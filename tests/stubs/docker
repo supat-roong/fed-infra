@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "docker $*" >> "$STUB_LOG"
+# Unquoted by design: STUB_DOCKER_FAIL_GLOB is a shell glob pattern, not a
+# literal string, so only matching subcommands fail.
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_DOCKER_FAIL_GLOB:-__never_matches__}) exit 1 ;;
+esac
+[ -n "${STUB_DOCKER_OUT:-}" ] && printf '%s' "$STUB_DOCKER_OUT"
+exit 0

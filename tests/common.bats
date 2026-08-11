@@ -1,0 +1,41 @@
+#!/usr/bin/env bats
+bats_require_minimum_version 1.5.0
+load helper
+
+setup() {
+  setup_stubs
+  source "$FED_INFRA_ROOT/lib/common.sh"
+}
+
+@test "fed_log writes to stderr, not stdout" {
+  run --separate-stderr bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; fed_log hello"
+  [ "$output" = "" ]
+  [[ "$stderr" == *"hello"* ]]
+}
+
+@test "fed_die exits 1 with the message on stderr" {
+  run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; fed_die boom"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"boom"* ]]
+}
+
+@test "fed_require_cmd succeeds when all commands exist" {
+  run fed_require_cmd kubectl kind
+  [ "$status" -eq 0 ]
+}
+
+@test "fed_require_cmd dies naming the missing command" {
+  run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; fed_require_cmd definitely_not_a_real_cmd"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"definitely_not_a_real_cmd"* ]]
+}
+
+@test "fed_retry returns 0 as soon as the command succeeds" {
+  run fed_retry 3 0 true
+  [ "$status" -eq 0 ]
+}
+
+@test "fed_retry gives up after the requested attempts" {
+  run fed_retry 3 0 false
+  [ "$status" -eq 1 ]
+}
