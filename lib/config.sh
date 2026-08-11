@@ -51,6 +51,13 @@ fed_config_validate() {
     single|multi) ;;
     *) fed_die "FED_PROFILE must be 'single' or 'multi', got: $FED_PROFILE" ;;
   esac
+  if fed_has_component mlflow; then
+    for v in FED_S3_ENDPOINT FED_S3_ACCESS_KEY FED_S3_SECRET_KEY; do
+      eval "local value=\${$v:-}"
+      # shellcheck disable=SC2154
+      [ -n "$value" ] || fed_die "missing required variable: $v (required when the mlflow component is enabled)"
+    done
+  fi
 }
 
 fed_has_component() {

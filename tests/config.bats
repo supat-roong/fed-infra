@@ -11,6 +11,9 @@ FED_CLUSTER_NAME=demo
 FED_NAMESPACE=demo-ns
 FED_PROFILE=single
 FED_COMPONENTS=kfp,minio,mlflow
+FED_S3_ENDPOINT=minio-service.demo-ns.svc.cluster.local:9000
+FED_S3_ACCESS_KEY=minio
+FED_S3_SECRET_KEY=minio123
 EOF
 }
 
@@ -56,6 +59,31 @@ EOF
   run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; source '$FED_INFRA_ROOT/lib/config.sh'; fed_config_load '$ENVFILE'"
   [ "$status" -eq 1 ]
   [[ "$output" == *"FED_PROFILE"* ]]
+}
+
+@test "fed_config_validate dies naming the missing FED_S3_* variable when mlflow is enabled" {
+  echo "FED_COMPONENTS=kfp,mlflow" >> "$ENVFILE"
+  echo "FED_S3_ENDPOINT=" >> "$ENVFILE"
+  run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; source '$FED_INFRA_ROOT/lib/config.sh'; fed_config_load '$ENVFILE'"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"FED_S3_ENDPOINT"* ]]
+}
+
+@test "fed_config_validate passes when FED_S3_* are set and mlflow is enabled" {
+  echo "FED_COMPONENTS=kfp,mlflow" >> "$ENVFILE"
+  fed_config_load "$ENVFILE"
+  [ "$FED_S3_ENDPOINT" = "minio-service.demo-ns.svc.cluster.local:9000" ]
+}
+
+@test "fed_config_validate does not require FED_S3_* when mlflow is disabled" {
+  {
+    echo "FED_COMPONENTS=kfp,minio"
+    echo "FED_S3_ENDPOINT="
+    echo "FED_S3_ACCESS_KEY="
+    echo "FED_S3_SECRET_KEY="
+  } >> "$ENVFILE"
+  fed_config_load "$ENVFILE"
+  [ "$FED_CLUSTER_NAME" = "demo" ]
 }
 
 @test "fed_has_component matches only whole component names" {
