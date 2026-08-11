@@ -7,5 +7,18 @@ echo "kind $*" >> "$STUB_LOG"
 case "$*" in
   ${STUB_KIND_FAIL_GLOB:-__never_matches__}) exit 1 ;;
 esac
+# `kind create cluster --config -` is the only invocation that pipes
+# meaningful stdin (the rendered cluster config from fed_kind_ensure_cluster).
+# Capture it to a separate log so tests can assert on the config fed-infra
+# actually generated (worker-node count, port mappings, ...) rather than
+# just the argv, which never shows it. Gated on the literal subcommand so
+# other invocations (get clusters, delete cluster, load docker-image) never
+# read stdin here — they are never piped, and reading would otherwise block
+# on an unredirected terminal stdin.
+case "$*" in
+  *"--config -"*)
+    [ -n "${STUB_STDIN_LOG:-}" ] && cat >> "$STUB_STDIN_LOG"
+    ;;
+esac
 [ -n "${STUB_KIND_OUT:-}" ] && printf '%s' "$STUB_KIND_OUT"
 exit 0
