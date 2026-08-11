@@ -17,9 +17,23 @@ setup() {
   assert_called "wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org"
 }
 
+@test "fed_training_install also waits for the operator pod to become ready when absent" {
+  export STUB_KUBECTL_FAIL_GLOB="get crd*"
+  fed_training_install v1.7.0
+  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n kubeflow --timeout=120s"
+}
+
+@test "fed_training_install honors FED_KFP_NAMESPACE for the pod-readiness wait" {
+  export STUB_KUBECTL_FAIL_GLOB="get crd*"
+  export FED_KFP_NAMESPACE=custom-ns
+  fed_training_install v1.7.0
+  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n custom-ns --timeout=120s"
+}
+
 @test "fed_training_install is a no-op when the CRD is already present" {
   fed_training_install v1.7.0   # probe succeeds by default
   refute_called "apply -k"
+  refute_called "wait --for=condition=ready pod"
 }
 
 @test "fed_training_install does nothing at all under FED_DRY_RUN=1" {

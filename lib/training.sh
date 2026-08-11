@@ -14,4 +14,6 @@ fed_training_install() {
   fed_log "installing Kubeflow Training Operator ${ver}"
   kubectl apply -k "https://github.com/kubeflow/training-operator/manifests/overlays/standalone?ref=${ver}" || return 1
   kubectl wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org || return 1
+  kubectl wait --for=condition=ready pod -l control-plane=kubeflow-training-operator \
+    -n "${FED_KFP_NAMESPACE:-kubeflow}" --timeout=120s || return 1
 }
