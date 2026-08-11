@@ -54,3 +54,13 @@ setup() {
   assert_called "rollout status deployment/ml-pipeline -n kubeflow"
   assert_called "rollout status deployment/ml-pipeline-ui -n kubeflow"
 }
+
+@test "fed_kfp_wait returns non-zero and stops on first deployment failure" {
+  export STUB_KUBECTL_FAIL_GLOB="rollout status deployment/workflow-controller*"
+  run fed_kfp_wait
+  [ "$status" -ne 0 ]
+  assert_called "rollout status deployment/workflow-controller -n kubeflow"
+  refute_called "rollout status deployment/minio -n kubeflow"
+  refute_called "rollout status deployment/ml-pipeline -n kubeflow"
+  refute_called "rollout status deployment/ml-pipeline-ui -n kubeflow"
+}

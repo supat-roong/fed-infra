@@ -23,15 +23,15 @@ fed_kfp_patch_arm() {
   local ver=$1 ns=$FED_KFP_NAMESPACE
   fed_log "patching KFP images for ARM/kind stability"
   kubectl set image deployment/ml-pipeline-ui \
-    "ml-pipeline-ui=ghcr.io/kubeflow/kfp-frontend:${ver}" -n "$ns"
+    "ml-pipeline-ui=ghcr.io/kubeflow/kfp-frontend:${ver}" -n "$ns" || return 1
   kubectl set image deployment/ml-pipeline \
-    "ml-pipeline-api-server=ghcr.io/kubeflow/kfp-api-server:${ver}" -n "$ns"
+    "ml-pipeline-api-server=ghcr.io/kubeflow/kfp-api-server:${ver}" -n "$ns" || return 1
   kubectl set image deployment/ml-pipeline-visualizationserver \
-    "ml-pipeline-visualizationserver=ghcr.io/kubeflow/kfp-visualization-server:${ver}" -n "$ns"
+    "ml-pipeline-visualizationserver=ghcr.io/kubeflow/kfp-visualization-server:${ver}" -n "$ns" || return 1
   kubectl set env deployment/ml-pipeline \
-    "V2_LAUNCHER_IMAGE=ghcr.io/kubeflow/kfp-launcher:${ver}" -n "$ns"
+    "V2_LAUNCHER_IMAGE=ghcr.io/kubeflow/kfp-launcher:${ver}" -n "$ns" || return 1
   kubectl patch deployment workflow-controller -n "$ns" --type=json \
-    -p="[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/args/3\",\"value\":\"${FED_ARGOEXEC_IMAGE}\"}]"
+    -p="[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/args/3\",\"value\":\"${FED_ARGOEXEC_IMAGE}\"}]" || return 1
 }
 
 # Patches KFP's own bundled MinIO (namespace kubeflow), which is separate from
@@ -40,17 +40,17 @@ fed_kfp_patch_arm() {
 fed_kfp_patch_minio() {
   local ns=$FED_KFP_NAMESPACE
   fed_log "patching KFP MinIO image and console port"
-  kubectl set image deployment/minio minio=minio/minio:latest -n "$ns"
+  kubectl set image deployment/minio minio=minio/minio:latest -n "$ns" || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
-    -p='[{"op":"replace","path":"/spec/template/spec/containers/0/ports","value":[{"containerPort":9000},{"containerPort":9001}]}]'
+    -p='[{"op":"replace","path":"/spec/template/spec/containers/0/ports","value":[{"containerPort":9000},{"containerPort":9001}]}]' || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
-    -p='[{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["server","/data","--console-address",":9001"]}]'
+    -p='[{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["server","/data","--console-address",":9001"]}]' || return 1
 }
 
 fed_kfp_wait() {
   local ns=$FED_KFP_NAMESPACE d
   fed_log "waiting for KFP core deployments"
   for d in workflow-controller minio ml-pipeline ml-pipeline-ui; do
-    kubectl rollout status "deployment/$d" -n "$ns" --timeout=15m
+    kubectl rollout status "deployment/$d" -n "$ns" --timeout=15m || return 1
   done
 }
