@@ -14,6 +14,12 @@ fed_training_install() {
   fed_log "installing Kubeflow Training Operator ${ver}"
   kubectl apply -k "https://github.com/kubeflow/training-operator/manifests/overlays/standalone?ref=${ver}" || return 1
   kubectl wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org || return 1
-  kubectl wait --for=condition=ready pod -l control-plane=kubeflow-training-operator \
-    -n "${FED_KFP_NAMESPACE:-kubeflow}" --timeout=120s || return 1
+  # A label selector that matches zero pods returns immediately with an
+  # error instead of polling, and right after 'apply -k' the pod is usually
+  # not scheduled yet. fed_retry polls instead of a fixed sleep, keeping
+  # roughly the same ~120s ceiling (12 attempts x up to 30s wait each, with
+  # a 5s gap between attempts).
+  fed_retry 12 5 kubectl wait --for=condition=ready pod \
+    -l control-plane=kubeflow-training-operator \
+    -n "${FED_KFP_NAMESPACE:-kubeflow}" --timeout=30s || return 1
 }

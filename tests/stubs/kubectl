@@ -7,5 +7,24 @@ echo "kubectl $*" >> "$STUB_LOG"
 case "$*" in
   ${STUB_KUBECTL_FAIL_GLOB:-__never_matches__}) exit 1 ;;
 esac
+# STUB_KUBECTL_FAIL_ONCE_GLOB + STUB_KUBECTL_FAIL_ONCE_COUNT (default 1) let
+# a test express "fail the first N matching calls, then succeed" — used to
+# exercise fed_retry-based polling without a fixed sleep. Kept independent
+# of STUB_KUBECTL_FAIL_GLOB above so a test can permanently fail one probe
+# (e.g. "get crd*") while transiently failing a different call (e.g. a wait
+# call) in the same run. Each invocation is a separate process, so the
+# count is tracked in a file next to STUB_LOG.
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_KUBECTL_FAIL_ONCE_GLOB:-__never_matches__})
+    counter_file="$(dirname "$STUB_LOG")/kubectl_fail_once_count"
+    count=$(cat "$counter_file" 2>/dev/null || echo 0)
+    limit=${STUB_KUBECTL_FAIL_ONCE_COUNT:-1}
+    if [ "$count" -lt "$limit" ]; then
+      echo $((count + 1)) > "$counter_file"
+      exit 1
+    fi
+    ;;
+esac
 [ -n "${STUB_KUBECTL_OUT:-}" ] && printf '%s' "$STUB_KUBECTL_OUT"
 exit 0

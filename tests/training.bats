@@ -20,14 +20,29 @@ setup() {
 @test "fed_training_install also waits for the operator pod to become ready when absent" {
   export STUB_KUBECTL_FAIL_GLOB="get crd*"
   fed_training_install v1.7.0
-  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n kubeflow --timeout=120s"
+  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n kubeflow --timeout=30s"
 }
 
 @test "fed_training_install honors FED_KFP_NAMESPACE for the pod-readiness wait" {
   export STUB_KUBECTL_FAIL_GLOB="get crd*"
   export FED_KFP_NAMESPACE=custom-ns
   fed_training_install v1.7.0
-  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n custom-ns --timeout=120s"
+  assert_called "wait --for=condition=ready pod -l control-plane=kubeflow-training-operator -n custom-ns --timeout=30s"
+}
+
+@test "fed_training_install retries the pod-readiness wait instead of failing when no pod exists yet" {
+  # Right after 'apply -k' the label selector can match zero pods, and a
+  # bare 'kubectl wait' returns immediately with an error in that case
+  # rather than polling. Simulate exactly that: the first wait call fails,
+  # a later one (after fed_retry's delay) succeeds.
+  export STUB_KUBECTL_FAIL_GLOB="get crd*"
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="wait --for=condition=ready pod*"
+  export STUB_KUBECTL_FAIL_ONCE_COUNT=1
+  run fed_training_install v1.7.0
+  [ "$status" -eq 0 ]
+  local attempts
+  attempts=$(grep -c "wait --for=condition=ready pod" "$STUB_LOG")
+  [ "$attempts" -eq 2 ]
 }
 
 @test "fed_training_install is a no-op when the CRD is already present" {
