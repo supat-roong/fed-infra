@@ -3,6 +3,10 @@
 
 fed_mlflow_build_image() {
   local image=$1 version=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would build mlflow image ${image}"
+    return 0
+  fi
   if docker image inspect "$image" >/dev/null 2>&1; then
     fed_log "mlflow image $image already built"
     return 0

@@ -35,6 +35,20 @@ EOF
   [ -f "$RENDER/mlflow-server.yaml" ]
 }
 
+@test "fed-infra-up --dry-run performs no real cluster, image, or apply side effects" {
+  write_env "kfp,minio,mlflow"
+  run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
+  [ "$status" -eq 0 ]
+  refute_called "kind create"
+  refute_called "kind load"
+  refute_called "docker build"
+  refute_called "kubectl apply"
+  refute_called "kubectl set"
+  refute_called "kubectl patch"
+  [ -f "$RENDER/minio.yaml" ]
+  [ -f "$RENDER/mlflow-server.yaml" ]
+}
+
 @test "fed-infra-up fails with a clear message when --env is missing" {
   run "$FED_INFRA_ROOT/bin/fed-infra-up"
   [ "$status" -eq 1 ]

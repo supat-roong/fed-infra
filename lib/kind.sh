@@ -3,6 +3,10 @@
 
 fed_kind_ensure_cluster() {
   local name=$1 tpl=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would ensure kind cluster '${name}' exists"
+    return 0
+  fi
   if kind get clusters 2>/dev/null | grep -qx "$name"; then
     fed_log "kind cluster '$name' already exists"
     return 0
@@ -35,6 +39,10 @@ fed_kind_cluster_image_id() {
 
 fed_kind_load_image() {
   local image=$1 cluster=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would load image ${image} into cluster ${cluster}"
+    return 0
+  fi
   local local_id cluster_id
   local_id=$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null \
     | cut -d: -f2 | cut -c1-12)

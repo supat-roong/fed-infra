@@ -8,6 +8,10 @@ FED_ARGOEXEC_IMAGE="quay.io/argoproj/argoexec:v3.4.17"
 
 fed_kfp_install() {
   local ver=$1
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would install KFP ${ver}"
+    return 0
+  fi
   if kubectl get deploy -n "$FED_KFP_NAMESPACE" ml-pipeline >/dev/null 2>&1; then
     fed_log "KFP already installed"
     return 0
@@ -21,6 +25,10 @@ fed_kfp_install() {
 
 fed_kfp_patch_arm() {
   local ver=$1 ns=$FED_KFP_NAMESPACE
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would patch KFP images for ARM/kind stability"
+    return 0
+  fi
   fed_log "patching KFP images for ARM/kind stability"
   kubectl set image deployment/ml-pipeline-ui \
     "ml-pipeline-ui=ghcr.io/kubeflow/kfp-frontend:${ver}" -n "$ns" || return 1
@@ -39,6 +47,10 @@ fed_kfp_patch_arm() {
 # repeated runs cannot append duplicate container ports.
 fed_kfp_patch_minio() {
   local ns=$FED_KFP_NAMESPACE
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would patch KFP MinIO image and console port"
+    return 0
+  fi
   fed_log "patching KFP MinIO image and console port"
   kubectl set image deployment/minio minio=minio/minio:latest -n "$ns" || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
@@ -49,6 +61,10 @@ fed_kfp_patch_minio() {
 
 fed_kfp_wait() {
   local ns=$FED_KFP_NAMESPACE d
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would wait for KFP core deployments"
+    return 0
+  fi
   fed_log "waiting for KFP core deployments"
   for d in workflow-controller minio ml-pipeline ml-pipeline-ui; do
     kubectl rollout status "deployment/$d" -n "$ns" --timeout=15m || return 1
