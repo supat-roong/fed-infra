@@ -1,0 +1,46 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats and shellcheck
+        run: sudo apt-get update && sudo apt-get install -y bats shellcheck gettext-base
+      - name: Lint
+        # -P SCRIPTDIR is required for the `source=` directives in bin/* to
+        # resolve relative to the script rather than the invocation dir
+        # (see Makefile's lint target).
+        run: shellcheck -x -P SCRIPTDIR bin/* lib/*.sh tests/stubs/*
+      - name: Test
+        run: bats tests/
+
+  smoke:
+    # Nightly only — brings up a real kind cluster, which is far too slow for PRs.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+        with:
+          install_only: true
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext-base
+      - name: Bring up the single profile
+        run: bin/fed-infra-up --env tests/fixtures/consumer-a.env
+      - name: Verify core workloads are running
+        run: |
+          kubectl get pods -n consumer-a
+          kubectl wait --for=condition=available deployment/mlflow-server \
+            -n consumer-a --timeout=300s
+      - name: Verify the run is idempotent
+        run: bin/fed-infra-up --env tests/fixtures/consumer-a.env
+      - name: Tear down
+        if: always()
+        run: bin/fed-infra-down --env tests/fixtures/consumer-a.env
