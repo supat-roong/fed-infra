@@ -14,8 +14,10 @@ fed_mlflow_build_image() {
 FROM ghcr.io/mlflow/mlflow:v${version}
 RUN pip install --no-cache-dir boto3
 EOF
-  docker build -t "$image" "$ctx"
+  local rc=0
+  docker build -t "$image" "$ctx" || rc=$?
   rm -rf "$ctx"
+  return "$rc"
 }
 
 fed_mlflow_install() {

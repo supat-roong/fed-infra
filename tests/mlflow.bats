@@ -25,6 +25,19 @@ setup() {
   refute_called "docker build"
 }
 
+@test "fed_mlflow_build_image cleans up context on build failure" {
+  # Make all docker commands fail, including both the probe and the build.
+  export STUB_DOCKER_FAIL_GLOB="*"
+  # Capture the context path from docker build's last argument before it fails.
+  run bash -c 'fed_mlflow_build_image fed-mlflow:2.12.2 2.12.2; return $?'
+  [ $status -ne 0 ]  # Function must return non-zero
+  # Extract the context path from the docker build command in the log.
+  local ctx_path
+  ctx_path=$(grep "docker build" "$STUB_LOG" | tail -1 | awk '{print $NF}')
+  # Verify the context directory was cleaned up.
+  [ -z "$ctx_path" ] || [ ! -d "$ctx_path" ]
+}
+
 @test "fed_mlflow_install applies the manifests and waits for rollout" {
   fed_mlflow_install
   assert_called "kubectl apply -f -"
