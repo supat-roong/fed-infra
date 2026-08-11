@@ -44,11 +44,17 @@ fed_kind_load_image() {
     return 0
   fi
   local local_id cluster_id
+  # Capture failure explicitly rather than letting the plain assignment abort
+  # under the entrypoints' `set -euo pipefail`: a failing pipeline on the
+  # right-hand side of `var=$(...)` propagates through `pipefail` and kills
+  # the script on this line before fed_die below ever runs.
   local_id=$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null \
-    | cut -d: -f2 | cut -c1-12)
+    | cut -d: -f2 | cut -c1-12) || local_id=""
   [ -n "$local_id" ] || fed_die "image not found locally: $image (build it first)"
 
-  cluster_id=$(fed_kind_cluster_image_id "$image" "$cluster")
+  # Same reasoning: if the control-plane container is gone, fall through to
+  # `kind load` below instead of aborting the whole script.
+  cluster_id=$(fed_kind_cluster_image_id "$image" "$cluster") || cluster_id=""
   if [ -n "$cluster_id" ] && [ "$(printf '%s' "$cluster_id" | cut -c1-12)" = "$local_id" ]; then
     fed_log "image $image already current in cluster $cluster"
     return 0
