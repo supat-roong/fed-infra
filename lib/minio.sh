@@ -20,7 +20,7 @@ fed_minio_ensure_bucket() {
     return 0
   fi
   local pod
-  pod="fl-mc-$(printf '%s' "$bucket" | tr -cd 'a-z0-9')"
+  pod="fed-mc-$(printf '%s' "$bucket" | tr -cd 'a-z0-9')"
   fed_log "ensuring bucket '${bucket}' at ${endpoint}"
   kubectl delete pod "$pod" -n "$ns" --ignore-not-found >/dev/null 2>&1 || true
   kubectl run "$pod" --image=minio/mc:latest -n "$ns" --restart=Never --command -- \

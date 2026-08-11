@@ -18,7 +18,7 @@ fed_config_defaults() {
   : "${FED_KFP_VERSION:=2.4.0}"
   : "${FED_KIND_WORKERS:=0}"
   : "${FED_MLFLOW_VERSION:=2.12.2}"
-  : "${FED_MLFLOW_IMAGE:=fl-mlflow:${FED_MLFLOW_VERSION}}"
+  : "${FED_MLFLOW_IMAGE:=fed-mlflow:${FED_MLFLOW_VERSION}}"
   : "${FED_IMAGES:=}"
   : "${FED_S3_BUCKET:=mlflow-artifacts}"
   : "${FED_NODEPORT_KFP:=30080}"
