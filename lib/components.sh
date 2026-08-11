@@ -15,6 +15,10 @@ fed_up() {
     fed_kfp_patch_minio
   fi
 
+  if fed_has_component training; then
+    fed_training_install "$FED_TRAINING_OPERATOR_VERSION"
+  fi
+
   if fed_has_component minio; then
     fed_minio_install
   fi
