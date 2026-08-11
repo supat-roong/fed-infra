@@ -7,5 +7,8 @@ echo "docker $*" >> "$STUB_LOG"
 case "$*" in
   ${STUB_DOCKER_FAIL_GLOB:-__never_matches__}) exit 1 ;;
 esac
-[ -n "${STUB_DOCKER_OUT:-}" ] && printf '%s' "$STUB_DOCKER_OUT"
+# Default keeps `docker image inspect --format '{{.Id}}'` non-empty when a
+# caller (e.g. fed_kind_load_image) parses stdout for a 12-char image id and
+# no test has opted into a specific value via STUB_DOCKER_OUT.
+printf '%s' "${STUB_DOCKER_OUT:-sha256:000000000000}"
 exit 0
