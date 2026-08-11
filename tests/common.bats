@@ -7,6 +7,12 @@ setup() {
   source "$FED_INFRA_ROOT/lib/common.sh"
 }
 
+@test "sourcing common.sh does not leak shell options into the caller" {
+  run bash -c "set +eu; source '$FED_INFRA_ROOT/lib/common.sh'; case \"\$-\" in *e*|*u*) echo LEAKED ;; *) echo CLEAN ;; esac"
+  [ "$status" -eq 0 ]
+  [ "$output" = "CLEAN" ]
+}
+
 @test "fed_log writes to stderr, not stdout" {
   run --separate-stderr bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; fed_log hello"
   [ "$output" = "" ]
