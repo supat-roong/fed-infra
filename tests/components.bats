@@ -48,6 +48,13 @@ EOF
   assert_called "kind delete cluster --name demo"
 }
 
+@test "fed-infra-down kills stale kubectl port-forwards via the stubbed pkill" {
+  write_env "kfp"
+  run "$FED_INFRA_ROOT/bin/fed-infra-down" --env "$ENVFILE"
+  [ "$status" -eq 0 ]
+  assert_called "pkill -f kubectl port-forward"
+}
+
 @test "fed_expose_nodeport patches a service to NodePort with the given ports" {
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/nodeport.sh"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "pkill $*" >> "$STUB_LOG"
+# Unquoted by design: STUB_PKILL_FAIL_GLOB is a shell glob pattern, not a
+# literal string, so only matching subcommands fail.
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_PKILL_FAIL_GLOB:-__never_matches__}) exit 1 ;;
+esac
+[ -n "${STUB_PKILL_OUT:-}" ] && printf '%s' "$STUB_PKILL_OUT"
+exit 0
