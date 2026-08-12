@@ -16,11 +16,29 @@ fed_kfp_install() {
     fed_log "KFP already installed"
     return 0
   fi
+  # kustomize enforces a hardcoded ~27s timeout on the git fetch it performs
+  # internally for a remote -k target. On a slow connection cloning the KFP
+  # repo alone can take 40s+, so `kubectl apply -k <git-url>` can never
+  # succeed there no matter how many times it is retried. Plain `git clone`
+  # has no such cap, so clone once ourselves and apply from the checkout.
+  local tmp rc=0
+  tmp=$(mktemp -d) || return 1
+  fed_log "cloning KFP ${ver} manifests"
+  if ! git clone --depth 1 --branch "$ver" https://github.com/kubeflow/pipelines "$tmp"; then
+    rm -rf "$tmp"
+    return 1
+  fi
   fed_log "installing KFP ${ver} cluster-scoped resources"
-  kubectl apply -k "https://github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=${ver}"
-  kubectl wait --for condition=established --timeout=300s crd/applications.app.k8s.io
-  fed_log "installing KFP ${ver} core"
-  kubectl apply -k "https://github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=${ver}"
+  kubectl apply -k "$tmp/manifests/kustomize/cluster-scoped-resources" || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    kubectl wait --for condition=established --timeout=300s crd/applications.app.k8s.io || rc=$?
+  fi
+  if [ "$rc" -eq 0 ]; then
+    fed_log "installing KFP ${ver} core"
+    kubectl apply -k "$tmp/manifests/kustomize/env/platform-agnostic" || rc=$?
+  fi
+  rm -rf "$tmp"
+  return "$rc"
 }
 
 fed_kfp_patch_arm() {

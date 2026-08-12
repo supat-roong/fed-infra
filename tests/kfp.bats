@@ -9,18 +9,63 @@ setup() {
   fed_config_defaults
 }
 
-@test "fed_kfp_install applies cluster-scoped resources then core when absent" {
-  # Only the existence probe fails; the applies that follow must still succeed,
-  # otherwise the second apply would never be reached.
+@test "fed_kfp_install clones the KFP repo at the requested tag" {
+  # Only the existence probe fails; the clone that follows must still
+  # succeed, otherwise neither apply would ever be reached.
   export STUB_KUBECTL_FAIL_GLOB="get deploy*"
   fed_kfp_install 2.4.0
-  assert_called "cluster-scoped-resources?ref=2.4.0"
-  assert_called "platform-agnostic?ref=2.4.0"
+  assert_called "git clone --depth 1 --branch 2.4.0 https://github.com/kubeflow/pipelines"
+}
+
+@test "fed_kfp_install applies both kustomize targets from the local clone, not a URL" {
+  # kustomize enforces a hardcoded ~27s timeout on its own git fetch when
+  # given a remote -k target, which a slow clone can exceed even though a
+  # plain 'git clone' of the same repo succeeds. Applying from the local
+  # checkout instead means these calls must never carry the git-url form.
+  export STUB_KUBECTL_FAIL_GLOB="get deploy*"
+  fed_kfp_install 2.4.0
+  local tmp
+  tmp=$(grep "git clone" "$STUB_LOG" | tail -1 | awk '{print $NF}')
+  [ -n "$tmp" ]
+  assert_called "kubectl apply -k $tmp/manifests/kustomize/cluster-scoped-resources"
+  assert_called "kubectl apply -k $tmp/manifests/kustomize/env/platform-agnostic"
+  run grep "kubectl apply -k" "$STUB_LOG"
+  [[ "$output" != *"https://"* ]]
+}
+
+@test "fed_kfp_install removes the temp clone directory after a successful install" {
+  export STUB_KUBECTL_FAIL_GLOB="get deploy*"
+  fed_kfp_install 2.4.0
+  local tmp
+  tmp=$(grep "git clone" "$STUB_LOG" | tail -1 | awk '{print $NF}')
+  [ -n "$tmp" ]
+  [ ! -d "$tmp" ]
+}
+
+@test "fed_kfp_install removes the temp clone directory when an apply fails" {
+  # Permanently fail the probe (so install proceeds) while transiently
+  # failing only the first cluster-scoped-resources apply, independent of
+  # STUB_KUBECTL_FAIL_GLOB above.
+  export STUB_KUBECTL_FAIL_GLOB="get deploy*"
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="apply -k*cluster-scoped-resources*"
+  run fed_kfp_install 2.4.0
+  [ "$status" -ne 0 ]
+  local tmp
+  tmp=$(grep "git clone" "$STUB_LOG" | tail -1 | awk '{print $NF}')
+  [ -n "$tmp" ]
+  [ ! -d "$tmp" ]
 }
 
 @test "fed_kfp_install is a no-op when KFP is already present" {
   fed_kfp_install 2.4.0   # probe succeeds by default
+  refute_called "git clone"
   refute_called "cluster-scoped-resources"
+}
+
+@test "fed_kfp_install is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_kfp_install 2.4.0
+  [ -z "$(calls)" ]
 }
 
 @test "fed_kfp_patch_arm repoints all four images at ghcr" {
