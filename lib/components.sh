@@ -19,6 +19,10 @@ fed_up() {
     fed_training_install "$FED_TRAINING_OPERATOR_VERSION"
   fi
 
+  if fed_has_component temporal; then
+    fed_temporal_install "$FED_TEMPORAL_NAMESPACE" "$FED_TEMPORAL_VERSION"
+  fi
+
   if fed_has_component minio; then
     fed_minio_install
   fi
@@ -43,6 +47,11 @@ fed_up() {
       "[{\"port\":80,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]"
   fi
 
+  if fed_has_component temporal; then
+    fed_expose_nodeport temporal-web "$FED_TEMPORAL_NAMESPACE" \
+      "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
+  fi
+
   if fed_has_component mlflow; then
     fed_minio_ensure_bucket "$FED_NAMESPACE" "$FED_S3_ENDPOINT" \
       "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
@@ -64,6 +73,9 @@ fed_up_summary() {
   fi
   if fed_has_component mlflow; then
     fed_log "  MLflow             : http://localhost:${FED_HOSTPORT_MLFLOW}"
+  fi
+  if fed_has_component temporal; then
+    fed_log "  Temporal UI        : http://localhost:${FED_HOSTPORT_TEMPORAL_UI}"
   fi
   if fed_has_component minio; then
     fed_log "  MinIO Console      : http://localhost:${FED_HOSTPORT_MINIO_CONSOLE}"

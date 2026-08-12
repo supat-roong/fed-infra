@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "helm $*" >> "$STUB_LOG"
+# Unquoted by design: STUB_HELM_FAIL_GLOB is a shell glob pattern.
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_HELM_FAIL_GLOB:-__never_matches__}) exit 1 ;;
+esac
+[ -n "${STUB_HELM_OUT:-}" ] && printf '%s' "$STUB_HELM_OUT"
+exit 0

@@ -6,7 +6,7 @@ export FED_INFRA_ROOT
 
 # shellcheck source=../lib/common.sh
 . "${FED_INFRA_ROOT}/lib/common.sh"
-for m in config render kind kfp training minio mlflow nodeport components; do
+for m in config render kind kfp training temporal minio mlflow nodeport components; do
   # shellcheck disable=SC1090
   . "${FED_INFRA_ROOT}/lib/${m}.sh"
 done

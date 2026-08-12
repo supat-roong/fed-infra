@@ -16,3 +16,6 @@ nodes:
       - containerPort: ${FED_NODEPORT_MINIO_CONSOLE}
         hostPort: ${FED_HOSTPORT_MINIO_CONSOLE}
         protocol: TCP
+      - containerPort: ${FED_NODEPORT_TEMPORAL_UI}
+        hostPort: ${FED_HOSTPORT_TEMPORAL_UI}
+        protocol: TCP
