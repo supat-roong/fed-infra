@@ -35,12 +35,25 @@ setup() {
   assert_called "rollout status deployment/temporal-frontend -n demo-ns"
 }
 
-@test "fed_temporal_install renders the postgres manifest but calls no helm or kubectl under FED_DRY_RUN=1" {
+@test "fed_temporal_install renders the namespace and postgres manifests but calls no helm or kubectl under FED_DRY_RUN=1" {
   export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
   fed_temporal_install demo-ns 0.62.0
+  [ -f "$FED_RENDER_DIR/namespace.yaml" ]
   [ -f "$FED_RENDER_DIR/temporal-postgres.yaml" ]
   refute_called "helm"
   refute_called "kubectl"
+}
+
+@test "fed_temporal_install creates its own namespace before deploying postgres" {
+  fed_temporal_install demo-ns 0.62.0
+  run bash -c "grep -c 'kubectl apply -f -' '$STUB_LOG'"
+  [ "$output" -ge 2 ]
+  local namespace_line postgres_line
+  namespace_line=$(grep -n "^kind: Namespace$" "$STUB_STDIN_LOG" | head -n1 | cut -d: -f1)
+  postgres_line=$(grep -n "^kind: StatefulSet$" "$STUB_STDIN_LOG" | head -n1 | cut -d: -f1)
+  [ -n "$namespace_line" ]
+  [ -n "$postgres_line" ]
+  [ "$namespace_line" -lt "$postgres_line" ]
 }
 
 @test "fed_temporal_install fails fast when the chart install fails" {

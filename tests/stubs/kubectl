@@ -26,5 +26,16 @@ case "$*" in
     fi
     ;;
 esac
+# `apply -f -` is the only invocation that pipes meaningful stdin (the
+# rendered manifest from fed_apply). Capture it to the same separate log the
+# kind stub uses for its own piped config, so tests can assert on manifest
+# *content and relative ordering* across multiple applies in one call (e.g.
+# "the namespace was applied before the postgres manifest"), not just argv,
+# which is identical ("kubectl apply -f -") for every fed_apply call.
+case "$*" in
+  *"apply -f -"*)
+    [ -n "${STUB_STDIN_LOG:-}" ] && cat >> "$STUB_STDIN_LOG"
+    ;;
+esac
 [ -n "${STUB_KUBECTL_OUT:-}" ] && printf '%s' "$STUB_KUBECTL_OUT"
 exit 0

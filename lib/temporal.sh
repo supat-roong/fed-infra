@@ -15,6 +15,16 @@
 fed_temporal_install() {
   local ns=$1 ver=$2
 
+  # fed_up dispatches components in a fixed order (kfp -> training ->
+  # temporal -> minio -> mlflow) and temporal deliberately runs before minio,
+  # but the namespace itself is only otherwise created by fed_minio_install /
+  # fed_mlflow_install applying namespace.yaml.tpl. On a clean cluster that
+  # means our own postgres manifest below would target a namespace that does
+  # not exist yet. Apply it here too, exactly like fed_minio_install /
+  # fed_mlflow_install already do, so this component is self-sufficient
+  # regardless of dispatch order.
+  fed_apply "${FED_INFRA_ROOT}/manifests/namespace.yaml.tpl" namespace
+
   # The chart has NO postgresql dependency (only cassandra/prometheus/
   # elasticsearch/grafana), so we supply our own database first. fed_apply
   # handles FED_DRY_RUN itself (writing the manifest under FED_RENDER_DIR
