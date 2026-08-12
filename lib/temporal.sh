@@ -14,21 +14,29 @@
 
 fed_temporal_install() {
   local ns=$1 ver=$2
+
+  # The chart has NO postgresql dependency (only cassandra/prometheus/
+  # elasticsearch/grafana), so we supply our own database first. fed_apply
+  # handles FED_DRY_RUN itself (writing the manifest under FED_RENDER_DIR
+  # instead of calling kubectl), so this call runs unconditionally -- matching
+  # fed_minio_install / fed_mlflow_install, which always render their
+  # manifests before gating the rollout wait on dry-run. Dry-run means
+  # "render every manifest, perform no action", not "render nothing".
+  fed_log "deploying PostgreSQL for Temporal into ${ns}"
+  fed_apply "${FED_INFRA_ROOT}/manifests/temporal-postgres.yaml.tpl" temporal-postgres
+
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then
     fed_log "dry-run: would install Temporal ${ver} into ${ns}"
     return 0
   fi
+
+  kubectl rollout status statefulset/temporal-postgresql -n "$ns" --timeout=300s || return 1
+
   fed_require_cmd helm
 
   fed_log "adding the Temporal Helm repo"
   helm repo add temporal https://go.temporal.io/helm-charts || return 1
   helm repo update >/dev/null 2>&1 || return 1
-
-  # The chart has NO postgresql dependency (only cassandra/prometheus/
-  # elasticsearch/grafana), so we supply our own database first.
-  fed_log "deploying PostgreSQL for Temporal into ${ns}"
-  fed_apply "${FED_INFRA_ROOT}/manifests/temporal-postgres.yaml.tpl" temporal-postgres
-  kubectl rollout status statefulset/temporal-postgresql -n "$ns" --timeout=300s || return 1
 
   # BOTH the default and visibility stores must be switched to sql. Overriding
   # only `default` leaves visibility on its cassandra default and the chart

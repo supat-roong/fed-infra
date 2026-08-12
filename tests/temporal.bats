@@ -35,9 +35,10 @@ setup() {
   assert_called "rollout status deployment/temporal-frontend -n demo-ns"
 }
 
-@test "fed_temporal_install does nothing at all under FED_DRY_RUN=1" {
-  export FED_DRY_RUN=1
+@test "fed_temporal_install renders the postgres manifest but calls no helm or kubectl under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
   fed_temporal_install demo-ns 0.62.0
+  [ -f "$FED_RENDER_DIR/temporal-postgres.yaml" ]
   refute_called "helm"
   refute_called "kubectl"
 }
