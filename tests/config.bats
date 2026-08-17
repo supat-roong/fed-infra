@@ -32,6 +32,14 @@ EOF
   [ "$FED_DRY_RUN" = "0" ]
 }
 
+@test "fed_config_load applies documented Karmada/member defaults" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_MEMBER_COUNT" = "2" ]
+  [ "$FED_MEMBER_PREFIX" = "member" ]
+  [ "$FED_KARMADA_VERSION" = "v1.17.0" ]
+  [ "$FED_KARMADA_CONFIG" = "${HOME}/.karmada/karmada-apiserver.config" ]
+}
+
 @test "fed_config_load does not override values already set in the env file" {
   echo "FED_KFP_VERSION=9.9.9" >> "$ENVFILE"
   fed_config_load "$ENVFILE"

@@ -1,0 +1,174 @@
+#!/usr/bin/env bats
+load helper
+
+setup() {
+  setup_stubs
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/config.sh"
+  source "$FED_INFRA_ROOT/lib/render.sh"
+  source "$FED_INFRA_ROOT/lib/karmada.sh"
+  fed_config_defaults
+  export FED_KARMADA_CONFIG="$BATS_TEST_TMPDIR/.karmada/karmada-apiserver.config"
+  # The docker stub's own default output is shaped like an image digest
+  # (sha256:...), not an IP -- fine for the image-id callers it was written
+  # for, but nonsensical as a "docker inspect ... IPAddress" result here.
+  # Give join tests a plausible default; tests that care about a specific
+  # value (or about no IP being resolvable) override or unset it.
+  export STUB_DOCKER_OUT="10.0.0.5"
+}
+
+# --- fed_karmada_init ---
+
+@test "fed_karmada_init skips karmadactl init when karmada-system already exists" {
+  fed_karmada_init host
+  assert_called "kubectl config use-context kind-host"
+  assert_called "kubectl get namespace karmada-system"
+  refute_called "karmadactl init"
+}
+
+@test "fed_karmada_init passes the expected flags when karmada-system does not exist" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  local karmada_data
+  karmada_data=$(dirname "$FED_KARMADA_CONFIG")
+  fed_karmada_init host
+  assert_called "karmadactl init"
+  assert_called "--karmada-data=${karmada_data}"
+  assert_called "--karmada-pki=${karmada_data}/pki"
+  assert_called "--cert-external-ip=127.0.0.1"
+  assert_called "--cert-external-dns=localhost"
+  assert_called "--karmada-apiserver-advertise-address=127.0.0.1"
+  assert_called "--etcd-storage-mode=emptyDir"
+}
+
+@test "fed_karmada_init creates the karmada data/pki directories before init" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  fed_karmada_init host
+  [ -d "$(dirname "$FED_KARMADA_CONFIG")/pki" ]
+}
+
+@test "fed_karmada_init is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_karmada_init host
+  [ -z "$(calls)" ]
+}
+
+@test "fed_karmada_init fails fast when the context switch fails" {
+  export STUB_KUBECTL_FAIL_GLOB="config use-context*"
+  run fed_karmada_init host
+  [ "$status" -ne 0 ]
+  refute_called "karmadactl init"
+}
+
+@test "fed_karmada_init fails fast when karmadactl init fails" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_KARMADACTL_FAIL_GLOB="init*"
+  run fed_karmada_init host
+  [ "$status" -ne 0 ]
+}
+
+# --- fed_karmada_join ---
+
+@test "fed_karmada_join joins a cluster not yet registered" {
+  # Only the existence probe (the very first 'get cluster member1' call, with
+  # no further flags) fails; the two later 'get cluster member1 -o
+  # jsonpath=...' reads for secretRef must still succeed, so a permanent
+  # STUB_KUBECTL_FAIL_GLOB would wrongly fail those too. FAIL_ONCE fails
+  # exactly the first match and lets every later one through.
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="*get cluster member1*"
+  fed_karmada_join member1 kind-member1
+  assert_called "karmadactl --kubeconfig=${FED_KARMADA_CONFIG} join member1"
+  assert_called "--cluster-context=kind-member1"
+}
+
+@test "fed_karmada_join skips karmadactl join for an already-registered cluster" {
+  fed_karmada_join member1 kind-member1
+  refute_called "karmadactl"
+}
+
+@test "fed_karmada_join still re-patches the endpoint for an already-registered cluster" {
+  # Re-patching on every call (not only right after joining) is deliberate:
+  # a kind container can get a new Docker-network IP across a docker/host
+  # restart even though the cluster stays registered with Karmada.
+  fed_karmada_join member1 kind-member1
+  assert_called "patch cluster member1 --type=merge"
+  assert_called "patch secret"
+}
+
+@test "fed_karmada_join patches the Cluster apiEndpoint and rewrites the Secret's kubeconfig to the container's Docker IP" {
+  export STUB_DOCKER_OUT="10.42.0.7"
+  local plain b64
+  plain=$'server: https://127.0.0.1:6443\naltserver: https://localhost:6443\n'
+  b64=$(printf '%s' "$plain" | python3 -c "import sys, base64; sys.stdout.write(base64.b64encode(sys.stdin.buffer.read()).decode())")
+  export STUB_KUBECTL_SECRET_KUBECONFIG_OUT="$b64"
+
+  fed_karmada_join member1 kind-member1
+
+  assert_called "patch cluster member1 --type=merge"
+  assert_called "https://10.42.0.7:6443"
+
+  local patch_secret_call patched_b64 decoded
+  patch_secret_call=$(grep "patch secret" "$STUB_LOG" | tail -1)
+  [ -n "$patch_secret_call" ]
+  patched_b64=$(printf '%s' "$patch_secret_call" | sed -E 's/.*"kubeconfig":"([^"]*)".*/\1/')
+  [ -n "$patched_b64" ]
+  decoded=$(printf '%s' "$patched_b64" | python3 -c "import sys, base64; sys.stdout.write(base64.b64decode(sys.stdin.read()).decode())")
+  [[ "$decoded" == *"https://10.42.0.7:6443"* ]]
+  # Both occurrences must be gone, not just one -- this is the essential
+  # part of the port: a kubeconfig with either placeholder left in it still
+  # points the Karmada control plane at itself instead of the member.
+  [[ "$decoded" != *"127.0.0.1"* ]]
+  [[ "$decoded" != *"localhost"* ]]
+}
+
+@test "fed_karmada_join is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_karmada_join member1 kind-member1
+  [ -z "$(calls)" ]
+}
+
+@test "fed_karmada_join fails fast when karmadactl join fails" {
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="*get cluster member1*"
+  export STUB_KARMADACTL_FAIL_GLOB="*join*"
+  run fed_karmada_join member1 kind-member1
+  [ "$status" -ne 0 ]
+  refute_called "patch cluster"
+}
+
+@test "fed_karmada_join fails fast when patching the Cluster object fails" {
+  export STUB_KUBECTL_FAIL_GLOB="*patch cluster*"
+  run fed_karmada_join member1 kind-member1
+  [ "$status" -ne 0 ]
+  refute_called "patch secret"
+}
+
+@test "fed_karmada_join fails fast when patching the Secret fails" {
+  export STUB_KUBECTL_FAIL_GLOB="*patch secret*"
+  run fed_karmada_join member1 kind-member1
+  [ "$status" -ne 0 ]
+}
+
+@test "fed_karmada_join returns success without patching when the Docker IP cannot be determined" {
+  export STUB_DOCKER_FAIL_GLOB="inspect*"
+  run fed_karmada_join member1 kind-member1
+  [ "$status" -eq 0 ]
+  refute_called "patch cluster"
+}
+
+# --- fed_karmada_wait_cluster ---
+
+@test "fed_karmada_wait_cluster waits for the cluster to report Ready" {
+  fed_karmada_wait_cluster member1
+  assert_called "kubectl --kubeconfig=${FED_KARMADA_CONFIG} wait --for=condition=Ready cluster/member1 --timeout=120s"
+}
+
+@test "fed_karmada_wait_cluster is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_karmada_wait_cluster member1
+  [ -z "$(calls)" ]
+}
+
+@test "fed_karmada_wait_cluster fails fast when the wait fails" {
+  export STUB_KUBECTL_FAIL_GLOB="*wait*"
+  run fed_karmada_wait_cluster member1
+  [ "$status" -ne 0 ]
+}

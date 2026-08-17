@@ -37,5 +37,26 @@ case "$*" in
     [ -n "${STUB_STDIN_LOG:-}" ] && cat >> "$STUB_STDIN_LOG"
     ;;
 esac
+# lib/karmada.sh reads three distinct jsonpath fields off two different
+# object kinds (Cluster.spec.secretRef.{name,namespace} and
+# Secret.data.kubeconfig) in the course of a single fed_karmada_join call.
+# All three would otherwise collide on the single STUB_KUBECTL_OUT value
+# below, so each gets its own seam, matched on the jsonpath expression
+# itself. Defaults are sane so tests that don't care about the secret
+# name/namespace never need to set them.
+case "$*" in
+  *"jsonpath={.spec.secretRef.name}"*)
+    printf '%s' "${STUB_KUBECTL_SECRET_NAME_OUT:-fed-cluster-secret}"
+    exit 0
+    ;;
+  *"jsonpath={.spec.secretRef.namespace}"*)
+    printf '%s' "${STUB_KUBECTL_SECRET_NS_OUT:-karmada-system}"
+    exit 0
+    ;;
+  *"jsonpath={.data.kubeconfig}"*)
+    printf '%s' "${STUB_KUBECTL_SECRET_KUBECONFIG_OUT:-}"
+    exit 0
+    ;;
+esac
 [ -n "${STUB_KUBECTL_OUT:-}" ] && printf '%s' "$STUB_KUBECTL_OUT"
 exit 0

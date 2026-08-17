@@ -51,6 +51,17 @@ setup() {
   [[ "$output" == *"FED_RENDER_DIR"* ]]
 }
 
+@test "fed_render substitutes FED_MEMBER_COUNT and FED_MEMBER_PREFIX" {
+  # Guards the FED_TEMPLATE_VARS whitelist directly for the Karmada
+  # component's config: a variable missing from it renders as an empty
+  # string with no error, so this would silently start passing 0/empty
+  # instead of failing if either were dropped from the whitelist.
+  export FED_MEMBER_COUNT=3 FED_MEMBER_PREFIX=worker
+  echo 'members: ${FED_MEMBER_COUNT} prefix: ${FED_MEMBER_PREFIX}' > "$TPL"
+  run fed_render "$TPL"
+  [ "$output" = "members: 3 prefix: worker" ]
+}
+
 @test "namespace template renders to a valid Namespace object" {
   run fed_render "$FED_INFRA_ROOT/manifests/namespace.yaml.tpl"
   [[ "$output" == *"kind: Namespace"* ]]
