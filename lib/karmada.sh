@@ -35,7 +35,7 @@ fed_karmada_init() {
   # address to loopback plus emptyDir etcd storage -- what makes this work
   # unattended on a local kind cluster with no external load balancer.
   local karmada_data
-  karmada_data=$(dirname "$FED_KARMADA_CONFIG")
+  karmada_data=$(dirname "$FED_KARMADA_CONFIG") || return 1
   mkdir -p "${karmada_data}/pki" || return 1
 
   fed_log "initializing Karmada ${FED_KARMADA_VERSION} control plane on ${host_cluster}"
@@ -69,9 +69,16 @@ fed_karmada_join() {
   # kind container can be assigned a new Docker-network IP across a
   # docker/host restart even though the cluster name and Karmada
   # registration are unchanged, and a stale patch is as broken as none.
+  # Guarded with `|| ip=""` rather than left bare: callers (bin/fed-infra-up)
+  # source this library under `set -euo pipefail`, and this pipeline can
+  # legitimately fail (both docker inspect attempts miss). Left unguarded,
+  # errexit would abort the whole script right here, before the "empty ip
+  # -> warn and return 0" branch below ever runs -- turning a deliberately
+  # soft fallback into a hard, unexplained bootstrap failure. Same idiom
+  # already used in fed_kind_load_image for the same reason.
   local ip
   ip=$( (docker inspect "${cluster_name}-control-plane" --format '{{ .NetworkSettings.Networks.kind.IPAddress }}' 2>/dev/null \
-    || docker inspect "kind-${cluster_name}-control-plane" --format '{{ .NetworkSettings.Networks.kind.IPAddress }}' 2>/dev/null) | tr -d '\n')
+    || docker inspect "kind-${cluster_name}-control-plane" --format '{{ .NetworkSettings.Networks.kind.IPAddress }}' 2>/dev/null) | tr -d '\n') || ip=""
   if [ -z "$ip" ]; then
     fed_warn "could not determine the Docker-network IP for ${cluster_name}; leaving its Karmada endpoint unpatched"
     return 0

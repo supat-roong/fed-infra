@@ -154,6 +154,33 @@ setup() {
   refute_called "patch cluster"
 }
 
+@test "fed_karmada_join's empty-IP fallback runs to completion under set -euo pipefail, not just under 'run'" {
+  # bin/fed-infra-up sources this library under set -euo pipefail. The IP
+  # lookup below is a plain `ip=$(...)` assignment (not `local ip=$(...)`,
+  # which would mask a failing command substitution behind the `local`
+  # builtin's own exit status) -- so if the substitution's pipeline itself
+  # fails, errexit propagates it and kills the whole script on that line,
+  # before the graceful "empty ip -> warn and return 0" branch below it
+  # ever runs. A plain `run fed_karmada_join ...` in this same test file
+  # cannot catch that: `run` always shields the call from errexit, which
+  # is exactly the blind spot this test exists to close. Exercise it for
+  # real, in a subshell that actually has errexit on, and assert on a
+  # marker printed *after* the call returns -- not just the exit status,
+  # which could pass for the wrong reason (e.g. the marker line itself
+  # silently not running while the subshell still happens to exit 0).
+  export STUB_DOCKER_FAIL_GLOB="inspect*"
+  run bash -c "
+    set -euo pipefail
+    source '$FED_INFRA_ROOT/lib/common.sh'
+    source '$FED_INFRA_ROOT/lib/karmada.sh'
+    fed_karmada_join member1 kind-member1
+    echo REACHED_AFTER_JOIN
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"REACHED_AFTER_JOIN"* ]]
+  [[ "$output" == *"could not determine the Docker-network IP"* ]]
+}
+
 # --- fed_karmada_wait_cluster ---
 
 @test "fed_karmada_wait_cluster waits for the cluster to report Ready" {
