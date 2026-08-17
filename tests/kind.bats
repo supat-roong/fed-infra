@@ -66,6 +66,53 @@ setup() {
   [[ "$output" == *"name: demo"* ]]
 }
 
+@test "multi-host template renders the same host port mappings as single-cluster" {
+  export FED_HOSTPORT_KFP=8080 FED_NODEPORT_KFP=30080 \
+         FED_HOSTPORT_MLFLOW=5050 FED_NODEPORT_MLFLOW=30500 \
+         FED_HOSTPORT_MINIO_API=9000 FED_NODEPORT_MINIO_API=30900 \
+         FED_HOSTPORT_MINIO_CONSOLE=9001 FED_NODEPORT_MINIO_CONSOLE=30901 \
+         FED_HOSTPORT_TEMPORAL_UI=8233 FED_NODEPORT_TEMPORAL_UI=30733
+  run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
+  # Note: bats does not abort a test on a failing bare `[[ ]]` unless it is
+  # the function's last statement (only the final command's status is
+  # checked), so every assertion below is guarded with `|| return 1` to make
+  # sure a false one actually fails the test instead of being silently
+  # shadowed by a later true one.
+  [[ "$output" == *"name: demo"* ]] || return 1
+  [[ "$output" == *"containerPort: 30080"* ]] || return 1
+  [[ "$output" == *"hostPort: 8080"* ]] || return 1
+  [[ "$output" == *"containerPort: 30500"* ]] || return 1
+  [[ "$output" == *"hostPort: 5050"* ]] || return 1
+  [[ "$output" == *"containerPort: 30900"* ]] || return 1
+  [[ "$output" == *"hostPort: 9000"* ]] || return 1
+  [[ "$output" == *"containerPort: 30901"* ]] || return 1
+  [[ "$output" == *"hostPort: 9001"* ]] || return 1
+  [[ "$output" == *"containerPort: 30733"* ]] || return 1
+  [[ "$output" == *"hostPort: 8233"* ]] || return 1
+}
+
+@test "single-cluster and multi-host templates render identically for the same variables" {
+  run fed_render "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  local single_output="$output"
+  run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
+  [ "$output" = "$single_output" ]
+}
+
+@test "member template has no extraPortMappings and no name field" {
+  run fed_render "$FED_INFRA_ROOT/kind/member.yaml.tpl"
+  [[ "$output" != *"extraPortMappings"* ]] || return 1
+  [[ "$output" != *"hostPort"* ]] || return 1
+  [[ "$output" != *"name:"* ]] || return 1
+  [[ "$output" == *"role: control-plane"* ]] || return 1
+}
+
+@test "fed_kind_ensure_cluster's piped config for a member has no port mappings" {
+  export STUB_KIND_OUT=""
+  fed_kind_ensure_cluster member1 "$FED_INFRA_ROOT/kind/member.yaml.tpl"
+  assert_called "kind create cluster --name member1"
+  [ "$(grep -c 'extraPortMappings' "$STUB_STDIN_LOG")" -eq 0 ]
+}
+
 @test "fed_kind_ensure_cluster appends the requested worker nodes" {
   export STUB_KIND_OUT="" FED_KIND_WORKERS=2
   run fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"

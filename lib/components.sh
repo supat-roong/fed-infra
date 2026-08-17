@@ -4,11 +4,71 @@
 fed_up() {
   fed_require_cmd kind kubectl docker envsubst
 
+  # multi is the only other profile fed_config_validate accepts, so this
+  # single check covers both branches; the single-profile body below is
+  # untouched from before this branch existed.
+  if [ "$FED_PROFILE" = "multi" ]; then
+    fed_up_multi
+    return 0
+  fi
+
   fed_kind_ensure_cluster "$FED_CLUSTER_NAME" "${FED_INFRA_ROOT}/kind/single-cluster.yaml.tpl"
   if [ "${FED_DRY_RUN:-0}" != "1" ]; then
     kubectl config use-context "kind-${FED_CLUSTER_NAME}"
   fi
 
+  fed_up_install_components
+}
+
+# Host + N member kind clusters federated by Karmada. Workers run on members
+# only; every shared service (kfp/training/temporal/minio/mlflow) runs on the
+# host only, so fed_up_install_components below (identical for both
+# profiles) executes with the host as the current kubectl context.
+fed_up_multi() {
+  fed_kind_ensure_cluster "$FED_CLUSTER_NAME" "${FED_INFRA_ROOT}/kind/multi-host.yaml.tpl"
+
+  local i=1
+  while [ "$i" -le "${FED_MEMBER_COUNT}" ]; do
+    fed_kind_ensure_cluster "${FED_MEMBER_PREFIX}${i}" "${FED_INFRA_ROOT}/kind/member.yaml.tpl"
+    i=$((i + 1))
+  done
+
+  fed_karmada_init "$FED_CLUSTER_NAME"
+  fed_karmada_join "$FED_CLUSTER_NAME" "kind-${FED_CLUSTER_NAME}"
+  fed_karmada_wait_cluster "$FED_CLUSTER_NAME"
+
+  i=1
+  while [ "$i" -le "${FED_MEMBER_COUNT}" ]; do
+    fed_karmada_join "${FED_MEMBER_PREFIX}${i}" "kind-${FED_MEMBER_PREFIX}${i}"
+    fed_karmada_wait_cluster "${FED_MEMBER_PREFIX}${i}"
+    i=$((i + 1))
+  done
+
+  # Workers run on members, so every cluster -- host included -- needs
+  # FED_IMAGES, not just the one fed_up_install_components loads its own
+  # copy into below. Loading the host's copy again there is a harmless,
+  # digest-checked no-op (fed_kind_load_image skips an already-current
+  # image), not a second real load.
+  local img
+  for img in $FED_IMAGES; do
+    fed_kind_load_image "$img" "$FED_CLUSTER_NAME"
+  done
+  i=1
+  while [ "$i" -le "${FED_MEMBER_COUNT}" ]; do
+    for img in $FED_IMAGES; do
+      fed_kind_load_image "$img" "${FED_MEMBER_PREFIX}${i}"
+    done
+    i=$((i + 1))
+  done
+
+  if [ "${FED_DRY_RUN:-0}" != "1" ]; then
+    kubectl config use-context "kind-${FED_CLUSTER_NAME}"
+  fi
+
+  fed_up_install_components
+}
+
+fed_up_install_components() {
   if fed_has_component kfp; then
     fed_kfp_install "$FED_KFP_VERSION"
     fed_kfp_patch_arm "$FED_KFP_VERSION"
@@ -85,5 +145,16 @@ fed_up_summary() {
 fed_down() {
   fed_require_cmd kind
   pkill -f "kubectl port-forward" 2>/dev/null || true
+
+  # Members first: the host runs the Karmada control plane the members are
+  # registered against, so deleting it first would orphan them.
+  if [ "$FED_PROFILE" = "multi" ]; then
+    local i=1
+    while [ "$i" -le "${FED_MEMBER_COUNT}" ]; do
+      fed_kind_delete_cluster "${FED_MEMBER_PREFIX}${i}"
+      i=$((i + 1))
+    done
+  fi
+
   fed_kind_delete_cluster "$FED_CLUSTER_NAME"
 }

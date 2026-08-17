@@ -24,6 +24,13 @@ render_consumer() {
   [ "$status" -eq 0 ]
 }
 
+@test "consumer-c (multi profile) renders byte-identically to its golden files" {
+  local out="$BATS_TEST_TMPDIR/c"
+  render_consumer consumer-c "$out"
+  run diff -r "$FED_INFRA_ROOT/tests/golden/consumer-c" "$out"
+  [ "$status" -eq 0 ]
+}
+
 @test "the two consumers render materially different manifests" {
   local a="$BATS_TEST_TMPDIR/a" b="$BATS_TEST_TMPDIR/b"
   render_consumer consumer-a "$a"
