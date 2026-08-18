@@ -54,6 +54,10 @@ fed_config_defaults() {
   # the port mapping must exist on the kind host node at cluster-creation
   # time -- a consumer cannot add one afterwards -- so it lives here.
   : "${FED_KARMADA_DASHBOARD_PORT:=32000}"
+  # Ceiling for pod-readiness polling, in attempts x (wait + FED_RETRY_DELAY).
+  # See fed_training_install for why the default is this generous.
+  : "${FED_POD_READY_ATTEMPTS:=30}"
+  : "${FED_RETRY_DELAY:=5}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -64,7 +68,8 @@ fed_config_defaults() {
          FED_HOSTPORT_MLFLOW FED_HOSTPORT_MINIO_API FED_HOSTPORT_MINIO_CONSOLE \
          FED_DRY_RUN FED_RENDER_DIR \
          FED_MEMBER_COUNT FED_MEMBER_PREFIX FED_KARMADA_VERSION FED_KARMADA_CONFIG \
-         FED_KARMADA_APISERVER_PORT FED_KARMADA_DASHBOARD_PORT
+         FED_KARMADA_APISERVER_PORT FED_KARMADA_DASHBOARD_PORT \
+         FED_POD_READY_ATTEMPTS FED_RETRY_DELAY
 }
 
 fed_config_validate() {

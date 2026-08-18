@@ -59,6 +59,8 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_KFP_VERSION` | `2.4.0` | Kubeflow Pipelines manifest ref (`?ref=` on the kustomize URLs) and the tag used for the ARM-friendly `ghcr.io/kubeflow/kfp-*` image patches. |
 | `FED_TRAINING_OPERATOR_VERSION` | `v1.7.0` | Kubeflow Training Operator manifest ref. |
 | `FED_KIND_WORKERS` | `0` | Number of extra `role: worker` nodes appended to the kind cluster (beyond the always-present control-plane node). |
+| `FED_POD_READY_ATTEMPTS` | `30` | How many times to poll for a pod to become ready before giving up (~17 minutes at the default delay). Raise it on a slow machine, or for a cold `multi` bring-up where three kind clusters pull the whole KFP image set at once. A high ceiling costs nothing when things are healthy — polling returns on the first success. |
+| `FED_RETRY_DELAY` | `5` | Seconds between retry attempts. |
 | `FED_MLFLOW_VERSION` | `2.12.2` | Upstream `ghcr.io/mlflow/mlflow` tag the local MLflow image is built `FROM`. |
 | `FED_MLFLOW_IMAGE` | `fed-mlflow:${FED_MLFLOW_VERSION}` | Local image tag built by `fed_mlflow_build_image` (adds `boto3` on top of upstream MLflow) and loaded into kind. |
 | `FED_IMAGES` | `` (empty) | Space-separated list of consumer-built images (e.g. a worker/aggregator image) to `kind load docker-image` into the cluster. fed-infra does not build these — the consumer builds them before calling `fed-infra-up`. |

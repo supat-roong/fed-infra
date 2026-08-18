@@ -56,3 +56,36 @@ setup() {
   fed_training_install v1.7.0
   refute_called "kubectl"
 }
+
+@test "fed_training_install honors FED_POD_READY_ATTEMPTS for the readiness wait" {
+  # The default budget was tuned on single-cluster bring-ups. A cold
+  # multi-cluster bring-up pulls the whole KFP image set across three kind
+  # clusters at once and blows straight through it, so the ceiling has to be
+  # raisable by the consumer rather than baked in. Three attempts here keeps
+  # the test fast while still proving the knob is read.
+  export STUB_KUBECTL_FAIL_GLOB="get crd*"
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="wait --for=condition=ready pod*"
+  # 14 failures then success: reachable only if the knob raised the ceiling
+  # above the built-in default, so this cannot pass by accident the way a
+  # value *below* the default would.
+  export STUB_KUBECTL_FAIL_ONCE_COUNT=14
+  export FED_POD_READY_ATTEMPTS=15
+  export FED_RETRY_DELAY=0
+  run fed_training_install v1.7.0
+  [ "$status" -eq 0 ]
+  local attempts
+  attempts=$(grep -c "wait --for=condition=ready pod" "$STUB_LOG")
+  [ "$attempts" -eq 15 ]
+}
+
+@test "fed_training_install stops at FED_POD_READY_ATTEMPTS and fails rather than looping forever" {
+  export STUB_KUBECTL_FAIL_GLOB="get crd*"
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="wait --for=condition=ready pod*"
+  export STUB_KUBECTL_FAIL_ONCE_COUNT=99
+  export FED_POD_READY_ATTEMPTS=2
+  run fed_training_install v1.7.0
+  [ "$status" -eq 1 ]
+  local attempts
+  attempts=$(grep -c "wait --for=condition=ready pod" "$STUB_LOG")
+  [ "$attempts" -eq 2 ]
+}
