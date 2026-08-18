@@ -381,3 +381,25 @@ setup() {
   run fed_karmada_wait_cluster member1
   [ "$status" -ne 0 ]
 }
+
+@test "fed_karmada_init fails fast when karmada-system exists but its datastore is empty" {
+  # karmadactl init runs etcd with --etcd-storage-mode=emptyDir, so a
+  # docker/host restart brings the control plane back with every CRD, Cluster
+  # registration and PropagationPolicy gone while the namespace itself still
+  # exists. Probing only the namespace reports "already initialized" and
+  # skips, leaving a control plane that cannot serve cluster.karmada.io and
+  # fails much later, at join, with an unrelated-looking error.
+  export STUB_KUBECTL_FAIL_GLOB="*get crd clusters.cluster.karmada.io*"
+  run fed_karmada_init host
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"karmada-system"* ]] || return 1
+  [[ "$output" == *"emptyDir"* ]] || return 1
+  refute_called "karmadactl init"
+}
+
+@test "fed_karmada_init skips only when the datastore actually has the cluster CRD" {
+  fed_karmada_init host
+  assert_called "kubectl get namespace karmada-system"
+  assert_called "get crd clusters.cluster.karmada.io"
+  refute_called "karmadactl init"
+}

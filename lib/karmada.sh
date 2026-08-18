@@ -22,9 +22,22 @@ fed_karmada_init() {
 
   kubectl config use-context "kind-${host_cluster}" || return 1
 
+  # "Already initialized" has to mean the control plane still holds its data,
+  # not merely that its namespace exists. karmadactl init runs etcd with
+  # --etcd-storage-mode=emptyDir (below), so a docker/host restart brings
+  # every control-plane pod back against an *empty* datastore: no CRDs, no
+  # Cluster registrations, no PropagationPolicies, while karmada-system is
+  # still there. Probing the namespace alone reports success and skips,
+  # leaving a control plane that cannot serve cluster.karmada.io -- and the
+  # failure only surfaces later at join, looking like something else
+  # entirely. Probe the cluster CRD on the Karmada apiserver itself, which
+  # is the thing every later step actually depends on.
   if kubectl get namespace karmada-system >/dev/null 2>&1; then
-    fed_log "Karmada control plane already initialized"
-    return 0
+    if kubectl --kubeconfig="$FED_KARMADA_CONFIG" get crd clusters.cluster.karmada.io >/dev/null 2>&1; then
+      fed_log "Karmada control plane already initialized"
+      return 0
+    fi
+    fed_die "karmada-system exists on ${host_cluster} but its datastore is empty (no clusters.cluster.karmada.io CRD). karmadactl init uses --etcd-storage-mode=emptyDir, so the control plane does not survive a docker/host restart. Delete the namespace and re-run: kubectl --context kind-${host_cluster} delete namespace karmada-system"
   fi
 
   fed_require_cmd karmadactl
