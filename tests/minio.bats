@@ -35,8 +35,20 @@ setup() {
 
 @test "fed_minio_ensure_bucket deletes any leftover pod before and after" {
   fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
-  run bash -c "grep -c 'kubectl delete pod' '$STUB_LOG'"
-  [ "$output" -ge 2 ]
+  # grep -c >= 2 alone would pass on a double-delete on either side of
+  # `kubectl run` with none on the other, since both `kubectl delete pod`
+  # calls log an identical line -- only their position relative to
+  # `kubectl run` in $STUB_LOG distinguishes "before and after" from
+  # "twice before" or "twice after". Assert that ordering directly.
+  local run_line first_delete_line last_delete_line
+  run_line=$(grep -n '^kubectl run ' "$STUB_LOG" | head -1 | cut -d: -f1)
+  first_delete_line=$(grep -n '^kubectl delete pod' "$STUB_LOG" | head -1 | cut -d: -f1)
+  last_delete_line=$(grep -n '^kubectl delete pod' "$STUB_LOG" | tail -1 | cut -d: -f1)
+  [ -n "$run_line" ] || return 1
+  [ -n "$first_delete_line" ] || return 1
+  [ -n "$last_delete_line" ] || return 1
+  [ "$first_delete_line" -lt "$run_line" ] || return 1
+  [ "$last_delete_line" -gt "$run_line" ]
 }
 
 @test "fed_minio_ensure_bucket is a no-op when dry-running" {
