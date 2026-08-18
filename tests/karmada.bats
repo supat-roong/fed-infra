@@ -6,6 +6,10 @@ setup() {
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/config.sh"
   source "$FED_INFRA_ROOT/lib/render.sh"
+  # fed_karmada_init's image pre-fetch reuses fed_kind_cluster_image_id (the
+  # same digest-check kind.sh already uses for fed_kind_load_image) to skip
+  # pulling an image the cluster already has.
+  source "$FED_INFRA_ROOT/lib/kind.sh"
   source "$FED_INFRA_ROOT/lib/karmada.sh"
   fed_config_defaults
   export FED_KARMADA_CONFIG="$BATS_TEST_TMPDIR/.karmada/karmada-apiserver.config"
@@ -57,6 +61,89 @@ setup() {
   fed_karmada_init host
   assert_called "--port=40443"
   refute_called "--port=32443"
+}
+
+@test "fed_karmada_init pre-fetches the Karmada core images before karmadactl init" {
+  # On Apple Silicon an in-cluster pull of these can be slow enough to time
+  # out `karmadactl init` outright -- the original hand-rolled bootstrap
+  # side-loaded them first specifically "to avoid container networking
+  # timeouts".
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  fed_karmada_init host
+  assert_called "docker pull docker.io/karmada/karmada-aggregated-apiserver:v1.17.0"
+  assert_called "docker pull docker.io/karmada/karmada-controller-manager:v1.17.0"
+  assert_called "docker pull docker.io/karmada/karmada-scheduler:v1.17.0"
+  assert_called "docker pull docker.io/karmada/karmada-webhook:v1.17.0"
+  assert_called "kind load docker-image docker.io/karmada/karmada-aggregated-apiserver:v1.17.0 --name host"
+  local pull_line init_line
+  pull_line=$(grep -n "docker pull docker.io/karmada" "$STUB_LOG" | head -1 | cut -d: -f1)
+  init_line=$(grep -n "karmadactl init" "$STUB_LOG" | head -1 | cut -d: -f1)
+  [ -n "$pull_line" ]
+  [ -n "$init_line" ]
+  [ "$pull_line" -lt "$init_line" ]
+}
+
+@test "fed_karmada_init's image pre-fetch uses FED_KARMADA_VERSION as the image tag, not a hardcoded one" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export FED_KARMADA_VERSION=v1.20.5
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.20.5", GitCommit:"deadbeef"}'
+  fed_karmada_init host
+  assert_called "docker pull docker.io/karmada/karmada-scheduler:v1.20.5"
+  refute_called "docker pull docker.io/karmada/karmada-scheduler:v1.17.0"
+}
+
+@test "fed_karmada_init skips pre-fetching an image already present in the host cluster" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export FED_KIND_CRICTL_OUT="abcdef123456"
+  fed_karmada_init host
+  refute_called "docker pull"
+  refute_called "kind load docker-image"
+  assert_called "karmadactl init"
+}
+
+@test "fed_karmada_init's image pre-fetch failing does not abort the bootstrap" {
+  # `|| true` throughout, matching the original: a failed pre-fetch is only
+  # a missed optimization -- karmadactl init still pulls in-cluster on a miss.
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_DOCKER_FAIL_GLOB="pull*"
+  run fed_karmada_init host
+  [ "$status" -eq 0 ]
+  assert_called "karmadactl init"
+}
+
+@test "fed_karmada_init's image pre-fetch load failing does not abort the bootstrap" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_KIND_FAIL_GLOB="load docker-image*"
+  run fed_karmada_init host
+  [ "$status" -eq 0 ]
+  assert_called "karmadactl init"
+}
+
+@test "fed_karmada_prefetch_images is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_karmada_prefetch_images host v1.17.0
+  [ -z "$(calls)" ]
+}
+
+@test "fed_karmada_prefetch_images's image-presence check runs to completion under set -euo pipefail when it fails" {
+  # Same idiom as fed_karmada_join's IP lookup and fed_kind_load_image's
+  # digest check (see lib/karmada.sh's top-of-file comment and
+  # fed_kind_load_image): a plain `var=$(pipeline)` assignment under the
+  # caller's `set -euo pipefail` aborts the whole script on a failing
+  # pipeline before any graceful fallback below it can run. Exercise this
+  # for real, under errexit, not just via `run` (which always shields the
+  # call from it).
+  export STUB_DOCKER_FAIL_GLOB="exec * crictl images*"
+  run bash -c "
+    set -euo pipefail
+    source '$FED_INFRA_ROOT/lib/common.sh'
+    source '$FED_INFRA_ROOT/lib/kind.sh'
+    source '$FED_INFRA_ROOT/lib/karmada.sh'
+    fed_karmada_prefetch_images host v1.17.0
+    echo REACHED_AFTER_PREFETCH
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"REACHED_AFTER_PREFETCH"* ]]
 }
 
 @test "fed_karmada_init creates the karmada data/pki directories before init" {

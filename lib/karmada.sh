@@ -38,6 +38,8 @@ fed_karmada_init() {
   karmada_data=$(dirname "$FED_KARMADA_CONFIG") || return 1
   mkdir -p "${karmada_data}/pki" || return 1
 
+  fed_karmada_prefetch_images "$host_cluster" "$FED_KARMADA_VERSION"
+
   fed_log "initializing Karmada ${FED_KARMADA_VERSION} control plane on ${host_cluster}"
   # --port must be the same value kind/multi-host.yaml.tpl maps as a
   # hostPort (FED_KARMADA_APISERVER_PORT, default 32443, matching
@@ -55,6 +57,42 @@ fed_karmada_init() {
     --karmada-apiserver-advertise-address="127.0.0.1" \
     --etcd-storage-mode="emptyDir" \
     --port="$FED_KARMADA_APISERVER_PORT" || return 1
+}
+
+# Pulls and side-loads the four Karmada control-plane images into the host
+# node before `karmadactl init` runs, keyed to $version (normally
+# FED_KARMADA_VERSION, so the pre-fetch and the installed karmadactl stay
+# pinned to the same Karmada release -- see fed_karmada_verify_version).
+# Ported from the original hand-rolled bootstrap, whose comment explained
+# why: on Apple Silicon, an in-cluster pull of these images is slow enough
+# to make `karmadactl init` itself time out on container networking.
+#
+# A pure optimization, not a prerequisite -- karmadactl init still pulls
+# in-cluster on a miss -- so every step is `|| true`, matching the original.
+# The one command substitution here (the presence check) is guarded the
+# same way as fed_kind_load_image's own digest check and fed_karmada_join's
+# IP lookup: a bare `var=$(pipeline)` would let a failing pipeline trip the
+# caller's `set -euo pipefail` and abort the whole script right there,
+# before the "treat it as absent and fall through" behavior below ever runs.
+fed_karmada_prefetch_images() {
+  local host_cluster=$1 version=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would pre-fetch Karmada ${version} images into ${host_cluster}"
+    return 0
+  fi
+
+  local repo img present
+  for repo in karmada-aggregated-apiserver karmada-controller-manager karmada-scheduler karmada-webhook; do
+    img="docker.io/karmada/${repo}:${version}"
+    present=$(fed_kind_cluster_image_id "$img" "$host_cluster") || present=""
+    if [ -n "$present" ]; then
+      fed_log "image ${img} already present in cluster ${host_cluster}"
+      continue
+    fi
+    fed_log "pre-fetching ${img} to avoid an in-cluster pull timeout"
+    docker pull "$img" || true
+    kind load docker-image "$img" --name "$host_cluster" || true
+  done
 }
 
 fed_karmada_join() {
