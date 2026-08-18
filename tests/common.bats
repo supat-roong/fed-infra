@@ -28,6 +28,13 @@ setup() {
 @test "fed_require_cmd succeeds when all commands exist" {
   run fed_require_cmd kubectl kind
   [ "$status" -eq 0 ]
+  # The assertion above passes even without the stub PATH prepend, because a
+  # real kubectl/kind usually exist on the host running the tests -- it
+  # proves nothing about setup_stubs actually working. Pin down that
+  # fed_require_cmd is resolving the stub binaries specifically, which only
+  # happens if tests/stubs was actually prepended onto PATH.
+  [ "$(command -v kubectl)" = "$FED_INFRA_ROOT/tests/stubs/kubectl" ]
+  [ "$(command -v kind)" = "$FED_INFRA_ROOT/tests/stubs/kind" ]
 }
 
 @test "fed_require_cmd dies naming the missing command" {
