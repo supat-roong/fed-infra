@@ -389,7 +389,7 @@ setup() {
   # exists. Probing only the namespace reports "already initialized" and
   # skips, leaving a control plane that cannot serve cluster.karmada.io and
   # fails much later, at join, with an unrelated-looking error.
-  export STUB_KUBECTL_FAIL_GLOB="*get crd clusters.cluster.karmada.io*"
+  export STUB_KUBECTL_FAIL_GLOB="*get clusters.cluster.karmada.io*"
   run fed_karmada_init host
   [ "$status" -eq 1 ]
   [[ "$output" == *"karmada-system"* ]] || return 1
@@ -397,9 +397,18 @@ setup() {
   refute_called "karmadactl init"
 }
 
-@test "fed_karmada_init skips only when the datastore actually has the cluster CRD" {
+@test "fed_karmada_init probes the aggregated Cluster resource, not a CRD" {
+  # Cluster is served by Karmada's aggregated apiserver, not as a
+  # CustomResourceDefinition, so `kubectl get crd clusters.cluster.karmada.io`
+  # returns non-zero even against a perfectly healthy control plane. Probing
+  # the CRD would report every healthy cluster as wiped.
+  fed_karmada_init host
+  refute_called "get crd clusters.cluster.karmada.io"
+}
+
+@test "fed_karmada_init skips only when the datastore actually serves clusters" {
   fed_karmada_init host
   assert_called "kubectl get namespace karmada-system"
-  assert_called "get crd clusters.cluster.karmada.io"
+  assert_called "get clusters.cluster.karmada.io"
   refute_called "karmadactl init"
 }

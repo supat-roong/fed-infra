@@ -33,7 +33,14 @@ fed_karmada_init() {
   # entirely. Probe the cluster CRD on the Karmada apiserver itself, which
   # is the thing every later step actually depends on.
   if kubectl get namespace karmada-system >/dev/null 2>&1; then
-    if kubectl --kubeconfig="$FED_KARMADA_CONFIG" get crd clusters.cluster.karmada.io >/dev/null 2>&1; then
+    # Probe the aggregated Cluster resource itself, not a CRD: Karmada serves
+    # cluster.karmada.io through its aggregated apiserver (an APIService), so
+    # `get crd clusters.cluster.karmada.io` returns non-zero even against a
+    # perfectly healthy control plane and would report every cluster as wiped.
+    # Listing the resource distinguishes the two states properly: it exits 0
+    # (possibly "No resources found") when the control plane serves it, and
+    # non-zero with a NotFound on the API itself when the datastore is empty.
+    if kubectl --kubeconfig="$FED_KARMADA_CONFIG" get clusters.cluster.karmada.io >/dev/null 2>&1; then
       fed_log "Karmada control plane already initialized"
       return 0
     fi
