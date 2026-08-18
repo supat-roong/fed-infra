@@ -49,11 +49,27 @@ fed_config_defaults() {
   # that runs kubectl/karmadactl against $FED_KARMADA_CONFIG -- both driven
   # off this one variable so they cannot drift apart.
   : "${FED_KARMADA_APISERVER_PORT:=32443}"
-  # NodePort the Karmada dashboard is expected to be exposed on. fed-infra
-  # never installs the dashboard itself (that's left to the consumer), but
-  # the port mapping must exist on the kind host node at cluster-creation
-  # time -- a consumer cannot add one afterwards -- so it lives here.
-  : "${FED_KARMADA_DASHBOARD_PORT:=32000}"
+  # Kubernetes Dashboard: manifest version, and the NodePort/hostPort pair
+  # it's exposed on -- same NODEPORT_*/HOSTPORT_* shape as every other
+  # component's Service (kfp, mlflow, minio, temporal), not the single
+  # containerPort==hostPort variable Karmada's apiserver port uses (that one
+  # is deliberately singular because it must equal karmadactl init's own
+  # --port flag; a dashboard Service's NodePort has no such constraint).
+  : "${FED_K8S_DASHBOARD_VERSION:=v2.7.0}"
+  : "${FED_NODEPORT_K8S_DASHBOARD:=30443}"
+  : "${FED_HOSTPORT_K8S_DASHBOARD:=8443}"
+  # Karmada Dashboard NodePort/hostPort pair. Used both by
+  # fed_karmada_dashboard_install's Service patch and by the kind host's
+  # port mapping (a consumer cannot add the mapping after cluster creation,
+  # so it must exist at kind-config-render time even though nothing in this
+  # file runs until fed_up_install_components dispatches to it later).
+  # Replaces the old single FED_KARMADA_DASHBOARD_PORT: that variable
+  # predates this library installing the dashboard at all, and reusing one
+  # variable for both the containerPort and the hostPort would let a
+  # consumer change one without the other going out of sync -- exactly the
+  # "decorative parameter" drift every other component's port pair avoids.
+  : "${FED_NODEPORT_KARMADA_DASHBOARD:=32000}"
+  : "${FED_HOSTPORT_KARMADA_DASHBOARD:=32000}"
   # Ceiling for pod-readiness polling, in attempts x (wait + FED_RETRY_DELAY).
   # See fed_training_install for why the default is this generous.
   : "${FED_POD_READY_ATTEMPTS:=30}"
@@ -68,7 +84,9 @@ fed_config_defaults() {
          FED_HOSTPORT_MLFLOW FED_HOSTPORT_MINIO_API FED_HOSTPORT_MINIO_CONSOLE \
          FED_DRY_RUN FED_RENDER_DIR \
          FED_MEMBER_COUNT FED_MEMBER_PREFIX FED_KARMADA_VERSION FED_KARMADA_CONFIG \
-         FED_KARMADA_APISERVER_PORT FED_KARMADA_DASHBOARD_PORT \
+         FED_KARMADA_APISERVER_PORT \
+         FED_K8S_DASHBOARD_VERSION FED_NODEPORT_K8S_DASHBOARD FED_HOSTPORT_K8S_DASHBOARD \
+         FED_NODEPORT_KARMADA_DASHBOARD FED_HOSTPORT_KARMADA_DASHBOARD \
          FED_POD_READY_ATTEMPTS FED_RETRY_DELAY
 }
 

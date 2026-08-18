@@ -62,15 +62,34 @@ setup() {
   [ "$output" = "members: 3 prefix: worker" ]
 }
 
-@test "fed_render substitutes FED_KARMADA_APISERVER_PORT and FED_KARMADA_DASHBOARD_PORT" {
+@test "fed_render substitutes FED_KARMADA_APISERVER_PORT and FED_NODEPORT_KARMADA_DASHBOARD" {
   # Same guard as above, for the two port variables kind/multi-host.yaml.tpl
   # needs to map the Karmada apiserver and dashboard NodePorts to the host --
   # dropped from the whitelist, they would render as empty strings (invalid
   # YAML port values) with no error from fed_render itself.
-  export FED_KARMADA_APISERVER_PORT=32443 FED_KARMADA_DASHBOARD_PORT=32000
-  echo 'apiserver: ${FED_KARMADA_APISERVER_PORT} dashboard: ${FED_KARMADA_DASHBOARD_PORT}' > "$TPL"
+  export FED_KARMADA_APISERVER_PORT=32443 FED_NODEPORT_KARMADA_DASHBOARD=32000
+  echo 'apiserver: ${FED_KARMADA_APISERVER_PORT} dashboard: ${FED_NODEPORT_KARMADA_DASHBOARD}' > "$TPL"
   run fed_render "$TPL"
   [ "$output" = "apiserver: 32443 dashboard: 32000" ]
+}
+
+@test "fed_render substitutes FED_HOSTPORT_KARMADA_DASHBOARD independently of the NodePort" {
+  # Guards that the whitelist carries the hostPort half of the pair too, and
+  # that the two are independently substitutable, not accidentally aliased
+  # to the same value by construction.
+  export FED_NODEPORT_KARMADA_DASHBOARD=32000 FED_HOSTPORT_KARMADA_DASHBOARD=32050
+  echo 'nodePort: ${FED_NODEPORT_KARMADA_DASHBOARD} hostPort: ${FED_HOSTPORT_KARMADA_DASHBOARD}' > "$TPL"
+  run fed_render "$TPL"
+  [ "$output" = "nodePort: 32000 hostPort: 32050" ]
+}
+
+@test "fed_render substitutes FED_NODEPORT_K8S_DASHBOARD and FED_HOSTPORT_K8S_DASHBOARD" {
+  # Guards the whitelist for the Kubernetes Dashboard's own port pair, used
+  # by kind/single-cluster.yaml.tpl and kind/multi-host.yaml.tpl.
+  export FED_NODEPORT_K8S_DASHBOARD=30443 FED_HOSTPORT_K8S_DASHBOARD=8443
+  echo 'nodePort: ${FED_NODEPORT_K8S_DASHBOARD} hostPort: ${FED_HOSTPORT_K8S_DASHBOARD}' > "$TPL"
+  run fed_render "$TPL"
+  [ "$output" = "nodePort: 30443 hostPort: 8443" ]
 }
 
 @test "namespace template renders to a valid Namespace object" {

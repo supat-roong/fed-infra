@@ -43,7 +43,15 @@ EOF
   # the machine running this script. See kind/multi-host.yaml.tpl and
   # fed_karmada_init's --port flag, both driven by this same variable.
   [ "$FED_KARMADA_APISERVER_PORT" = "32443" ]
-  [ "$FED_KARMADA_DASHBOARD_PORT" = "32000" ]
+}
+
+@test "fed_config_load applies documented dashboard defaults" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_K8S_DASHBOARD_VERSION" = "v2.7.0" ]
+  [ "$FED_NODEPORT_K8S_DASHBOARD" = "30443" ]
+  [ "$FED_HOSTPORT_K8S_DASHBOARD" = "8443" ]
+  [ "$FED_NODEPORT_KARMADA_DASHBOARD" = "32000" ]
+  [ "$FED_HOSTPORT_KARMADA_DASHBOARD" = "32000" ]
 }
 
 @test "fed_config_load does not override values already set in the env file" {

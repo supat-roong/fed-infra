@@ -93,13 +93,17 @@ fail partway through if they're missing and needed:
 |---|---|
 | `FED_INFRA_ROOT` | Exported by `bin/fed-infra-up` / `fed-infra-down` as the absolute path of the checked-out submodule; used to locate `lib/`, `kind/`, `manifests/`. |
 | `FED_KFP_NAMESPACE` | Hardcoded to `kubeflow` in `lib/kfp.sh` — upstream KFP always installs into that namespace regardless of `FED_NAMESPACE`. |
+| `FED_K8S_DASHBOARD_NAMESPACE` | Hardcoded to `kubernetes-dashboard` in `lib/dashboard.sh` — upstream's `recommended.yaml` always installs into that namespace. |
+| `FED_KARMADA_DASHBOARD_NAMESPACE` | Hardcoded to `karmada-system` in `lib/dashboard.sh`. |
+| `FED_KARMADA_ADMIN_SA` | Hardcoded to `karmada-admin-sa` in `lib/dashboard.sh` — the ServiceAccount `fed_karmada_dashboard_install` creates against the Karmada apiserver for `fed_dashboard_token` to mint a login token for. |
 | `FED_ARGOEXEC_IMAGE` | Hardcoded pinned `argoexec` image used when patching `workflow-controller` for ARM/kind stability. |
 | `FED_KIND_CRICTL_OUT` | Test-only seam so bats can stub `crictl images` output; never set outside `tests/`. |
 | `FED_REQUIRED_VARS`, `FED_TEMPLATE_VARS` | Internal lists consumed by `fed_config_validate` and `fed_render`; not meant to be overridden by consumers. |
 
 ## `FED_COMPONENTS`
 
-A comma-separated subset of `kfp,training,minio,mlflow,temporal,karmada`,
+A comma-separated subset of
+`kfp,training,minio,mlflow,temporal,karmada,k8s-dashboard,karmada-dashboard`,
 checked with a whole-token match (`fed_has_component`), so order doesn't
 matter but there must be no spaces around the commas. Each token turns on:
 
@@ -142,11 +146,51 @@ matter but there must be no spaces around the commas. Each token turns on:
   contract must make rather than a switch that turns the work on and off —
   a `multi` contract without it fails fast instead of silently getting
   Karmada anyway.
+- **`k8s-dashboard`** — Installs the upstream Kubernetes Dashboard
+  (`FED_K8S_DASHBOARD_VERSION`) plus a `dashboard-admin` ServiceAccount bound
+  to `cluster-admin` (`manifests/dashboard-admin.yaml.tpl`, namespaced by
+  `FED_NAMESPACE`), and exposes it as a NodePort on
+  `FED_NODEPORT_K8S_DASHBOARD` (reachable on the host at
+  `FED_HOSTPORT_K8S_DASHBOARD`). Works under either profile. Get a login
+  token with `fed_dashboard_token "$FED_NAMESPACE" dashboard-admin`. See
+  [Dashboard access](#dashboard-access) for the security note on why a
+  cluster-admin binding is acceptable here.
+- **`karmada-dashboard`** — Only meaningful under `FED_PROFILE=multi`.
+  Installs the Karmada Dashboard onto the host cluster, wires it to the
+  Karmada control plane via a `karmada-kubeconfig` Secret (in both
+  `karmada-system` and `kubeflow`), grants a `karmada-admin-sa`
+  ServiceAccount cluster-admin against the Karmada apiserver itself, and
+  exposes the dashboard as a NodePort on `FED_NODEPORT_KARMADA_DASHBOARD`
+  (reachable on the host at `FED_HOSTPORT_KARMADA_DASHBOARD`). Get a login
+  token with `KUBECONFIG="$FED_KARMADA_CONFIG" fed_dashboard_token
+  karmada-system karmada-admin-sa`.
 
 Within `fed_up`, components run in a fixed order: create/reuse the kind
 cluster → `kfp` install + patches → `training` → `minio` → `mlflow`
-(build image, load image, install) → load any consumer `FED_IMAGES` →
-`kfp` wait + bucket + NodePort → `mlflow` bucket → `minio` NodePort.
+(build image, load image, install) → `k8s-dashboard` → `karmada-dashboard`
+→ load any consumer `FED_IMAGES` → `kfp` wait + bucket + NodePort →
+`mlflow` bucket → `minio` NodePort → `k8s-dashboard` NodePort.
+
+## Dashboard access
+
+Both dashboard components grant their access ServiceAccount cluster-admin —
+`k8s-dashboard` via `manifests/dashboard-admin.yaml.tpl`, `karmada-dashboard`
+via a ServiceAccount created directly against the Karmada apiserver. This is
+a **local-development convenience only**: the Kubernetes/Karmada Dashboards
+otherwise carry no usable RBAC of their own, and a cluster-admin binding is
+what makes `fed_dashboard_token` (below) hand out a token that actually
+authenticates. Never do this against a shared or production cluster — it is
+appropriate here only because the target is always an ephemeral local kind
+cluster.
+
+`fed_dashboard_token <namespace> <service_account>` mints a 24h token
+(`kubectl create token`) and prints it on stdout only — never through
+`fed_log`, so it cannot end up in a redirected log file. It takes no
+kubeconfig/context argument: it relies entirely on the caller's ambient
+kubectl context (or `$KUBECONFIG`), which is the host cluster's current
+context for `k8s-dashboard` and requires
+`KUBECONFIG="$FED_KARMADA_CONFIG"` for `karmada-dashboard`, since that
+ServiceAccount lives inside the Karmada control plane's own apiserver.
 
 Two illustrative `infra.env` shapes (matching `tests/fixtures/*.env`):
 
@@ -185,9 +229,12 @@ safe to bump independently in each consumer.
 `kubectl wait` — a no-op that only logs what it would have done. Manifests
 that would normally be applied are instead rendered with `envsubst` and
 written to `FED_RENDER_DIR/<label>.yaml` (`namespace.yaml`, `minio.yaml`,
-`mlflow-server.yaml`) so they can be inspected or diffed against
-`tests/golden/`. `FED_RENDER_DIR` must be set whenever dry-run is on, or
-`fed_apply` dies immediately.
+`mlflow-server.yaml`, `dashboard-admin.yaml` when `k8s-dashboard` is
+enabled) so they can be inspected or diffed against `tests/golden/`.
+`FED_RENDER_DIR` must be set whenever dry-run is on, or `fed_apply` dies
+immediately. `karmada-dashboard` has no local template of its own (it
+applies an upstream manifest directly), so it renders nothing and is a
+complete no-op under dry-run, same as `karmada` itself.
 
 ```bash
 vendor/fed-infra/bin/fed-infra-up \

@@ -107,7 +107,8 @@ setup() {
          FED_HOSTPORT_MLFLOW=5050 FED_NODEPORT_MLFLOW=30500 \
          FED_HOSTPORT_MINIO_API=9000 FED_NODEPORT_MINIO_API=30900 \
          FED_HOSTPORT_MINIO_CONSOLE=9001 FED_NODEPORT_MINIO_CONSOLE=30901 \
-         FED_HOSTPORT_TEMPORAL_UI=8233 FED_NODEPORT_TEMPORAL_UI=30733
+         FED_HOSTPORT_TEMPORAL_UI=8233 FED_NODEPORT_TEMPORAL_UI=30733 \
+         FED_HOSTPORT_K8S_DASHBOARD=8443 FED_NODEPORT_K8S_DASHBOARD=30443
   run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
   # Note: bats does not abort a test on a failing bare `[[ ]]` unless it is
   # the function's last statement (only the final command's status is
@@ -125,6 +126,8 @@ setup() {
   [[ "$output" == *"hostPort: 9001"* ]] || return 1
   [[ "$output" == *"containerPort: 30733"* ]] || return 1
   [[ "$output" == *"hostPort: 8233"* ]] || return 1
+  [[ "$output" == *"containerPort: 30443"* ]] || return 1
+  [[ "$output" == *"hostPort: 8443"* ]] || return 1
 }
 
 @test "multi-host template renders every port mapping single-cluster has, plus the Karmada apiserver and dashboard ports" {
@@ -144,12 +147,18 @@ setup() {
 }
 
 @test "multi-host template renders the configured Karmada apiserver and dashboard ports, not just the defaults" {
-  export FED_KARMADA_APISERVER_PORT=40443 FED_KARMADA_DASHBOARD_PORT=40000
+  # FED_NODEPORT_KARMADA_DASHBOARD and FED_HOSTPORT_KARMADA_DASHBOARD are set
+  # to different values here (unlike the apiserver port, which must stay a
+  # single shared variable -- see the template's own comment) specifically
+  # to prove the two substitute independently, not just both happening to
+  # equal the same configured number.
+  export FED_KARMADA_APISERVER_PORT=40443 \
+         FED_NODEPORT_KARMADA_DASHBOARD=40000 FED_HOSTPORT_KARMADA_DASHBOARD=40001
   run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
   [[ "$output" == *"containerPort: 40443"* ]] || return 1
   [[ "$output" == *"hostPort: 40443"* ]] || return 1
   [[ "$output" == *"containerPort: 40000"* ]] || return 1
-  [[ "$output" == *"hostPort: 40000"* ]] || return 1
+  [[ "$output" == *"hostPort: 40001"* ]] || return 1
   [[ "$output" != *"32443"* ]] || return 1
   [[ "$output" != *"32000"* ]]
 }

@@ -19,3 +19,6 @@ nodes:
       - containerPort: ${FED_NODEPORT_TEMPORAL_UI}
         hostPort: ${FED_HOSTPORT_TEMPORAL_UI}
         protocol: TCP
+      - containerPort: ${FED_NODEPORT_K8S_DASHBOARD}
+        hostPort: ${FED_HOSTPORT_K8S_DASHBOARD}
+        protocol: TCP

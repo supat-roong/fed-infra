@@ -93,6 +93,14 @@ fed_up_install_components() {
     fed_mlflow_install
   fi
 
+  if fed_has_component k8s-dashboard; then
+    fed_k8s_dashboard_install "$FED_K8S_DASHBOARD_VERSION"
+  fi
+
+  if fed_has_component karmada-dashboard; then
+    fed_karmada_dashboard_install "$FED_KARMADA_CONFIG"
+  fi
+
   local img
   for img in $FED_IMAGES; do
     fed_kind_load_image "$img" "$FED_CLUSTER_NAME"
@@ -122,6 +130,16 @@ fed_up_install_components() {
       "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
   fi
 
+  # karmada-dashboard patches its own Service NodePort inside
+  # fed_karmada_dashboard_install itself (it needs the Karmada-apiserver
+  # kubeconfig secrets in place first); k8s-dashboard has no such ordering
+  # requirement, so it's exposed here, alongside every other component's
+  # post-install NodePort step.
+  if fed_has_component k8s-dashboard; then
+    fed_expose_nodeport kubernetes-dashboard "$FED_K8S_DASHBOARD_NAMESPACE" \
+      "[{\"port\":443,\"targetPort\":8443,\"nodePort\":${FED_NODEPORT_K8S_DASHBOARD}}]"
+  fi
+
   fed_up_summary
 }
 
@@ -139,6 +157,12 @@ fed_up_summary() {
   fi
   if fed_has_component minio; then
     fed_log "  MinIO Console      : http://localhost:${FED_HOSTPORT_MINIO_CONSOLE}"
+  fi
+  if fed_has_component k8s-dashboard; then
+    fed_log "  Kubernetes Dashboard : https://localhost:${FED_HOSTPORT_K8S_DASHBOARD}"
+  fi
+  if fed_has_component karmada-dashboard; then
+    fed_log "  Karmada Dashboard    : http://localhost:${FED_HOSTPORT_KARMADA_DASHBOARD}"
   fi
 }
 

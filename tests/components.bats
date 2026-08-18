@@ -63,6 +63,8 @@ source_multi_libs() {
   # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/nodeport.sh"
   # shellcheck disable=SC1091
+  source "$FED_INFRA_ROOT/lib/dashboard.sh"
+  # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/components.sh"
   fed_config_defaults
   export FED_CLUSTER_NAME=host
@@ -94,7 +96,7 @@ source_multi_libs() {
 }
 
 @test "fed-infra-up --dry-run performs no real cluster, image, or apply side effects" {
-  write_env "kfp,training,minio,mlflow"
+  write_env "kfp,training,minio,mlflow,k8s-dashboard"
   run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
   [ "$status" -eq 0 ]
   refute_called "kind create"
@@ -104,8 +106,17 @@ source_multi_libs() {
   refute_called "kubectl apply -k"
   refute_called "kubectl set"
   refute_called "kubectl patch"
+  # k8s-dashboard's own real side effects: the upstream manifest apply,
+  # the token mint, and every kubectl call fed_karmada_dashboard_install
+  # would make if it (wrongly) ran in a single profile.
+  refute_called "recommended.yaml"
+  refute_called "kubectl create token"
+  refute_called "kubectl create secret"
+  refute_called "kubectl create serviceaccount"
+  refute_called "kubectl create clusterrolebinding"
   [ -f "$RENDER/minio.yaml" ]
   [ -f "$RENDER/mlflow-server.yaml" ]
+  [ -f "$RENDER/dashboard-admin.yaml" ]
 }
 
 @test "fed-infra-up fails with a clear message when --env is missing" {
@@ -236,8 +247,50 @@ source_multi_libs() {
   refute_called "kubectl apply -k"
 }
 
+@test "fed_up installs the Kubernetes Dashboard when k8s-dashboard is listed, using FED_K8S_DASHBOARD_VERSION" {
+  source_multi_libs
+  export FED_COMPONENTS="k8s-dashboard" FED_K8S_DASHBOARD_VERSION=v9.9.9
+  # Default stub state has 'get deployment kubernetes-dashboard' succeed
+  # (i.e. already installed), which would skip the manifest apply this test
+  # exists to check -- force the "not yet installed" branch.
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="get deployment kubernetes-dashboard*"
+  fed_up
+  assert_called "kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v9.9.9/aio/deploy/recommended.yaml"
+  assert_called "kubectl patch service kubernetes-dashboard -n kubernetes-dashboard"
+}
+
+@test "fed_up does not install the Kubernetes Dashboard when k8s-dashboard is not listed" {
+  source_multi_libs
+  export FED_COMPONENTS="minio"
+  fed_up
+  refute_called "recommended.yaml"
+  refute_called "kubernetes-dashboard"
+}
+
+@test "fed_up installs the Karmada Dashboard when karmada-dashboard is listed, wired to FED_KARMADA_CONFIG" {
+  source_multi_libs
+  export FED_COMPONENTS="karmada,karmada-dashboard"
+  # Default stub state has 'get deployment karmada-dashboard' succeed (i.e.
+  # already installed), which would skip the manifest apply this test
+  # exists to check -- force the "not yet installed" branch, same idiom
+  # tests/dashboard.bats and tests/karmada.bats both use.
+  export STUB_KUBECTL_FAIL_ONCE_GLOB="get deployment karmada-dashboard*"
+  fed_up
+  assert_called "kubectl apply -f https://raw.githubusercontent.com/karmada-io/dashboard/main/deploy/karmada-dashboard.yaml"
+  assert_called "create secret generic karmada-kubeconfig --from-file=karmada-kubeconfig=${FED_KARMADA_CONFIG}"
+  assert_called "kubectl patch service karmada-dashboard -n karmada-system"
+}
+
+@test "fed_up does not install the Karmada Dashboard when karmada-dashboard is not listed" {
+  source_multi_libs
+  export FED_COMPONENTS="karmada"
+  fed_up
+  refute_called "karmada-dashboard.yaml"
+  refute_called "karmada-kubeconfig"
+}
+
 @test "fed-infra-up multi profile is a complete no-op for real side effects under --dry-run, except rendering manifests" {
-  write_multi_env "minio,mlflow,karmada"
+  write_multi_env "minio,mlflow,karmada,karmada-dashboard"
   run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
   [ "$status" -eq 0 ]
   refute_called "kind create"
@@ -254,6 +307,13 @@ source_multi_libs() {
   # here, not just the ones that already had one.
   refute_called "docker exec"
   refute_called "docker pull"
+  # karmada-dashboard's own real side effects: no local template to render,
+  # so it must be a complete no-op, not just "no live kubectl apply".
+  refute_called "karmada-dashboard.yaml"
+  refute_called "kubectl create secret"
+  refute_called "kubectl create serviceaccount"
+  refute_called "kubectl create clusterrolebinding"
+  refute_called "kubectl rollout status deployment/karmada-dashboard"
   [ -f "$RENDER/minio.yaml" ]
   [ -f "$RENDER/mlflow-server.yaml" ]
 }

@@ -7,6 +7,17 @@ echo "kubectl $*" >> "$STUB_LOG"
 case "$*" in
   ${STUB_KUBECTL_FAIL_GLOB:-__never_matches__}) exit 1 ;;
 esac
+# A second, independent glob, same reasoning as the helm stub's
+# STUB_HELM_FAIL_GLOB2: a `|` from a variable expansion is a literal
+# character in a case pattern, not an alternation separator (case patterns
+# are parsed before expansion), so one glob cannot express "fail these two
+# different calls in the same test" -- e.g. dashboard.sh tests that need an
+# existence probe to report "not installed" (one call) while the install
+# it then triggers also fails (a different call).
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_KUBECTL_FAIL_GLOB2:-__never_matches__}) exit 1 ;;
+esac
 # STUB_KUBECTL_FAIL_ONCE_GLOB + STUB_KUBECTL_FAIL_ONCE_COUNT (default 1) let
 # a test express "fail the first N matching calls, then succeed" — used to
 # exercise fed_retry-based polling without a fixed sleep. Kept independent
