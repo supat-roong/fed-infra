@@ -99,21 +99,18 @@ source_multi_libs() {
   write_env "kfp,training,minio,mlflow,k8s-dashboard"
   run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
   [ "$status" -eq 0 ]
-  refute_called "kind create"
-  refute_called "kind load"
-  refute_called "docker build"
-  refute_called "kubectl apply"
-  refute_called "kubectl apply -k"
-  refute_called "kubectl set"
-  refute_called "kubectl patch"
-  # k8s-dashboard's own real side effects: the upstream manifest apply,
-  # the token mint, and every kubectl call fed_karmada_dashboard_install
-  # would make if it (wrongly) ran in a single profile.
-  refute_called "recommended.yaml"
-  refute_called "kubectl create token"
-  refute_called "kubectl create secret"
-  refute_called "kubectl create serviceaccount"
-  refute_called "kubectl create clusterrolebinding"
+  # refute_called "docker build" / "kubectl apply" do not discriminate here:
+  # fed_kfp_install's "kubectl get deploy" probe and fed_mlflow_build_image's
+  # "docker image inspect" probe both succeed by default in the stubs, so
+  # both functions return via their "already installed/built" branch and
+  # never reach the build/apply calls those two lines refute -- true whether
+  # or not their own FED_DRY_RUN guard (the thing actually under test) is
+  # even present. Assert the stub log is empty instead: every dry-run-guarded
+  # function must return before calling any stub at all, including the
+  # probes themselves, which *do* get called (and logged) once a guard is
+  # missing -- see the sibling "is a complete no-op under FED_DRY_RUN=1"
+  # tests in kind.bats/kfp.bats for the same idiom on a single function.
+  [ -z "$(calls)" ]
   [ -f "$RENDER/minio.yaml" ]
   [ -f "$RENDER/mlflow-server.yaml" ]
   [ -f "$RENDER/dashboard-admin.yaml" ]
@@ -293,27 +290,17 @@ source_multi_libs() {
   write_multi_env "minio,mlflow,karmada,karmada-dashboard"
   run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
   [ "$status" -eq 0 ]
-  refute_called "kind create"
-  refute_called "kind load"
-  refute_called "karmadactl"
-  refute_called "kubectl config use-context"
-  refute_called "kubectl apply -k"
-  refute_called "kubectl patch"
-  refute_called "kubectl wait"
-  refute_called "docker build"
-  # Guards the inotify-raise (docker exec ... sysctl) and Karmada image
-  # pre-fetch (docker pull / kind load docker-image) added for the multi
-  # profile: both must stay behind the same dry-run guard as everything else
-  # here, not just the ones that already had one.
-  refute_called "docker exec"
-  refute_called "docker pull"
-  # karmada-dashboard's own real side effects: no local template to render,
-  # so it must be a complete no-op, not just "no live kubectl apply".
-  refute_called "karmada-dashboard.yaml"
-  refute_called "kubectl create secret"
-  refute_called "kubectl create serviceaccount"
-  refute_called "kubectl create clusterrolebinding"
-  refute_called "kubectl rollout status deployment/karmada-dashboard"
+  # Same non-discriminating trap as the single-profile version of this test:
+  # refute_called "docker build" never fires regardless of whether
+  # fed_mlflow_build_image's own FED_DRY_RUN guard is present, because its
+  # "docker image inspect" probe succeeds by default in the stub. Assert the
+  # stub log is empty instead -- covers docker build, the inotify-raise
+  # (docker exec ... sysctl) and Karmada image pre-fetch (docker pull / kind
+  # load docker-image) added for the multi profile, and karmada-dashboard's
+  # own manifest apply / secret / ServiceAccount / ClusterRoleBinding calls,
+  # all in one assertion that cannot miss a newly added call the way an
+  # enumerated refute_called list can.
+  [ -z "$(calls)" ]
   [ -f "$RENDER/minio.yaml" ]
   [ -f "$RENDER/mlflow-server.yaml" ]
 }
