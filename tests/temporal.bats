@@ -95,12 +95,12 @@ setup() {
   export FED_TEMPORAL_NAMESPACE=demo-ns
   export FED_TEMPORAL_DB_USER=pguser FED_TEMPORAL_DB_PASSWORD=pgpass FED_TEMPORAL_DB_NAME=pgdb
   run fed_render "$FED_INFRA_ROOT/manifests/temporal-postgres.yaml.tpl"
-  [[ "$output" == *"namespace: demo-ns"* ]]
-  [[ "$output" == *'value: "pguser"'* ]]
-  [[ "$output" == *'value: "pgpass"'* ]]
-  [[ "$output" == *'value: "pgdb"'* ]]
+  [[ "$output" == *"namespace: demo-ns"* ]] || return 1
+  [[ "$output" == *'value: "pguser"'* ]] || return 1
+  [[ "$output" == *'value: "pgpass"'* ]] || return 1
+  [[ "$output" == *'value: "pgdb"'* ]] || return 1
   # Guards the FED_TEMPLATE_VARS whitelist directly: a variable missing from
   # it is never substituted, so a leftover ${FED_TEMPORAL...} marker here
   # means the whitelist is out of sync with the template.
-  [[ "$output" != *'${FED_TEMPORAL'* ]]
+  [[ "$output" != *'${FED_TEMPORAL'* ]] || return 1
 }

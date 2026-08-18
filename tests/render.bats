@@ -64,6 +64,6 @@ setup() {
 
 @test "namespace template renders to a valid Namespace object" {
   run fed_render "$FED_INFRA_ROOT/manifests/namespace.yaml.tpl"
-  [[ "$output" == *"kind: Namespace"* ]]
+  [[ "$output" == *"kind: Namespace"* ]] || return 1
   [[ "$output" == *"name: demo-ns"* ]]
 }

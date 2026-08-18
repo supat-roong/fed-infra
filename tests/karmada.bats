@@ -112,11 +112,11 @@ setup() {
   patched_b64=$(printf '%s' "$patch_secret_call" | sed -E 's/.*"kubeconfig":"([^"]*)".*/\1/')
   [ -n "$patched_b64" ]
   decoded=$(printf '%s' "$patched_b64" | python3 -c "import sys, base64; sys.stdout.write(base64.b64decode(sys.stdin.read()).decode())")
-  [[ "$decoded" == *"https://10.42.0.7:6443"* ]]
+  [[ "$decoded" == *"https://10.42.0.7:6443"* ]] || return 1
   # Both occurrences must be gone, not just one -- this is the essential
   # part of the port: a kubeconfig with either placeholder left in it still
   # points the Karmada control plane at itself instead of the member.
-  [[ "$decoded" != *"127.0.0.1"* ]]
+  [[ "$decoded" != *"127.0.0.1"* ]] || return 1
   [[ "$decoded" != *"localhost"* ]]
 }
 
@@ -177,7 +177,7 @@ setup() {
     echo REACHED_AFTER_JOIN
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"REACHED_AFTER_JOIN"* ]]
+  [[ "$output" == *"REACHED_AFTER_JOIN"* ]] || return 1
   [[ "$output" == *"could not determine the Docker-network IP"* ]]
 }
 

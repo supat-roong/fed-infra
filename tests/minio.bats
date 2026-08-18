@@ -47,7 +47,7 @@ setup() {
 
 @test "minio template renders credentials and namespace" {
   run fed_render "$FED_INFRA_ROOT/manifests/minio.yaml.tpl"
-  [[ "$output" == *"namespace: demo-ns"* ]]
-  [[ "$output" == *'value: "ak"'* ]]
+  [[ "$output" == *"namespace: demo-ns"* ]] || return 1
+  [[ "$output" == *'value: "ak"'* ]] || return 1
   [[ "$output" == *"kind: StatefulSet"* ]]
 }

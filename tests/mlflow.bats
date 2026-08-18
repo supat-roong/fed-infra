@@ -54,10 +54,10 @@ setup() {
 @test "mlflow template renders image, S3 endpoint, bucket, and nodePort" {
   export FED_MLFLOW_IMAGE=fed-mlflow:2.12.2 FED_NODEPORT_MLFLOW=30500
   run fed_render "$FED_INFRA_ROOT/manifests/mlflow-server.yaml.tpl"
-  [[ "$output" == *"image: fed-mlflow:2.12.2"* ]]
-  [[ "$output" == *"http://minio-service:9000"* ]]
-  [[ "$output" == *"s3://arts"* ]]
-  [[ "$output" == *"nodePort: 30500"* ]]
+  [[ "$output" == *"image: fed-mlflow:2.12.2"* ]] || return 1
+  [[ "$output" == *"http://minio-service:9000"* ]] || return 1
+  [[ "$output" == *"s3://arts"* ]] || return 1
+  [[ "$output" == *"nodePort: 30500"* ]] || return 1
   [[ "$output" == *"namespace: demo-ns"* ]]
 }
 

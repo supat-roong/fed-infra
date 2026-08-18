@@ -61,8 +61,8 @@ setup() {
 @test "kind template renders the configured host port mappings" {
   export FED_HOSTPORT_KFP=8080 FED_NODEPORT_KFP=30080
   run fed_render "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
-  [[ "$output" == *"containerPort: 30080"* ]]
-  [[ "$output" == *"hostPort: 8080"* ]]
+  [[ "$output" == *"containerPort: 30080"* ]] || return 1
+  [[ "$output" == *"hostPort: 8080"* ]] || return 1
   [[ "$output" == *"name: demo"* ]]
 }
 
@@ -173,6 +173,6 @@ setup() {
     fed_kind_load_image myimg:v1 demo
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"loading image myimg:v1 into cluster demo"* ]]
+  [[ "$output" == *"loading image myimg:v1 into cluster demo"* ]] || return 1
   assert_called "kind load docker-image myimg:v1 --name demo"
 }
