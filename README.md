@@ -2,9 +2,9 @@
 
 Shared Bash library for bootstrapping local Kubernetes-based development
 clusters (kind, Kubeflow Pipelines, the Kubeflow Training Operator, MLflow,
-MinIO). Designed to be consumed as a git submodule by other repositories; it
-holds no knowledge of any specific consumer — see
-[Repo agnosticism](#repo-agnosticism) below.
+MinIO, the Kubernetes Dashboard, the Karmada Dashboard). Designed to be
+consumed as a git submodule by other repositories; it holds no knowledge of
+any specific consumer — see [Repo agnosticism](#repo-agnosticism) below.
 
 ## Layout
 
