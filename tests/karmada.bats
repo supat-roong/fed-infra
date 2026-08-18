@@ -40,6 +40,25 @@ setup() {
   assert_called "--etcd-storage-mode=emptyDir"
 }
 
+@test "fed_karmada_init passes --port matching FED_KARMADA_APISERVER_PORT to karmadactl init" {
+  # karmadactl init --port defaults to 32443, and kind/multi-host.yaml.tpl
+  # maps that same port from FED_KARMADA_APISERVER_PORT to the host. If this
+  # flag were left off (or hardcoded to a different value), the two would be
+  # free to drift and the apiserver would be unreachable from the host again
+  # -- exactly the gap this flag closes.
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  fed_karmada_init host
+  assert_called "--port=32443"
+}
+
+@test "fed_karmada_init passes a custom FED_KARMADA_APISERVER_PORT through to karmadactl init, not a hardcoded default" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export FED_KARMADA_APISERVER_PORT=40443
+  fed_karmada_init host
+  assert_called "--port=40443"
+  refute_called "--port=32443"
+}
+
 @test "fed_karmada_init creates the karmada data/pki directories before init" {
   export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
   fed_karmada_init host

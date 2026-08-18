@@ -19,3 +19,21 @@ nodes:
       - containerPort: ${FED_NODEPORT_TEMPORAL_UI}
         hostPort: ${FED_HOSTPORT_TEMPORAL_UI}
         protocol: TCP
+      # The Karmada control plane and dashboard run on the host only (see
+      # lib/karmada.sh), so only this template -- not member.yaml.tpl --
+      # needs them mapped. containerPort and hostPort are deliberately the
+      # same variable, not a NODEPORT_*/HOSTPORT_* pair like the services
+      # above: fed_karmada_init passes FED_KARMADA_APISERVER_PORT to
+      # `karmadactl init --port`, so this mapping and that flag must always
+      # agree, and a second, independently-settable hostPort would let them
+      # drift again -- exactly the bug this template change fixes.
+      - containerPort: ${FED_KARMADA_APISERVER_PORT}
+        hostPort: ${FED_KARMADA_APISERVER_PORT}
+        protocol: TCP
+      # fed-infra never installs the Karmada dashboard itself (a consumer's
+      # concern), but the port mapping must exist at kind cluster-creation
+      # time -- a consumer has no way to add one to a running kind node --
+      # so it belongs here even though nothing in this library deploys it.
+      - containerPort: ${FED_KARMADA_DASHBOARD_PORT}
+        hostPort: ${FED_KARMADA_DASHBOARD_PORT}
+        protocol: TCP

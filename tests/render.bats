@@ -62,6 +62,17 @@ setup() {
   [ "$output" = "members: 3 prefix: worker" ]
 }
 
+@test "fed_render substitutes FED_KARMADA_APISERVER_PORT and FED_KARMADA_DASHBOARD_PORT" {
+  # Same guard as above, for the two port variables kind/multi-host.yaml.tpl
+  # needs to map the Karmada apiserver and dashboard NodePorts to the host --
+  # dropped from the whitelist, they would render as empty strings (invalid
+  # YAML port values) with no error from fed_render itself.
+  export FED_KARMADA_APISERVER_PORT=32443 FED_KARMADA_DASHBOARD_PORT=32000
+  echo 'apiserver: ${FED_KARMADA_APISERVER_PORT} dashboard: ${FED_KARMADA_DASHBOARD_PORT}' > "$TPL"
+  run fed_render "$TPL"
+  [ "$output" = "apiserver: 32443 dashboard: 32000" ]
+}
+
 @test "namespace template renders to a valid Namespace object" {
   run fed_render "$FED_INFRA_ROOT/manifests/namespace.yaml.tpl"
   [[ "$output" == *"kind: Namespace"* ]] || return 1

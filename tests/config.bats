@@ -38,6 +38,12 @@ EOF
   [ "$FED_MEMBER_PREFIX" = "member" ]
   [ "$FED_KARMADA_VERSION" = "v1.17.0" ]
   [ "$FED_KARMADA_CONFIG" = "${HOME}/.karmada/karmada-apiserver.config" ]
+  # karmadactl init defaults --port to 32443; the host kind cluster must map
+  # a hostPort of the same value or the Karmada apiserver is unreachable from
+  # the machine running this script. See kind/multi-host.yaml.tpl and
+  # fed_karmada_init's --port flag, both driven by this same variable.
+  [ "$FED_KARMADA_APISERVER_PORT" = "32443" ]
+  [ "$FED_KARMADA_DASHBOARD_PORT" = "32000" ]
 }
 
 @test "fed_config_load does not override values already set in the env file" {

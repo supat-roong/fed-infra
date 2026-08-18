@@ -43,6 +43,17 @@ fed_config_defaults() {
   : "${FED_MEMBER_PREFIX:=member}"
   : "${FED_KARMADA_VERSION:=v1.17.0}"
   : "${FED_KARMADA_CONFIG:=${HOME}/.karmada/karmada-apiserver.config}"
+  # karmadactl init's own --port default. kind/multi-host.yaml.tpl maps this
+  # same value as a hostPort, so the apiserver is reachable at
+  # https://127.0.0.1:${FED_KARMADA_APISERVER_PORT} from the host machine
+  # that runs kubectl/karmadactl against $FED_KARMADA_CONFIG -- both driven
+  # off this one variable so they cannot drift apart.
+  : "${FED_KARMADA_APISERVER_PORT:=32443}"
+  # NodePort the Karmada dashboard is expected to be exposed on. fed-infra
+  # never installs the dashboard itself (that's left to the consumer), but
+  # the port mapping must exist on the kind host node at cluster-creation
+  # time -- a consumer cannot add one afterwards -- so it lives here.
+  : "${FED_KARMADA_DASHBOARD_PORT:=32000}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -52,7 +63,8 @@ fed_config_defaults() {
          FED_NODEPORT_MINIO_API FED_NODEPORT_MINIO_CONSOLE FED_HOSTPORT_KFP \
          FED_HOSTPORT_MLFLOW FED_HOSTPORT_MINIO_API FED_HOSTPORT_MINIO_CONSOLE \
          FED_DRY_RUN FED_RENDER_DIR \
-         FED_MEMBER_COUNT FED_MEMBER_PREFIX FED_KARMADA_VERSION FED_KARMADA_CONFIG
+         FED_MEMBER_COUNT FED_MEMBER_PREFIX FED_KARMADA_VERSION FED_KARMADA_CONFIG \
+         FED_KARMADA_APISERVER_PORT FED_KARMADA_DASHBOARD_PORT
 }
 
 fed_config_validate() {

@@ -91,11 +91,31 @@ setup() {
   [[ "$output" == *"hostPort: 8233"* ]] || return 1
 }
 
-@test "single-cluster and multi-host templates render identically for the same variables" {
+@test "multi-host template renders every port mapping single-cluster has, plus the Karmada apiserver and dashboard ports" {
+  # The two templates are no longer byte-identical: only the multi profile
+  # runs a Karmada control plane on the host, so only multi-host.yaml.tpl
+  # needs its NodePort mapped to the host. single-cluster.yaml.tpl is
+  # unchanged, so multi-host's rendered output must still start with exactly
+  # single-cluster's, with the Karmada ports appended after.
   run fed_render "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
   local single_output="$output"
   run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
-  [ "$output" = "$single_output" ]
+  [[ "$output" == "$single_output"* ]] || return 1
+  [[ "$output" == *"containerPort: 32443"* ]] || return 1
+  [[ "$output" == *"hostPort: 32443"* ]] || return 1
+  [[ "$output" == *"containerPort: 32000"* ]] || return 1
+  [[ "$output" == *"hostPort: 32000"* ]]
+}
+
+@test "multi-host template renders the configured Karmada apiserver and dashboard ports, not just the defaults" {
+  export FED_KARMADA_APISERVER_PORT=40443 FED_KARMADA_DASHBOARD_PORT=40000
+  run fed_render "$FED_INFRA_ROOT/kind/multi-host.yaml.tpl"
+  [[ "$output" == *"containerPort: 40443"* ]] || return 1
+  [[ "$output" == *"hostPort: 40443"* ]] || return 1
+  [[ "$output" == *"containerPort: 40000"* ]] || return 1
+  [[ "$output" == *"hostPort: 40000"* ]] || return 1
+  [[ "$output" != *"32443"* ]] || return 1
+  [[ "$output" != *"32000"* ]]
 }
 
 @test "member template has no extraPortMappings and no name field" {
@@ -104,6 +124,14 @@ setup() {
   [[ "$output" != *"hostPort"* ]] || return 1
   [[ "$output" != *"name:"* ]] || return 1
   [[ "$output" == *"role: control-plane"* ]] || return 1
+}
+
+@test "member template has no Karmada apiserver/dashboard port mappings" {
+  # The Karmada control plane pods run on the host only -- a member never
+  # needs its own NodePort mapped to the machine's localhost.
+  run fed_render "$FED_INFRA_ROOT/kind/member.yaml.tpl"
+  [[ "$output" != *"32443"* ]] || return 1
+  [[ "$output" != *"32000"* ]]
 }
 
 @test "fed_kind_ensure_cluster's piped config for a member has no port mappings" {

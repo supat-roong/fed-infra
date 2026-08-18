@@ -39,13 +39,22 @@ fed_karmada_init() {
   mkdir -p "${karmada_data}/pki" || return 1
 
   fed_log "initializing Karmada ${FED_KARMADA_VERSION} control plane on ${host_cluster}"
+  # --port must be the same value kind/multi-host.yaml.tpl maps as a
+  # hostPort (FED_KARMADA_APISERVER_PORT, default 32443, matching
+  # karmadactl's own default): karmadactl init writes $FED_KARMADA_CONFIG
+  # pointing at https://127.0.0.1:<this port>, and every later
+  # kubectl --kubeconfig="$FED_KARMADA_CONFIG" call runs from this host
+  # machine, not from inside the kind container. A hardcoded template port
+  # with a different --port here would leave the apiserver unreachable
+  # exactly like the gap this line fixes.
   karmadactl init \
     --karmada-data="$karmada_data" \
     --karmada-pki="${karmada_data}/pki" \
     --cert-external-ip="127.0.0.1" \
     --cert-external-dns="localhost" \
     --karmada-apiserver-advertise-address="127.0.0.1" \
-    --etcd-storage-mode="emptyDir" || return 1
+    --etcd-storage-mode="emptyDir" \
+    --port="$FED_KARMADA_APISERVER_PORT" || return 1
 }
 
 fed_karmada_join() {
