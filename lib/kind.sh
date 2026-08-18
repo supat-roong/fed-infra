@@ -45,6 +45,27 @@ fed_kind_raise_inotify_limits() {
     fed_log "dry-run: would raise inotify limits on ${name}-control-plane"
     return 0
   fi
+  # Raise means raise. This sysctl is shared with the host kernel rather than
+  # namespaced per container (verified live: setting it on the VM immediately
+  # changed the value read inside a node container), so writing 512
+  # unconditionally does not merely set this node's ceiling -- it overwrites
+  # the whole machine's. An operator who raised it by hand to survive several
+  # clusters would have it silently dropped back to 512 by the next
+  # fed-infra-up. Guarded with `|| cur=""` for the usual reason: callers
+  # source this under `set -euo pipefail`, and an unreadable value must fall
+  # through to "set it" rather than abort the bootstrap.
+  local cur
+  cur=$(docker exec "${name}-control-plane" sysctl -n fs.inotify.max_user_instances 2>/dev/null) || cur=""
+  case "$cur" in
+    ''|*[!0-9]*) ;;
+    *)
+      if [ "$cur" -ge 512 ]; then
+        fed_log "inotify limits on ${name}-control-plane already at ${cur}, leaving them alone"
+        return 0
+      fi
+      ;;
+  esac
+
   fed_log "raising inotify limits on ${name}-control-plane"
   docker exec "${name}-control-plane" \
     sysctl -w fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288 || true

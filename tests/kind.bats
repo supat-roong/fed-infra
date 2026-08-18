@@ -240,3 +240,26 @@ setup() {
   [[ "$output" == *"loading image myimg:v1 into cluster demo"* ]] || return 1
   assert_called "kind load docker-image myimg:v1 --name demo"
 }
+
+@test "fed_kind_raise_inotify_limits leaves an already-higher limit alone" {
+  # The sysctl is shared with the host kernel rather than namespaced per
+  # container, so `sysctl -w ...=512` does not just raise this node's ceiling
+  # -- it overwrites the machine's. An operator who raised it to survive
+  # several clusters would silently have it dropped back to 512 by the next
+  # fed-infra-up. Raise means raise.
+  export STUB_DOCKER_OUT="8192"
+  fed_kind_raise_inotify_limits demo
+  refute_called "sysctl -w fs.inotify.max_user_instances=512"
+}
+
+@test "fed_kind_raise_inotify_limits still raises a lower limit" {
+  export STUB_DOCKER_OUT="128"
+  fed_kind_raise_inotify_limits demo
+  assert_called "sysctl -w fs.inotify.max_user_instances=512"
+}
+
+@test "fed_kind_raise_inotify_limits raises when the current value cannot be read" {
+  export STUB_DOCKER_FAIL_GLOB="exec demo-control-plane sysctl -n*"
+  fed_kind_raise_inotify_limits demo
+  assert_called "sysctl -w fs.inotify.max_user_instances=512"
+}
