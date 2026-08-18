@@ -31,6 +31,19 @@ setup() {
   assert_called "kubectl apply -k $tmp/manifests/kustomize/env/platform-agnostic"
   run grep "kubectl apply -k" "$STUB_LOG"
   [[ "$output" != *"https://"* ]]
+  # assert_called above only proves both applies happened, not in which
+  # order -- cluster-scoped-resources must install the CRD that the second
+  # apply's objects depend on, and the wait for it to establish must fall
+  # between the two, or a reordering regression would still pass this test.
+  local cluster_line wait_line platform_line
+  cluster_line=$(grep -n "apply -k $tmp/manifests/kustomize/cluster-scoped-resources" "$STUB_LOG" | cut -d: -f1)
+  wait_line=$(grep -n "wait --for condition=established --timeout=300s crd/applications.app.k8s.io" "$STUB_LOG" | cut -d: -f1)
+  platform_line=$(grep -n "apply -k $tmp/manifests/kustomize/env/platform-agnostic" "$STUB_LOG" | cut -d: -f1)
+  [ -n "$cluster_line" ] || return 1
+  [ -n "$wait_line" ] || return 1
+  [ -n "$platform_line" ] || return 1
+  [ "$cluster_line" -lt "$wait_line" ] || return 1
+  [ "$wait_line" -lt "$platform_line" ]
 }
 
 @test "fed_kfp_install removes the temp clone directory after a successful install" {
