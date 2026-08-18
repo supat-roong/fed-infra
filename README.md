@@ -49,7 +49,7 @@ sources it, applies defaults, and validates it before anything else runs.
 |---|---|
 | `FED_CLUSTER_NAME` | Name passed to `kind create cluster` / `kind delete cluster`, and used to derive the kubeconfig context `kind-${FED_CLUSTER_NAME}`. |
 | `FED_NAMESPACE` | Namespace fed-infra creates for the consumer's own resources: the standalone MinIO (`minio` component) and the MLflow server (`mlflow` component). Independent of `kubeflow`, the namespace KFP always installs itself into. |
-| `FED_PROFILE` | Either `single` or `multi`. Currently only `single` is exercised end to end; `multi` is reserved for a later multi-cluster phase (see the deferred-work list in the project's task briefs) and is validated but otherwise unused today. |
+| `FED_PROFILE` | Either `single` or `multi`. `single` creates one kind cluster and installs everything on it. `multi` creates a host cluster plus `FED_MEMBER_COUNT` member clusters, installs the Karmada control plane on the host, and joins every member to it; shared services still install on the host only. `multi` requires `karmada` in `FED_COMPONENTS`. |
 | `FED_COMPONENTS` | Comma-separated (no spaces) list of components to install. See [FED_COMPONENTS](#fed_components) below. |
 
 ### Optional, with defaults (`fed_config_defaults`)
@@ -97,9 +97,9 @@ fail partway through if they're missing and needed:
 
 ## `FED_COMPONENTS`
 
-A comma-separated subset of `kfp,training,minio,mlflow`, checked with a
-substring match (`fed_has_component`), so order and spacing don't matter but
-there must be no spaces around the commas. Each token turns on:
+A comma-separated subset of `kfp,training,minio,mlflow,temporal,karmada`,
+checked with a whole-token match (`fed_has_component`), so order doesn't
+matter but there must be no spaces around the commas. Each token turns on:
 
 - **`kfp`** — Installs Kubeflow Pipelines at `FED_KFP_VERSION` (cluster-scoped
   resources, then the platform-agnostic core) into the `kubeflow` namespace;
@@ -126,6 +126,20 @@ there must be no spaces around the commas. Each token turns on:
   `FED_S3_ENDPOINT`. That endpoint can point at the consumer's own `minio`
   component or at a shared store such as KFP's bundled MinIO; fed-infra
   doesn't care which, it only reads `FED_S3_*`.
+- **`temporal`** — Deploys a Postgres instance plus the Temporal server and
+  Web UI (chart version `FED_TEMPORAL_VERSION`) into `FED_NAMESPACE`, and
+  exposes the UI as a NodePort on `FED_NODEPORT_TEMPORAL_UI` (reachable on
+  the host at `FED_HOSTPORT_TEMPORAL_UI`).
+- **`karmada`** — Only meaningful under `FED_PROFILE=multi`, where it is
+  **required**: `fed_config_validate` rejects a `multi` contract that omits
+  it. Installs the Karmada control plane (`FED_KARMADA_VERSION`) on the host
+  cluster, writes its kubeconfig to `FED_KARMADA_CONFIG`, and joins the host
+  and every member cluster, re-patching each member's Docker-network address
+  on every run. Note the asymmetry with the other tokens: the `multi` profile
+  drives the Karmada steps directly, so this entry is a declaration the
+  contract must make rather than a switch that turns the work on and off —
+  a `multi` contract without it fails fast instead of silently getting
+  Karmada anyway.
 
 Within `fed_up`, components run in a fixed order: create/reuse the kind
 cluster → `kfp` install + patches → `training` → `minio` → `mlflow`
