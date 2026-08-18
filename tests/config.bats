@@ -103,3 +103,17 @@ EOF
   run fed_has_component mini
   [ "$status" -eq 1 ]
 }
+
+@test "fed_config_validate dies when the multi profile omits the karmada component" {
+  sed -i.bak 's/FED_PROFILE=single/FED_PROFILE=multi/' "$ENVFILE"
+  run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; source '$FED_INFRA_ROOT/lib/config.sh'; fed_config_load '$ENVFILE'"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"karmada"* ]]
+}
+
+@test "fed_config_validate passes when the multi profile declares karmada" {
+  sed -i.bak 's/FED_PROFILE=single/FED_PROFILE=multi/' "$ENVFILE"
+  sed -i.bak 's/FED_COMPONENTS=kfp,minio,mlflow/FED_COMPONENTS=kfp,minio,mlflow,karmada/' "$ENVFILE"
+  run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; source '$FED_INFRA_ROOT/lib/config.sh'; fed_config_load '$ENVFILE'"
+  [ "$status" -eq 0 ]
+}

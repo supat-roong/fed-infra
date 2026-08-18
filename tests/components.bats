@@ -237,7 +237,7 @@ source_multi_libs() {
 }
 
 @test "fed-infra-up multi profile is a complete no-op for real side effects under --dry-run, except rendering manifests" {
-  write_multi_env "minio,mlflow"
+  write_multi_env "minio,mlflow,karmada"
   run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
   [ "$status" -eq 0 ]
   refute_called "kind create"

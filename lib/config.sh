@@ -66,6 +66,15 @@ fed_config_validate() {
     single|multi) ;;
     *) fed_die "FED_PROFILE must be 'single' or 'multi', got: $FED_PROFILE" ;;
   esac
+  # fed_up_multi installs the Karmada control plane off FED_PROFILE alone, so
+  # listing `karmada` in FED_COMPONENTS changes nothing on its own. Rather than
+  # leave a decorative entry that reads as if it gated something, require it:
+  # a multi contract that omits it now fails fast instead of quietly getting
+  # Karmada anyway. Gating the install on it instead would allow the worse
+  # state -- member clusters created with no federation to bind them.
+  if [ "$FED_PROFILE" = "multi" ] && ! fed_has_component karmada; then
+    fed_die "FED_PROFILE=multi requires the karmada component in FED_COMPONENTS, got: $FED_COMPONENTS"
+  fi
   if fed_has_component mlflow; then
     for v in FED_S3_ENDPOINT FED_S3_ACCESS_KEY FED_S3_SECRET_KEY; do
       eval "local value=\${$v:-}"
