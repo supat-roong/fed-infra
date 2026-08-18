@@ -19,6 +19,13 @@ setup() {
   # Give join tests a plausible default; tests that care about a specific
   # value (or about no IP being resolvable) override or unset it.
   export STUB_DOCKER_OUT="10.0.0.5"
+  # fed_karmada_init now verifies `karmadactl version` against
+  # FED_KARMADA_VERSION before doing anything else -- default this to a
+  # matching value so every test that doesn't care about the check
+  # specifically exercises the same "installed karmadactl matches" path
+  # instead of tripping the mismatch fed_die. Tests for the check itself
+  # override it.
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.17.0", GitCommit:"deadbeef", GitTreeState:"clean"}'
 }
 
 # --- fed_karmada_init ---
@@ -61,6 +68,75 @@ setup() {
   fed_karmada_init host
   assert_called "--port=40443"
   refute_called "--port=32443"
+}
+
+@test "fed_karmada_init fails fast when the installed karmadactl version does not match FED_KARMADA_VERSION" {
+  # FED_KARMADA_VERSION used to be purely decorative: karmadactl init has no
+  # flag that pins the Karmada control plane's own image tag (only
+  # --kube-image-tag, for the Kubernetes components it installs), so the
+  # installed version was entirely whatever karmadactl happened to be on
+  # PATH. Verifying the two agree, and refusing to proceed on a mismatch, is
+  # what makes the variable genuinely load-bearing.
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.16.0", GitCommit:"aaa"}'
+  run fed_karmada_init host
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"v1.16.0"* ]] || return 1
+  [[ "$output" == *"v1.17.0"* ]] || return 1
+  refute_called "karmadactl init"
+}
+
+@test "fed_karmada_init proceeds when the installed karmadactl version matches FED_KARMADA_VERSION" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.17.0", GitCommit:"aaa"}'
+  fed_karmada_init host
+  assert_called "karmadactl init"
+}
+
+@test "fed_karmada_init fails fast with a clear message when karmadactl version output cannot be parsed" {
+  export STUB_KUBECTL_FAIL_GLOB="get namespace karmada-system*"
+  export STUB_KARMADACTL_OUT='garbage, not the expected version.Info struct'
+  run fed_karmada_init host
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"could not parse"* ]] || return 1
+  refute_called "karmadactl init"
+}
+
+@test "fed_karmada_verify_version passes when karmadactl's version matches" {
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.17.0", GitCommit:"aaa"}'
+  run fed_karmada_verify_version v1.17.0
+  [ "$status" -eq 0 ]
+}
+
+@test "fed_karmada_verify_version names both the installed and expected version when they differ" {
+  export STUB_KARMADACTL_OUT='karmadactl version: version.Info{GitVersion:"v1.16.0", GitCommit:"aaa"}'
+  run fed_karmada_verify_version v1.17.0
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"v1.16.0"* ]] || return 1
+  [[ "$output" == *"v1.17.0"* ]]
+}
+
+@test "fed_karmada_verify_version is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_karmada_verify_version v1.17.0
+  [ -z "$(calls)" ]
+}
+
+@test "fed_karmada_verify_version's own version lookup runs to completion under set -euo pipefail when karmadactl fails" {
+  # Same idiom as everywhere else in this file: guard the command
+  # substitution so a failing `karmadactl version` cannot trip the caller's
+  # errexit before the "could not parse" diagnostic below it gets to run.
+  export STUB_KARMADACTL_FAIL_GLOB="version*"
+  run bash -c "
+    set -euo pipefail
+    source '$FED_INFRA_ROOT/lib/common.sh'
+    source '$FED_INFRA_ROOT/lib/karmada.sh'
+    fed_karmada_verify_version v1.17.0
+    echo UNREACHABLE
+  "
+  [ "$status" -ne 0 ]
+  [[ "$output" != *"UNREACHABLE"* ]] || return 1
+  [[ "$output" == *"could not parse"* ]]
 }
 
 @test "fed_karmada_init pre-fetches the Karmada core images before karmadactl init" {

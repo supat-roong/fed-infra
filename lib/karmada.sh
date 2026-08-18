@@ -28,6 +28,7 @@ fed_karmada_init() {
   fi
 
   fed_require_cmd karmadactl
+  fed_karmada_verify_version "$FED_KARMADA_VERSION" || return 1
 
   # karmadactl init defaults its data/PKI dirs under /etc/karmada, which
   # requires sudo. Point both at a directory under HOME instead, derived
@@ -57,6 +58,47 @@ fed_karmada_init() {
     --karmada-apiserver-advertise-address="127.0.0.1" \
     --etcd-storage-mode="emptyDir" \
     --port="$FED_KARMADA_APISERVER_PORT" || return 1
+}
+
+# FED_KARMADA_VERSION used to be decorative: it is never passed to
+# karmadactl init, so the installed Karmada version was entirely whatever
+# karmadactl binary happened to be on PATH. karmadactl init has no flag that
+# pins the Karmada control plane's own image tag wholesale -- only
+# --kube-image-tag (for the *Kubernetes* components it installs),
+# --kube-image-registry, and --private-image-registry -- so direct pinning
+# isn't possible. The honest fix is to verify the two agree and refuse to
+# proceed on a mismatch, the same "decorative parameter" bug class already
+# fixed once for the karmada component flag (see fed_config_validate's
+# FED_PROFILE=multi check). That fix chose a hard failure over a warning,
+# and this follows the same precedent: a mismatch here means every image
+# fed_karmada_prefetch_images pulls, and everything karmadactl init actually
+# installs, is a version nobody asked for -- and this profile has never run
+# against real clusters, with the live gate coming up next. A warning that
+# scrolls past unattended in a bootstrap log is exactly the failure mode a
+# silent version skew needs to go unnoticed; there is nothing to gain by
+# proceeding on a wrong guess instead of surfacing it immediately.
+fed_karmada_verify_version() {
+  local expected=$1 raw actual
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would verify karmadactl matches FED_KARMADA_VERSION=${expected}"
+    return 0
+  fi
+
+  # Guarded the same way as every other command substitution in this file:
+  # a bare `raw=$(karmadactl version)` would let a failing invocation trip
+  # the caller's `set -euo pipefail` and abort right here, before the
+  # "could not parse" diagnostic below ever gets a chance to run.
+  raw=$(karmadactl version 2>&1) || raw=""
+
+  # Expected shape: karmadactl version: version.Info{GitVersion:"v1.17.0", ...}
+  # Extracted with sed rather than assuming a fixed field order/count, since
+  # version.Info's other fields are not order-guaranteed across releases.
+  actual=$(printf '%s' "$raw" | sed -n 's/.*GitVersion:"\([^"]*\)".*/\1/p') || actual=""
+  [ -n "$actual" ] || fed_die "could not parse karmadactl version output: ${raw}"
+
+  if [ "$actual" != "$expected" ]; then
+    fed_die "karmadactl on PATH reports ${actual}, but FED_KARMADA_VERSION=${expected}; install a matching karmadactl or update FED_KARMADA_VERSION"
+  fi
 }
 
 # Pulls and side-loads the four Karmada control-plane images into the host
