@@ -2,7 +2,18 @@
 # render.sh — envsubst-based manifest rendering with a dry-run mode.
 
 # Explicit substitution list. envsubst with no args would replace every $NAME
-# in the template, including shell variables inside container commands.
+# in the template, including shell variables inside container commands -- which
+# is the reason this whitelist exists at all.
+#
+# What happens when a var used in a template is NOT listed here, verified
+# directly rather than assumed: envsubst leaves the placeholder *literally*,
+# e.g. `b=${FED_MISSING}` stays as that text. It does NOT render empty. Earlier
+# write-ups in this project (including the P0 deferred-findings list and two
+# phase plans) claimed a silent empty string; that was wrong. The practical
+# consequence is milder and louder than advertised: a literal `${FED_X}` in a
+# manifest fails `kubectl apply` outright on a typed field, or produces a
+# visibly bogus string value. Still a bug, still add the variable -- but it
+# announces itself rather than hiding.
 # shellcheck disable=SC2016
 FED_TEMPLATE_VARS='${FED_CLUSTER_NAME} ${FED_NAMESPACE} ${FED_KIND_WORKERS}
 ${FED_S3_ENDPOINT} ${FED_S3_ACCESS_KEY} ${FED_S3_SECRET_KEY} ${FED_S3_BUCKET}
