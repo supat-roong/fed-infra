@@ -30,7 +30,7 @@ setup() {
   assert_called "kubectl apply -k $tmp/manifests/kustomize/cluster-scoped-resources"
   assert_called "kubectl apply -k $tmp/manifests/kustomize/env/platform-agnostic"
   run grep "kubectl apply -k" "$STUB_LOG"
-  [[ "$output" != *"https://"* ]]
+  [[ "$output" != *"https://"* ]] || return 1
   # assert_called above only proves both applies happened, not in which
   # order -- cluster-scoped-resources must install the CRD that the second
   # apply's objects depend on, and the wait for it to establish must fall
