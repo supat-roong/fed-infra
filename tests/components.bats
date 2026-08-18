@@ -248,6 +248,12 @@ source_multi_libs() {
   refute_called "kubectl patch"
   refute_called "kubectl wait"
   refute_called "docker build"
+  # Guards the inotify-raise (docker exec ... sysctl) and Karmada image
+  # pre-fetch (docker pull / kind load docker-image) added for the multi
+  # profile: both must stay behind the same dry-run guard as everything else
+  # here, not just the ones that already had one.
+  refute_called "docker exec"
+  refute_called "docker pull"
   [ -f "$RENDER/minio.yaml" ]
   [ -f "$RENDER/mlflow-server.yaml" ]
 }

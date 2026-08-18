@@ -9,20 +9,45 @@ fed_kind_ensure_cluster() {
   fi
   if kind get clusters 2>/dev/null | grep -qx "$name"; then
     fed_log "kind cluster '$name' already exists"
+  else
+    fed_log "creating kind cluster '$name'"
+
+    # Worker nodes are appended rather than templated, because the count
+    # varies per consumer and YAML has no repeat construct.
+    local rendered i=0
+    rendered=$(fed_render "$tpl")
+    while [ "$i" -lt "${FED_KIND_WORKERS:-0}" ]; do
+      rendered="${rendered}
+  - role: worker"
+      i=$((i + 1))
+    done
+    printf '%s\n' "$rendered" | kind create cluster --name "$name" --config -
+  fi
+
+  # Applies whether the cluster was just created or already existed: a node
+  # can lose this setting across a docker/host restart even though kind
+  # itself still reports the cluster present.
+  fed_kind_raise_inotify_limits "$name"
+}
+
+# kind nodes running many pods routinely exhaust the default inotify
+# instance/watch ceiling, surfacing as "too many open files" from
+# kubelet/containerd -- a classic, confusing failure under load, and worse
+# the more clusters/pods a single machine hosts (i.e. exactly the multi
+# profile). Generic kind hygiene, not Karmada-specific, so every profile's
+# node gets it. `|| true` throughout, matching the original hand-rolled
+# script this was ported from: raising the limit is an optimization, and a
+# failure here (e.g. sysctl unsupported in some container runtime) must
+# never abort an otherwise-successful cluster bootstrap.
+fed_kind_raise_inotify_limits() {
+  local name=$1
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would raise inotify limits on ${name}-control-plane"
     return 0
   fi
-  fed_log "creating kind cluster '$name'"
-
-  # Worker nodes are appended rather than templated, because the count varies
-  # per consumer and YAML has no repeat construct.
-  local rendered i=0
-  rendered=$(fed_render "$tpl")
-  while [ "$i" -lt "${FED_KIND_WORKERS:-0}" ]; do
-    rendered="${rendered}
-  - role: worker"
-    i=$((i + 1))
-  done
-  printf '%s\n' "$rendered" | kind create cluster --name "$name" --config -
+  fed_log "raising inotify limits on ${name}-control-plane"
+  docker exec "${name}-control-plane" \
+    sysctl -w fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288 || true
 }
 
 # Returns the 12-char image id of $1 inside cluster $2, or empty if absent.

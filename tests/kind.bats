@@ -53,6 +53,42 @@ setup() {
   assert_called "kind load docker-image myimg:v1 --name demo"
 }
 
+@test "fed_kind_ensure_cluster raises inotify limits on the control-plane node after creating a cluster" {
+  # kind nodes running many pods (the multi profile's members especially)
+  # routinely exhaust the default inotify instance/watch ceiling, which
+  # surfaces as a confusing "too many open files" from kubelet/containerd
+  # rather than anything that names inotify. Generic kind hygiene, not
+  # Karmada-specific -- applies to the single profile too.
+  export STUB_KIND_OUT="other-cluster"
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  assert_called "docker exec demo-control-plane sysctl -w fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288"
+}
+
+@test "fed_kind_ensure_cluster raises inotify limits even when the cluster already exists" {
+  # The original hand-rolled bootstrap raised these on every run, not just
+  # right after creation -- a node can lose the setting across a docker/host
+  # restart even though the kind cluster itself is unchanged.
+  export STUB_KIND_OUT="demo"
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  assert_called "docker exec demo-control-plane sysctl -w fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288"
+}
+
+@test "fed_kind_ensure_cluster does not fail cluster bootstrap when raising inotify limits fails" {
+  # The original used `|| true` throughout for exactly this: raising limits
+  # is hygiene, not a hard prerequisite, and must never abort a bootstrap
+  # that otherwise succeeded.
+  export STUB_KIND_OUT="other-cluster"
+  export STUB_DOCKER_FAIL_GLOB="exec * sysctl*"
+  run fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  [ "$status" -eq 0 ]
+}
+
+@test "fed_kind_ensure_cluster is a complete no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  [ -z "$(calls)" ]
+}
+
 @test "fed_kind_delete_cluster deletes by name" {
   fed_kind_delete_cluster demo
   assert_called "kind delete cluster --name demo"
