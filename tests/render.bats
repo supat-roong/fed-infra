@@ -53,9 +53,12 @@ setup() {
 
 @test "fed_render substitutes FED_MEMBER_COUNT and FED_MEMBER_PREFIX" {
   # Guards the FED_TEMPLATE_VARS whitelist directly for the Karmada
-  # component's config: a variable missing from it renders as an empty
-  # string with no error, so this would silently start passing 0/empty
-  # instead of failing if either were dropped from the whitelist.
+  # component's config: a variable missing from the whitelist is left as a
+  # literal, unsubstituted ${VAR} in the output rather than an empty string
+  # (see "fed_render leaves non-FL variables untouched" above -- that is
+  # envsubst's documented SHELL-FORMAT behaviour), so dropping either from
+  # the whitelist would fail this test with the placeholder still in
+  # $output instead of "3"/"worker".
   export FED_MEMBER_COUNT=3 FED_MEMBER_PREFIX=worker
   echo 'members: ${FED_MEMBER_COUNT} prefix: ${FED_MEMBER_PREFIX}' > "$TPL"
   run fed_render "$TPL"
@@ -65,8 +68,9 @@ setup() {
 @test "fed_render substitutes FED_KARMADA_APISERVER_PORT and FED_NODEPORT_KARMADA_DASHBOARD" {
   # Same guard as above, for the two port variables kind/multi-host.yaml.tpl
   # needs to map the Karmada apiserver and dashboard NodePorts to the host --
-  # dropped from the whitelist, they would render as empty strings (invalid
-  # YAML port values) with no error from fed_render itself.
+  # dropped from the whitelist, they would leave the literal ${VAR}
+  # placeholder in the rendered output (invalid YAML port values), not an
+  # empty string.
   export FED_KARMADA_APISERVER_PORT=32443 FED_NODEPORT_KARMADA_DASHBOARD=32000
   echo 'apiserver: ${FED_KARMADA_APISERVER_PORT} dashboard: ${FED_NODEPORT_KARMADA_DASHBOARD}' > "$TPL"
   run fed_render "$TPL"
@@ -90,6 +94,20 @@ setup() {
   echo 'nodePort: ${FED_NODEPORT_K8S_DASHBOARD} hostPort: ${FED_HOSTPORT_K8S_DASHBOARD}' > "$TPL"
   run fed_render "$TPL"
   [ "$output" = "nodePort: 30443 hostPort: 8443" ]
+}
+
+@test "fed_render substitutes FED_KFP_VERSION" {
+  # FED_KFP_VERSION is defaulted and exported by fed_config_defaults, same
+  # as every other variable guarded above, but was absent from
+  # FED_TEMPLATE_VARS entirely -- harmless while it's only ever used as a
+  # shell variable in fed_kfp_install's `kubectl apply -k` URLs, never inside
+  # a template, but a future KFP template referencing it would leave the
+  # literal ${FED_KFP_VERSION} placeholder in the rendered manifest instead
+  # of the configured version.
+  export FED_KFP_VERSION=9.9.9
+  echo 'version: ${FED_KFP_VERSION}' > "$TPL"
+  run fed_render "$TPL"
+  [ "$output" = "version: 9.9.9" ]
 }
 
 @test "namespace template renders to a valid Namespace object" {
