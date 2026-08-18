@@ -48,6 +48,23 @@ fed_temporal_install() {
   helm repo add temporal https://go.temporal.io/helm-charts || return 1
   helm repo update >/dev/null 2>&1 || return 1
 
+  # fed-infra-up must stay safely re-runnable, and `helm upgrade` is not: on a
+  # second run helm's server-side apply collides with the NodePort patch
+  # fed_expose_nodeport applies to temporal-web, reporting a field-manager
+  # conflict with "kubectl-patch" over .spec.type and
+  # .spec.ports[].targetPort, and aborts the entire bootstrap even though
+  # Temporal itself is perfectly healthy. Skip the chart when the release is
+  # already there, matching what kfp, training and karmada each already do.
+  # The consequence is that changing FED_TEMPORAL_VERSION against a cluster
+  # that already has Temporal is a no-op: uninstall the release (or the
+  # cluster) to move versions, same as the other components.
+  if helm status temporal -n "$ns" >/dev/null 2>&1; then
+    fed_log "Temporal already installed"
+    fed_log "waiting for the Temporal frontend"
+    kubectl rollout status deployment/temporal-frontend -n "$ns" --timeout=600s || return 1
+    return 0
+  fi
+
   # BOTH the default and visibility stores must be switched to sql. Overriding
   # only `default` leaves visibility on its cassandra default and the chart
   # aborts with "Please specify cassandra port for visibility store".

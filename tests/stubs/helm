@@ -6,5 +6,13 @@ echo "helm $*" >> "$STUB_LOG"
 case "$*" in
   ${STUB_HELM_FAIL_GLOB:-__never_matches__}) exit 1 ;;
 esac
+# A second, independent glob. Two are needed because a `|` coming from a
+# variable expansion is a literal character in a case pattern, not an
+# alternation separator (case patterns are parsed before expansion), so a
+# single var cannot express "fail these two different calls".
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_HELM_FAIL_GLOB2:-__never_matches__}) exit 1 ;;
+esac
 [ -n "${STUB_HELM_OUT:-}" ] && printf '%s' "$STUB_HELM_OUT"
 exit 0

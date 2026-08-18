@@ -9,6 +9,11 @@ setup() {
   source "$FED_INFRA_ROOT/lib/temporal.sh"
   fed_config_defaults
   export FED_NAMESPACE=demo-ns
+  # Default precondition: no Temporal release yet, i.e. a clean cluster, which
+  # is what every install-path test below assumes. `helm status` succeeding is
+  # the "already installed" case and is opted into explicitly by the tests
+  # that exercise the skip path.
+  export STUB_HELM_FAIL_GLOB="status temporal*"
 }
 
 @test "fed_temporal_install adds the repo and installs the chart" {
@@ -57,7 +62,11 @@ setup() {
 }
 
 @test "fed_temporal_install fails fast when the chart install fails" {
-  export STUB_HELM_FAIL_GLOB="upgrade --install*"
+  # Two globs, not one alternation: `|` from a variable expansion is literal
+  # in a case pattern. The setup() default (status fails => not installed)
+  # must stay in force, or the skip path is taken and the frontend wait below
+  # legitimately runs.
+  export STUB_HELM_FAIL_GLOB2="upgrade --install*"
   run fed_temporal_install demo-ns 0.62.0
   [ "$status" -ne 0 ]
   # Not a bare "rollout status": the postgres statefulset wait runs (and must
@@ -103,4 +112,31 @@ setup() {
   # it is never substituted, so a leftover ${FED_TEMPORAL...} marker here
   # means the whitelist is out of sync with the template.
   [[ "$output" != *'${FED_TEMPORAL'* ]] || return 1
+}
+
+@test "fed_temporal_install skips the chart upgrade when the release is already deployed" {
+  # fed-infra-up is meant to be safely re-runnable, but `helm upgrade` on a
+  # second run collides with the NodePort patch fed_expose_nodeport applies
+  # to temporal-web: helm's server-side apply reports a field-manager
+  # conflict with "kubectl-patch" over .spec.type and .spec.ports[].targetPort
+  # and aborts the whole bootstrap. Every other component (kfp, training,
+  # karmada) checks for an existing install and returns early; this one did
+  # not.
+  unset STUB_HELM_FAIL_GLOB
+  fed_temporal_install demo-ns 0.62.0
+  refute_called "helm upgrade"
+  assert_called "helm status temporal"
+}
+
+@test "fed_temporal_install still installs the chart when no release exists" {
+  export STUB_HELM_FAIL_GLOB="status temporal*"
+  fed_temporal_install demo-ns 0.62.0
+  assert_called "helm upgrade --install temporal temporal/temporal"
+}
+
+@test "fed_temporal_install waits for the frontend even when it skips the upgrade" {
+  unset STUB_HELM_FAIL_GLOB
+  fed_temporal_install demo-ns 0.62.0
+  refute_called "helm upgrade"
+  assert_called "rollout status deployment/temporal-frontend"
 }
