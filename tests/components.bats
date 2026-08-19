@@ -39,7 +39,10 @@ EOF
 # clusters get created/joined/loaded needs the calls to actually reach the
 # stubs on PATH. No real cluster or Karmada control plane is ever created --
 # only tests/stubs/* are on PATH.
-source_multi_libs() {
+# Sources every lib directly, without setting any profile-specific env --
+# shared by source_multi_libs below and by the fed_require_cmd-recorder
+# tests, which need the libs loaded but pick their own FED_PROFILE.
+source_libs() {
   # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/common.sh"
   # shellcheck disable=SC1091
@@ -67,6 +70,10 @@ source_multi_libs() {
   # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/components.sh"
   fed_config_defaults
+}
+
+source_multi_libs() {
+  source_libs
   export FED_CLUSTER_NAME=host
   export FED_NAMESPACE=demo-ns
   export FED_PROFILE=multi
@@ -116,54 +123,44 @@ source_multi_libs() {
   [ -f "$RENDER/dashboard-admin.yaml" ]
 }
 
-@test "fed-infra-up --dry-run succeeds when only envsubst is on PATH (no kind/kubectl/docker required)" {
-  write_env "kfp,minio,mlflow"
-  # Build a PATH that can still resolve envsubst plus whatever coreutils/bash
-  # the script itself needs, but strips out every directory that provides
-  # kind, kubectl, or docker -- including tests/stubs, which setup_stubs
-  # already prepended and which provides stub versions of all three. A dry
-  # run renders manifests and touches no cluster, so none of those three
-  # should be required to even start it.
-  local restricted="$BATS_TEST_TMPDIR/envsubst-only-bin"
-  mkdir -p "$restricted"
-  ln -s "$(command -v envsubst)" "$restricted/envsubst"
-  local filtered="$restricted" dir
-  local IFS=':'
-  for dir in $PATH; do
-    [ -n "$dir" ] || continue
-    [ -x "$dir/kind" ] && continue
-    [ -x "$dir/kubectl" ] && continue
-    [ -x "$dir/docker" ] && continue
-    filtered="$filtered:$dir"
-  done
-  PATH="$filtered" run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
-  [ "$status" -eq 0 ] || { echo "$output" >&2; return 1; }
-  [ -f "$RENDER/minio.yaml" ] || return 1
-  [ -f "$RENDER/mlflow-server.yaml" ] || return 1
+@test "fed_up requires only envsubst under FED_DRY_RUN=1 (no kind/kubectl/docker required)" {
+  # Same regression the old PATH-filtering version of this test covered --
+  # a dry run renders manifests via envsubst and touches no cluster, so it
+  # must not hard-require kind/kubectl/docker -- but proves it by testing
+  # the logic directly instead of by stripping PATH entries. Stripping every
+  # directory that provides kind/kubectl/docker is unsound in CI: on
+  # Ubuntu, docker lives in /usr/bin alongside bash itself, so filtering out
+  # "any dir containing docker" also removes bash and every coreutil,
+  # breaking the `#!/usr/bin/env bash` shebang with exit 127 before the test
+  # gets to assert anything (see git history for the failure this replaced).
+  # Recording fed_require_cmd's own arguments instead makes the assertion
+  # independent of where any tool happens to live on the host.
+  source_libs
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_PROFILE=single
+  export FED_COMPONENTS="kfp,minio,mlflow" FED_DRY_RUN=1 FED_RENDER_DIR="$RENDER"
+  local log="$BATS_TEST_TMPDIR/require_cmd.log"
+  : > "$log"
+  fed_require_cmd() { printf '%s\n' "$*" >> "$log"; }
+  fed_up
+  [ "$(cat "$log")" = "envsubst" ] || { echo "recorded: $(cat "$log")" >&2; return 1; }
 }
 
-@test "fed_up without --dry-run still requires the full command set (docker missing fails, unlike a dry run)" {
-  write_env "kfp,minio,mlflow"
-  # Counterpart to the test above: guarantee kind/kubectl resolve (as stubs,
-  # so no real cluster work would happen even if this got past
-  # fed_require_cmd) while stripping every directory that provides docker,
-  # then confirm the full set is still enforced outside --dry-run. A fix
-  # that relaxed fed_require_cmd unconditionally, rather than only under
-  # FED_DRY_RUN=1, would fail this one.
-  local nodocker="$BATS_TEST_TMPDIR/no-docker-bin"
-  mkdir -p "$nodocker"
-  ln -s "$FED_INFRA_ROOT/tests/stubs/kind" "$nodocker/kind"
-  ln -s "$FED_INFRA_ROOT/tests/stubs/kubectl" "$nodocker/kubectl"
-  local filtered="$nodocker" dir
-  local IFS=':'
-  for dir in $PATH; do
-    [ -n "$dir" ] || continue
-    [ -x "$dir/docker" ] && continue
-    filtered="$filtered:$dir"
-  done
-  PATH="$filtered" run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE"
-  [ "$status" -eq 1 ] || { echo "$output" >&2; return 1; }
-  [[ "$output" == *"required command not found: docker"* ]]
+@test "fed_up without FED_DRY_RUN still requires the full command set (kind kubectl docker envsubst)" {
+  # Counterpart to the test above: same recorder technique, no PATH
+  # manipulation. Confirms the full set is still enforced outside a dry
+  # run -- a fix that relaxed fed_require_cmd unconditionally, rather than
+  # only under FED_DRY_RUN=1, would fail this one; a fix that reverted to
+  # requiring the full set even under FED_DRY_RUN=1 would fail the sibling
+  # test above instead.
+  source_libs
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_PROFILE=single
+  export FED_COMPONENTS="kfp,minio,mlflow"
+  unset FED_DRY_RUN
+  local log="$BATS_TEST_TMPDIR/require_cmd.log"
+  : > "$log"
+  fed_require_cmd() { printf '%s\n' "$*" >> "$log"; }
+  fed_up
+  [ "$(cat "$log")" = "kind kubectl docker envsubst" ] || { echo "recorded: $(cat "$log")" >&2; return 1; }
 }
 
 @test "fed-infra-up fails with a clear message when --env is missing" {
