@@ -97,6 +97,12 @@ jobs:
       - name: Render each contract against this fed-infra
         run: |
           set -euo pipefail
+          # A consumer having only one of the listed envs is fine (per-file
+          # skip below); a consumer having NONE of them is not -- that is a
+          # silent-skip-to-green false pass (e.g. the sparse-checkout pattern
+          # stopped matching because the consumer moved its env files), so
+          # rendered_count is asserted >= 1 after the loop, not "all rendered".
+          rendered_count=0
           for env in ${{ matrix.consumer.envs }}; do
             src="/tmp/consumer/$env"
             if [ ! -f "$src" ]; then
@@ -107,4 +113,10 @@ jobs:
             out=$(mktemp -d)
             bin/fed-infra-up --env "$src" --dry-run --render-dir "$out"
             test -n "$(ls -A "$out")" || { echo "FAIL: $env rendered nothing"; exit 1; }
+            rendered_count=$((rendered_count + 1))
           done
+          if [ "$rendered_count" -eq 0 ]; then
+            echo "FAIL: ${{ matrix.consumer.repo }} rendered zero contracts -- expected at least one of: ${{ matrix.consumer.envs }}" >&2
+            echo "either the consumer's layout changed or the sparse-checkout pattern stopped matching; this is a silent-pass, not a real check, until fixed" >&2
+            exit 1
+          fi
