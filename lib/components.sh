@@ -2,7 +2,18 @@
 # components.sh — ordered component dispatch for fed-infra-up / fed-infra-down.
 
 fed_up() {
-  fed_require_cmd kind kubectl docker envsubst
+  # A dry run renders manifests via envsubst and touches no cluster, so it
+  # must not hard-require kind/kubectl/docker -- that would force every CI
+  # runner that only renders contracts (no cluster tooling installed) to
+  # fail before it ever reaches the FED_DRY_RUN guards further down that
+  # make it a no-op. See tests/components.bats's "only envsubst is on PATH"
+  # (this branch) and "still requires the full command set" (the else)
+  # tests for the sibling regression each half guards against.
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_require_cmd envsubst
+  else
+    fed_require_cmd kind kubectl docker envsubst
+  fi
 
   # multi is the only other profile fed_config_validate accepts, so this
   # single check covers both branches; the single-profile body below is

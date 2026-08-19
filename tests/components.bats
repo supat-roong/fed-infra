@@ -116,6 +116,56 @@ source_multi_libs() {
   [ -f "$RENDER/dashboard-admin.yaml" ]
 }
 
+@test "fed-infra-up --dry-run succeeds when only envsubst is on PATH (no kind/kubectl/docker required)" {
+  write_env "kfp,minio,mlflow"
+  # Build a PATH that can still resolve envsubst plus whatever coreutils/bash
+  # the script itself needs, but strips out every directory that provides
+  # kind, kubectl, or docker -- including tests/stubs, which setup_stubs
+  # already prepended and which provides stub versions of all three. A dry
+  # run renders manifests and touches no cluster, so none of those three
+  # should be required to even start it.
+  local restricted="$BATS_TEST_TMPDIR/envsubst-only-bin"
+  mkdir -p "$restricted"
+  ln -s "$(command -v envsubst)" "$restricted/envsubst"
+  local filtered="$restricted" dir
+  local IFS=':'
+  for dir in $PATH; do
+    [ -n "$dir" ] || continue
+    [ -x "$dir/kind" ] && continue
+    [ -x "$dir/kubectl" ] && continue
+    [ -x "$dir/docker" ] && continue
+    filtered="$filtered:$dir"
+  done
+  PATH="$filtered" run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
+  [ "$status" -eq 0 ] || { echo "$output" >&2; return 1; }
+  [ -f "$RENDER/minio.yaml" ] || return 1
+  [ -f "$RENDER/mlflow-server.yaml" ] || return 1
+}
+
+@test "fed_up without --dry-run still requires the full command set (docker missing fails, unlike a dry run)" {
+  write_env "kfp,minio,mlflow"
+  # Counterpart to the test above: guarantee kind/kubectl resolve (as stubs,
+  # so no real cluster work would happen even if this got past
+  # fed_require_cmd) while stripping every directory that provides docker,
+  # then confirm the full set is still enforced outside --dry-run. A fix
+  # that relaxed fed_require_cmd unconditionally, rather than only under
+  # FED_DRY_RUN=1, would fail this one.
+  local nodocker="$BATS_TEST_TMPDIR/no-docker-bin"
+  mkdir -p "$nodocker"
+  ln -s "$FED_INFRA_ROOT/tests/stubs/kind" "$nodocker/kind"
+  ln -s "$FED_INFRA_ROOT/tests/stubs/kubectl" "$nodocker/kubectl"
+  local filtered="$nodocker" dir
+  local IFS=':'
+  for dir in $PATH; do
+    [ -n "$dir" ] || continue
+    [ -x "$dir/docker" ] && continue
+    filtered="$filtered:$dir"
+  done
+  PATH="$filtered" run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE"
+  [ "$status" -eq 1 ] || { echo "$output" >&2; return 1; }
+  [[ "$output" == *"required command not found: docker"* ]]
+}
+
 @test "fed-infra-up fails with a clear message when --env is missing" {
   run "$FED_INFRA_ROOT/bin/fed-infra-up"
   [ "$status" -eq 1 ]
