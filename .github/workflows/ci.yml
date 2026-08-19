@@ -56,3 +56,55 @@ jobs:
       - name: Tear down
         if: always()
         run: bin/fed-infra-down --env tests/fixtures/consumer-a.env
+
+  consumer-contracts:
+    # Nightly only. Fetches each configured consumer's real contract and
+    # renders it against this repo's current main, so a library change that
+    # breaks a consumer fails here rather than surfacing days later as a
+    # mysterious submodule-bump failure in that consumer's own repo.
+    #
+    # Contracts are fetched at runtime, never committed: this repo must not
+    # contain consumer identifiers anywhere in its tree (tests/agnostic.bats
+    # scans the whole repo, this workflow file included), and a checked-in
+    # copy would drift from the real one -- which is the exact failure this
+    # job exists to catch. For the same reason, the consumer list itself
+    # does not live in this matrix: it is read from the CONSUMER_CONTRACT_REPOS
+    # repository variable (see README.md) so this file never needs to name a
+    # consumer. If that variable is unset, the job below is skipped rather
+    # than failing -- an unconfigured repo just doesn't get this check yet.
+    if: github.event_name == 'schedule' && vars.CONSUMER_CONTRACT_REPOS != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      # Guarded with `|| '[]'` in addition to the job-level `if:` above: an
+      # empty/unset variable must degrade to zero matrix entries, never to a
+      # fromJSON parse error, which would otherwise surface as a confusing
+      # red workflow run instead of a plainly skipped job.
+      matrix:
+        consumer: ${{ fromJSON(vars.CONSUMER_CONTRACT_REPOS || '[]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install envsubst
+        run: sudo apt-get update && sudo apt-get install -y gettext-base
+      - name: Fetch the consumer's contracts
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --sparse \
+            "https://github.com/${{ matrix.consumer.repo }}.git" /tmp/consumer
+          cd /tmp/consumer && git sparse-checkout set --no-cone '/*.env*'
+          ls -la /tmp/consumer
+      - name: Render each contract against this fed-infra
+        run: |
+          set -euo pipefail
+          for env in ${{ matrix.consumer.envs }}; do
+            src="/tmp/consumer/$env"
+            if [ ! -f "$src" ]; then
+              echo "consumer has no $env; skipping"
+              continue
+            fi
+            echo "=== $env ==="
+            out=$(mktemp -d)
+            bin/fed-infra-up --env "$src" --dry-run --render-dir "$out"
+            test -n "$(ls -A "$out")" || { echo "FAIL: $env rendered nothing"; exit 1; }
+          done

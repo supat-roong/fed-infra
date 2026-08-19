@@ -296,3 +296,33 @@ git submodule status vendor/fed-infra
 A leading space means the working tree matches the pinned SHA; a leading
 `+` means it's checked out at some other commit (someone moved it without
 committing); a leading `-` means the submodule hasn't been initialized yet.
+
+## Nightly cross-repo contract check
+
+A nightly-only `consumer-contracts` job in `.github/workflows/ci.yml` fetches
+each consumer's real `infra.env` contracts at runtime and renders them
+against this repo's current `main`, so a library change that breaks a
+consumer fails here — in the repo that caused it — instead of surfacing
+days later as a confusing failure in that consumer's own submodule bump.
+
+The consumer list cannot live in the workflow file itself (see
+[Repo agnosticism](#repo-agnosticism)), so it is configured out-of-band as a
+repository variable:
+
+- **Name:** `CONSUMER_CONTRACT_REPOS` (Settings → Secrets and variables →
+  Actions → Variables).
+- **Shape:** a JSON array of objects, each `{"repo": "<owner>/<name>",
+  "envs": "<space-separated env files>"}`, e.g.:
+
+  ```json
+  [
+    { "repo": "OWNER/CONSUMER_ONE", "envs": "infra.env infra.env.multi" },
+    { "repo": "OWNER/CONSUMER_TWO", "envs": "infra.env infra.env.multi" }
+  ]
+  ```
+
+- **If unset:** the job's `if:` condition evaluates false and it shows as
+  *skipped* in the Actions run, not failed — an unconfigured fork or fresh
+  clone of this repo simply doesn't get the cross-repo check until someone
+  sets the variable. It does not need to be set for `make check` or the
+  regular per-PR CI jobs to pass.
