@@ -33,16 +33,26 @@ jobs:
         run: make contracts
 
   smoke:
-    # Nightly only — brings up a real kind cluster, which is far too slow for PRs.
+    # Nightly only -- brings up a real kind cluster, far too slow for PRs.
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Report disk before reclamation
+        # The design doc records the runner's free disk as UNVERIFIED. This
+        # step is how we find out; adjust the component set below if it is
+        # tighter than the stack needs.
+        run: df -h /
+      - name: Reclaim runner disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
       - uses: helm/kind-action@v1
         with:
           install_only: true
-      - name: Install gettext
+      - name: Install envsubst
         run: sudo apt-get update && sudo apt-get install -y gettext-base
       - name: Bring up the single profile
         run: bin/fed-infra-up --env tests/fixtures/consumer-a.env
@@ -52,7 +62,13 @@ jobs:
           kubectl wait --for=condition=available deployment/mlflow-server \
             -n consumer-a --timeout=300s
       - name: Verify the run is idempotent
+        # fed-infra-up must be safely re-runnable; this is not decorative.
+        # A helm field-manager conflict made it non-idempotent during P3 and
+        # only a re-run exposed it.
         run: bin/fed-infra-up --env tests/fixtures/consumer-a.env
+      - name: Report disk after
+        if: always()
+        run: df -h /
       - name: Tear down
         if: always()
         run: bin/fed-infra-down --env tests/fixtures/consumer-a.env
