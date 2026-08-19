@@ -5,20 +5,32 @@ on:
   schedule:
     - cron: "0 3 * * *"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Install bats and shellcheck
+      - name: Install bats, shellcheck and envsubst
         run: sudo apt-get update && sudo apt-get install -y bats shellcheck gettext-base
-      - name: Lint
-        # -P SCRIPTDIR is required for the `source=` directives in bin/* to
-        # resolve relative to the script rather than the invocation dir
-        # (see Makefile's lint target).
-        run: shellcheck -x -P SCRIPTDIR bin/* lib/*.sh tests/stubs/*
-      - name: Test
-        run: bats tests/
+      - run: make ci
+
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install envsubst
+        run: sudo apt-get update && sudo apt-get install -y gettext-base
+      - name: Dry-run every fixture contract
+        run: make contracts
 
   smoke:
     # Nightly only — brings up a real kind cluster, which is far too slow for PRs.
