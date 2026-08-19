@@ -4,6 +4,7 @@ on:
   pull_request: { branches: [main] }
   schedule:
     - cron: "0 3 * * *"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,7 +35,7 @@ jobs:
 
   smoke:
     # Nightly only -- brings up a real kind cluster, far too slow for PRs.
-    if: github.event_name == 'schedule'
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -88,7 +89,7 @@ jobs:
     # repository variable (see README.md) so this file never needs to name a
     # consumer. If that variable is unset, the job below is skipped rather
     # than failing -- an unconfigured repo just doesn't get this check yet.
-    if: github.event_name == 'schedule' && vars.CONSUMER_CONTRACT_REPOS != ''
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && vars.CONSUMER_CONTRACT_REPOS != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
