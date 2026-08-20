@@ -40,16 +40,15 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Report disk before reclamation
-        # The design doc records the runner's free disk as UNVERIFIED. This
-        # step is how we find out; adjust the component set below if it is
-        # tighter than the stack needs.
+      - name: Report available disk
+        # Measured on a real run of this job: 145G total, 58G used, 87G free
+        # (40% used) before this job does anything -- roughly an order of
+        # magnitude more than the ~14G the design doc guessed, and far more
+        # than a single-cluster kind stack needs. No reclamation step is
+        # needed on this runner image. Kept as a plain measurement (costs
+        # nothing) so a future runner-image change that shrinks this shows up
+        # here rather than as a mystery kind/helm failure further down.
         run: df -h /
-      - name: Reclaim runner disk
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
-          df -h /
       - uses: helm/kind-action@v1
         with:
           install_only: true
