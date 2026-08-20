@@ -321,8 +321,15 @@ repository variable:
   ]
   ```
 
-- **If unset:** the job's `if:` condition evaluates false and it shows as
-  *skipped* in the Actions run, not failed — an unconfigured fork or fresh
-  clone of this repo simply doesn't get the cross-repo check until someone
-  sets the variable. It does not need to be set for `make check` or the
-  regular per-PR CI jobs to pass.
+- **If unset:** the `consumer-contracts` job's `if:` condition evaluates
+  false and it shows as *skipped* in the Actions run, not failed — a fork
+  simply doesn't get the cross-repo check until someone sets the variable
+  there. It does not need to be set for `make check` or the regular per-PR
+  CI jobs to pass.
+- **On the origin repo:** a sibling `consumer-contracts-guard` job runs on
+  the same schedule/dispatch triggers (but never on a fork) and fails the
+  workflow if the variable is unset. This is what keeps an accidentally
+  cleared variable from silently degrading the nightly run to green having
+  verified nothing — the same failure shape `consumer-contracts` itself
+  guards against one level further in (see the "silent-pass" checks inside
+  that job).

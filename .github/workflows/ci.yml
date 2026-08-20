@@ -120,6 +120,28 @@ jobs:
         if: always()
         run: bin/fed-infra-down --env tests/fixtures/consumer-a.env
 
+  consumer-contracts-guard:
+    # The job below degrades to a skip, not a failure, when
+    # CONSUMER_CONTRACT_REPOS is unset -- deliberately, so a fork or a fresh
+    # clone that has never configured the variable doesn't fail on an
+    # org-specific setting it can't have (see README.md). But on the origin
+    # repo, on the runs where the check is actually expected to execute, an
+    # accidentally-cleared variable would silently stop verifying anything
+    # while CI stays green -- the same silent-skip-to-green shape the job
+    # below exists to avoid one level further in. This job makes exactly
+    # that misconfiguration loud instead, without ever naming a consumer.
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if the cross-repo contract check has nothing configured
+        run: |
+          if [ -z "${{ vars.CONSUMER_CONTRACT_REPOS }}" ]; then
+            echo "::error::CONSUMER_CONTRACT_REPOS is unset on the origin repo, so the consumer-contracts job below will silently skip instead of verifying anything. Set the repository variable (see README.md) or this check has quietly gone dark." >&2
+            exit 1
+          fi
+          echo "CONSUMER_CONTRACT_REPOS is set; consumer-contracts will run for real."
+
   consumer-contracts:
     # Nightly only. Fetches each configured consumer's real contract and
     # renders it against this repo's current main, so a library change that
@@ -133,8 +155,10 @@ jobs:
     # job exists to catch. For the same reason, the consumer list itself
     # does not live in this matrix: it is read from the CONSUMER_CONTRACT_REPOS
     # repository variable (see README.md) so this file never needs to name a
-    # consumer. If that variable is unset, the job below is skipped rather
-    # than failing -- an unconfigured repo just doesn't get this check yet.
+    # consumer. If that variable is unset, this job is skipped rather than
+    # failing -- forks and fresh clones aren't expected to have it set. The
+    # consumer-contracts-guard job above is what keeps that skip from being
+    # silent on the origin repo.
     if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && vars.CONSUMER_CONTRACT_REPOS != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
