@@ -19,8 +19,24 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Install bats, shellcheck and envsubst
-        run: sudo apt-get update && sudo apt-get install -y bats shellcheck gettext-base
+      - name: Install bats and envsubst
+        # shellcheck is preinstalled on ubuntu-latest (confirmed in
+        # actions/runner-images: images/ubuntu/toolsets/toolset-2404.json
+        # lists it in apt.cmd_packages, baked in at image-build time), so it
+        # is not installed here -- one less apt package, one less thing that
+        # can flake. bats and gettext-base (envsubst) are not in that
+        # toolset, so they still need installing.
+        #
+        # apt-get update hits an Ubuntu mirror and has been observed to hang
+        # and blow the job timeout on an otherwise-unchanged run, so retry it
+        # a few times before giving up.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y bats gettext-base
       - run: make ci
 
   contracts:
@@ -29,7 +45,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install envsubst
-        run: sudo apt-get update && sudo apt-get install -y gettext-base
+        # gettext-base is not preinstalled on ubuntu-latest (not present in
+        # actions/runner-images' toolset-2404.json apt package lists), so it
+        # still needs installing here. apt-get update hits an Ubuntu mirror
+        # and has been observed to hang and blow the job timeout on an
+        # otherwise-unchanged run, so retry it a few times before giving up.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y gettext-base
       - name: Dry-run every fixture contract
         run: make contracts
 
@@ -53,7 +80,18 @@ jobs:
         with:
           install_only: true
       - name: Install envsubst
-        run: sudo apt-get update && sudo apt-get install -y gettext-base
+        # gettext-base is not preinstalled on ubuntu-latest (not present in
+        # actions/runner-images' toolset-2404.json apt package lists), so it
+        # still needs installing here. apt-get update hits an Ubuntu mirror
+        # and has been observed to hang and blow the job timeout on an
+        # otherwise-unchanged run, so retry it a few times before giving up.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y gettext-base
       - name: Bring up the single profile
         run: bin/fed-infra-up --env tests/fixtures/consumer-a.env
       - name: Verify core workloads are running
@@ -102,7 +140,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install envsubst
-        run: sudo apt-get update && sudo apt-get install -y gettext-base
+        # gettext-base is not preinstalled on ubuntu-latest (not present in
+        # actions/runner-images' toolset-2404.json apt package lists), so it
+        # still needs installing here. apt-get update hits an Ubuntu mirror
+        # and has been observed to hang and blow the job timeout on an
+        # otherwise-unchanged run, so retry it a few times before giving up.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y gettext-base
       - name: Fetch the consumer's contracts
         run: |
           set -euo pipefail

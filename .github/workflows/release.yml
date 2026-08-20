@@ -17,8 +17,23 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Install bats, shellcheck and envsubst
-        run: sudo apt-get update && sudo apt-get install -y bats shellcheck gettext-base
+      - name: Install bats and envsubst
+        # shellcheck is preinstalled on ubuntu-latest (confirmed in
+        # actions/runner-images: images/ubuntu/toolsets/toolset-2404.json
+        # lists it in apt.cmd_packages, baked in at image-build time), so it
+        # is not installed here. bats and gettext-base (envsubst) are not in
+        # that toolset, so they still need installing.
+        #
+        # apt-get update hits an Ubuntu mirror and has been observed to hang
+        # and blow the job timeout on an otherwise-unchanged run, so retry it
+        # a few times before giving up.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y bats gettext-base
       # A tag consumers pin their submodule to must be green.
       - run: make ci
       - run: make contracts
