@@ -28,11 +28,14 @@ jobs:
         # toolset, so they still need installing.
         #
         # apt-get update hits an Ubuntu mirror and has been observed to hang
-        # and blow the job timeout on an otherwise-unchanged run, so retry it
-        # a few times before giving up.
+        # and blow the job timeout on an otherwise-unchanged run. A bare
+        # retry loop only reacts to a nonzero exit, not a hang, so each
+        # attempt is itself wrapped in `timeout` to turn a hang into a
+        # failure the retry can act on, then retried a few times before
+        # giving up.
         run: |
           for i in 1 2 3; do
-            sudo apt-get update && break
+            sudo timeout 60 apt-get update && break
             echo "apt-get update failed (attempt $i/3), retrying..." >&2
             sleep 10
           done
@@ -49,10 +52,13 @@ jobs:
         # actions/runner-images' toolset-2404.json apt package lists), so it
         # still needs installing here. apt-get update hits an Ubuntu mirror
         # and has been observed to hang and blow the job timeout on an
-        # otherwise-unchanged run, so retry it a few times before giving up.
+        # otherwise-unchanged run. A bare retry loop only reacts to a
+        # nonzero exit, not a hang, so each attempt is itself wrapped in
+        # `timeout` to turn a hang into a failure the retry can act on,
+        # then retried a few times before giving up.
         run: |
           for i in 1 2 3; do
-            sudo apt-get update && break
+            sudo timeout 60 apt-get update && break
             echo "apt-get update failed (attempt $i/3), retrying..." >&2
             sleep 10
           done
@@ -84,10 +90,13 @@ jobs:
         # actions/runner-images' toolset-2404.json apt package lists), so it
         # still needs installing here. apt-get update hits an Ubuntu mirror
         # and has been observed to hang and blow the job timeout on an
-        # otherwise-unchanged run, so retry it a few times before giving up.
+        # otherwise-unchanged run. A bare retry loop only reacts to a
+        # nonzero exit, not a hang, so each attempt is itself wrapped in
+        # `timeout` to turn a hang into a failure the retry can act on,
+        # then retried a few times before giving up.
         run: |
           for i in 1 2 3; do
-            sudo apt-get update && break
+            sudo timeout 60 apt-get update && break
             echo "apt-get update failed (attempt $i/3), retrying..." >&2
             sleep 10
           done
@@ -144,10 +153,13 @@ jobs:
         # actions/runner-images' toolset-2404.json apt package lists), so it
         # still needs installing here. apt-get update hits an Ubuntu mirror
         # and has been observed to hang and blow the job timeout on an
-        # otherwise-unchanged run, so retry it a few times before giving up.
+        # otherwise-unchanged run. A bare retry loop only reacts to a
+        # nonzero exit, not a hang, so each attempt is itself wrapped in
+        # `timeout` to turn a hang into a failure the retry can act on,
+        # then retried a few times before giving up.
         run: |
           for i in 1 2 3; do
-            sudo apt-get update && break
+            sudo timeout 60 apt-get update && break
             echo "apt-get update failed (attempt $i/3), retrying..." >&2
             sleep 10
           done
