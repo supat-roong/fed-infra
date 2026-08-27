@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "juju $*" >> "$STUB_LOG"
+# Output precedes the fail-globs deliberately: a failing juju call still
+# prints its message, and tests capture it via $(... 2>&1).
+[ -n "${STUB_JUJU_OUT:-}" ] && printf '%s' "$STUB_JUJU_OUT"
+# Unquoted by design: shell glob patterns. Two independent globs because a
+# `|` from a variable expansion is literal in a case pattern.
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_JUJU_FAIL_GLOB:-__never_matches__}) exit 1 ;;
+esac
+# shellcheck disable=SC2254
+case "$*" in
+  ${STUB_JUJU_FAIL_GLOB2:-__never_matches__}) exit 1 ;;
+esac
+exit 0

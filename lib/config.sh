@@ -74,6 +74,10 @@ fed_config_defaults() {
   # See fed_training_install for why the default is this generous.
   : "${FED_POD_READY_ATTEMPTS:=30}"
   : "${FED_RETRY_DELAY:=5}"
+  # Deploy mode: `auto` picks juju on an amd64 docker daemon and manifests
+  # otherwise (see lib/juju.sh's fed_deploy_mode and the 2026-08-28 spike
+  # findings for why the daemon's arch, not the host's, decides).
+  : "${FED_DEPLOY_MODE:=auto}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -87,7 +91,8 @@ fed_config_defaults() {
          FED_KARMADA_APISERVER_PORT \
          FED_K8S_DASHBOARD_VERSION FED_NODEPORT_K8S_DASHBOARD FED_HOSTPORT_K8S_DASHBOARD \
          FED_NODEPORT_KARMADA_DASHBOARD FED_HOSTPORT_KARMADA_DASHBOARD \
-         FED_POD_READY_ATTEMPTS FED_RETRY_DELAY
+         FED_POD_READY_ATTEMPTS FED_RETRY_DELAY \
+         FED_DEPLOY_MODE
 }
 
 fed_config_validate() {
@@ -117,6 +122,10 @@ fed_config_validate() {
       [ -n "$value" ] || fed_die "missing required variable: $v (required when the mlflow component is enabled)"
     done
   fi
+  case "${FED_DEPLOY_MODE:-auto}" in
+    auto|manifests|juju) ;;
+    *) fed_die "FED_DEPLOY_MODE must be 'auto', 'manifests' or 'juju', got: $FED_DEPLOY_MODE" ;;
+  esac
 }
 
 fed_has_component() {
