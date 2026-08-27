@@ -5,8 +5,10 @@ setup() {
   setup_stubs
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/config.sh"
+  source "$FED_INFRA_ROOT/lib/juju.sh"
   source "$FED_INFRA_ROOT/lib/training.sh"
   fed_config_defaults
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_COMPONENTS=training
 }
 
 @test "fed_training_install applies the operator manifest and waits for the CRD when absent" {
@@ -88,4 +90,24 @@ setup() {
   local attempts
   attempts=$(grep -c "wait --for=condition=ready pod" "$STUB_LOG")
   [ "$attempts" -eq 2 ]
+}
+
+@test "fed_training_install_juju deploys the training-operator charm into the kubeflow model" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='workload:active'
+  fed_training_install_juju
+  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel ${FED_TRAINING_CHANNEL} --trust"
+}
+
+@test "fed_training_install_juju waits for the pytorchjobs CRD to be established" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_training_install_juju
+  assert_called "kubectl wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org"
+}
+
+@test "fed_training_install_juju performs no real side effects under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_training_install_juju
+  [ -z "$(calls)" ]
+  grep -q "training-operator" "$FED_RENDER_DIR/juju-commands.txt"
 }

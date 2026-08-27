@@ -104,7 +104,11 @@ fed_up_install_components() {
   fi
 
   if fed_has_component training; then
-    fed_training_install "$FED_TRAINING_OPERATOR_VERSION"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_training_install_juju
+    else
+      fed_training_install "$FED_TRAINING_OPERATOR_VERSION"
+    fi
   fi
 
   if fed_has_component temporal; then

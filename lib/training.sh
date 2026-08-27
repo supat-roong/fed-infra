@@ -33,3 +33,13 @@ fed_training_install() {
     -l control-plane=kubeflow-training-operator \
     -n "${FED_KFP_NAMESPACE:-kubeflow}" --timeout=30s || return 1
 }
+
+# Juju-mode counterpart: the training-operator charm creates the operator
+# Deployment; the pytorchjobs CRD it registers is the consumer contract.
+fed_training_install_juju() {
+  fed_juju_deploy "${FED_KFP_NAMESPACE:-kubeflow}" training-operator training-operator \
+    "$FED_TRAINING_CHANNEL" --trust
+  fed_juju_wait_active "${FED_KFP_NAMESPACE:-kubeflow}" training-operator
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then return 0; fi
+  kubectl wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org || return 1
+}

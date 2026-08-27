@@ -151,3 +151,8 @@ EOF
   [ "$FED_TEMPORAL_UI_CHANNEL" = "1.23/stable" ]
   [ "$FED_POSTGRESQL_CHANNEL" = "14/stable" ]
 }
+
+@test "fed_config_load defaults the training channel" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_TRAINING_CHANNEL" = "1.8/stable" ]
+}
