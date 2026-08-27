@@ -180,6 +180,7 @@ fed_up_summary() {
 fed_down() {
   fed_require_cmd kind
   pkill -f "kubectl port-forward" 2>/dev/null || true
+  fed_juju_teardown
 
   # Members first: the host runs the Karmada control plane the members are
   # registered against, so deleting it first would orphan them.

@@ -48,6 +48,8 @@ source_libs() {
   # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/config.sh"
   # shellcheck disable=SC1091
+  source "$FED_INFRA_ROOT/lib/juju.sh"
+  # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/render.sh"
   # shellcheck disable=SC1091
   source "$FED_INFRA_ROOT/lib/kind.sh"
@@ -385,4 +387,14 @@ source_multi_libs() {
   assert_called "kind delete cluster --name host"
   refute_called "kind delete cluster --name member1"
   refute_called "kind delete cluster --name member2"
+}
+
+@test "fed_down cleans juju client state before deleting the cluster" {
+  source_multi_libs
+  export FED_PROFILE=single
+  fed_down
+  local unreg del
+  unreg=$(grep -n "juju unregister fed-host" "$STUB_LOG" | head -1 | cut -d: -f1)
+  del=$(grep -n "kind delete cluster --name host" "$STUB_LOG" | head -1 | cut -d: -f1)
+  [ -n "$unreg" ] && [ -n "$del" ] && [ "$unreg" -lt "$del" ]
 }

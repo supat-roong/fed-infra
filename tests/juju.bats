@@ -181,3 +181,22 @@ EOF
   fed_juju_action demo-ns temporal-admin-k8s/0 cli "args=operator namespace create --retention 3d default"
   assert_called "juju run -m fed-demo:demo-ns temporal-admin-k8s/0 cli"
 }
+
+@test "fed_juju_teardown unregisters the controller and removes the client cloud" {
+  fed_juju_teardown
+  assert_called "juju unregister fed-demo --no-prompt"
+  assert_called "juju remove-cloud fed-demo-k8s --client"
+}
+
+@test "fed_juju_teardown is quiet when controller and cloud are already gone" {
+  export STUB_JUJU_FAIL_GLOB="show-*"
+  fed_juju_teardown
+  refute_called "juju unregister"
+  refute_called "juju remove-cloud"
+}
+
+@test "fed_juju_teardown is a no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_juju_teardown
+  [ -z "$(calls)" ]
+}

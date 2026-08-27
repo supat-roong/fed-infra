@@ -179,3 +179,28 @@ fed_juju_action() {
   controller=$(fed_juju_controller_name)
   fed_juju run -m "${controller}:${model}" "$unit" "$action" "$@"
 }
+
+# Client-state hygiene for fed_down. The kind cluster deletion that follows
+# destroys the in-cluster controller and every model; only the local client's
+# controller/cloud records need cleaning (spike §8: remove-cloud also drops
+# the credential). A machine without the juju CLI has nothing to clean.
+fed_juju_teardown() {
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would unregister the juju controller and remove the kind cloud"
+    return 0
+  fi
+  command -v juju >/dev/null 2>&1 || return 0
+  local cloud controller
+  cloud=$(fed_juju_cloud_name)
+  controller=$(fed_juju_controller_name)
+  if juju show-controller "$controller" >/dev/null 2>&1; then
+    fed_log "unregistering juju controller '${controller}'"
+    juju unregister "$controller" --no-prompt \
+      || fed_warn "could not unregister controller '${controller}'; remove it manually with: juju unregister ${controller}"
+  fi
+  if juju show-cloud --client "$cloud" >/dev/null 2>&1; then
+    fed_log "removing juju cloud '${cloud}' from the client"
+    juju remove-cloud "$cloud" --client \
+      || fed_warn "could not remove cloud '${cloud}'"
+  fi
+}
