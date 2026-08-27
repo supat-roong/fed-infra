@@ -4,7 +4,14 @@ load helper
 @test "fed-infra contains no consumer-specific identifiers" {
   # --exclude=agnostic.bats: this file's own grep patterns are the literal
   # forbidden strings, so without excluding itself it would always match.
-  run grep -rIl --exclude-dir=.git --exclude=agnostic.bats \
+  # --exclude-dir=superpowers/.superpowers: design/plan process docs and the
+  # git-ignored SDD scratch workspace legitimately discuss consumer repos
+  # (e.g. migration follow-ups); the guard protects the library surface --
+  # lib/, bin/, manifests/, kind/, tests/, README -- not project planning
+  # prose. Note grep walks the working tree, so gitignored scratch would
+  # trip an unexcluded guard even though git never ships it.
+  run grep -rIl --exclude-dir=.git --exclude-dir=superpowers \
+    --exclude-dir=.superpowers --exclude=agnostic.bats \
     -e 'active-fed' -e 'fed-twin' "$FED_INFRA_ROOT"
   [ "$status" -ne 0 ] || {
     echo "consumer-specific strings found in: $output" >&2
