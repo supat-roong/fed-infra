@@ -31,3 +31,19 @@ fed_mlflow_install() {
   fed_log "waiting for MLflow server"
   kubectl rollout status deployment/mlflow-server -n "$FED_NAMESPACE" --timeout=300s
 }
+
+# Juju-mode counterpart: mlflow-server charm backed by mysql-k8s (metadata,
+# mysql_client interface — the charm's legacy `mysql` endpoint does NOT
+# match mlflow-server, see spike findings §5) and the minio charm
+# (artifacts, via the object-storage relation).
+fed_mlflow_install_juju() {
+  if ! fed_has_component minio; then
+    fed_die "FED_DEPLOY_MODE=juju requires the minio component when mlflow is enabled (mlflow-server's artifact store is the minio charm), got: $FED_COMPONENTS"
+  fi
+  fed_juju_deploy "$FED_NAMESPACE" mlflow-mysql mysql-k8s "$FED_MYSQL_CHANNEL" --trust
+  fed_juju_deploy "$FED_NAMESPACE" mlflow-server mlflow-server "$FED_MLFLOW_CHANNEL"
+  fed_juju_integrate "$FED_NAMESPACE" mlflow-server:relational-db mlflow-mysql:database
+  fed_juju_integrate "$FED_NAMESPACE" mlflow-server:object-storage minio:object-storage
+  fed_juju_wait_active "$FED_NAMESPACE" mlflow-mysql
+  fed_juju_wait_active "$FED_NAMESPACE" mlflow-server
+}

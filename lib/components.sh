@@ -120,9 +120,13 @@ fed_up_install_components() {
   fi
 
   if fed_has_component mlflow; then
-    fed_mlflow_build_image "$FED_MLFLOW_IMAGE" "$FED_MLFLOW_VERSION"
-    fed_kind_load_image "$FED_MLFLOW_IMAGE" "$FED_CLUSTER_NAME"
-    fed_mlflow_install
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_mlflow_install_juju
+    else
+      fed_mlflow_build_image "$FED_MLFLOW_IMAGE" "$FED_MLFLOW_VERSION"
+      fed_kind_load_image "$FED_MLFLOW_IMAGE" "$FED_CLUSTER_NAME"
+      fed_mlflow_install
+    fi
   fi
 
   if fed_has_component k8s-dashboard; then
@@ -153,8 +157,15 @@ fed_up_install_components() {
   fi
 
   if fed_has_component mlflow; then
-    fed_minio_ensure_bucket "$FED_NAMESPACE" "$FED_S3_ENDPOINT" \
-      "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_expose_nodeport mlflow-server "$FED_NAMESPACE" \
+        "[{\"port\":5000,\"targetPort\":5000,\"nodePort\":${FED_NODEPORT_MLFLOW}}]"
+      fed_minio_ensure_bucket "$FED_NAMESPACE" "minio.${FED_NAMESPACE}.svc.cluster.local:9000" \
+        "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
+    else
+      fed_minio_ensure_bucket "$FED_NAMESPACE" "$FED_S3_ENDPOINT" \
+        "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
+    fi
   fi
 
   if fed_has_component minio; then

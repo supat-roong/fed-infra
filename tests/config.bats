@@ -137,3 +137,9 @@ EOF
   [ "$FED_DEPLOY_MODE" = "auto" ]
   [ "$FED_MINIO_CHANNEL" = "ckf-1.9/stable" ]
 }
+
+@test "fed_config_load defaults the mlflow and mysql channels" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_MLFLOW_CHANNEL" = "2.15/stable" ]
+  [ "$FED_MYSQL_CHANNEL" = "8.0/stable" ]
+}

@@ -6,11 +6,13 @@ setup() {
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/config.sh"
   source "$FED_INFRA_ROOT/lib/render.sh"
+  source "$FED_INFRA_ROOT/lib/juju.sh"
   source "$FED_INFRA_ROOT/lib/mlflow.sh"
   fed_config_defaults
   export FED_NAMESPACE=demo-ns
   export FED_S3_ENDPOINT=minio-service:9000
   export FED_S3_ACCESS_KEY=ak FED_S3_SECRET_KEY=sk FED_S3_BUCKET=arts
+  export FED_CLUSTER_NAME=demo FED_COMPONENTS=minio,mlflow
 }
 
 @test "fed_mlflow_build_image builds when the image is absent" {
@@ -64,4 +66,40 @@ setup() {
 @test "mlflow template does not embed a pip install at pod start" {
   run fed_render "$FED_INFRA_ROOT/manifests/mlflow-server.yaml.tpl"
   [[ "$output" != *"pip install"* ]]
+}
+
+@test "fed_mlflow_install_juju deploys mysql and mlflow-server charms" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='workload:active'
+  fed_mlflow_install_juju
+  assert_called "juju deploy -m fed-demo:demo-ns mysql-k8s mlflow-mysql --channel ${FED_MYSQL_CHANNEL} --trust"
+  assert_called "juju deploy -m fed-demo:demo-ns mlflow-server mlflow-server --channel ${FED_MLFLOW_CHANNEL}"
+}
+
+@test "fed_mlflow_install_juju integrates the database and object-storage relations" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_mlflow_install_juju
+  assert_called "juju integrate -m fed-demo:demo-ns mlflow-server:relational-db mlflow-mysql:database"
+  assert_called "juju integrate -m fed-demo:demo-ns mlflow-server:object-storage minio:object-storage"
+}
+
+@test "fed_mlflow_install_juju waits for both apps" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_mlflow_install_juju
+  assert_called "juju status -m fed-demo:demo-ns mlflow-mysql --format=oneline"
+  assert_called "juju status -m fed-demo:demo-ns mlflow-server --format=oneline"
+}
+
+@test "fed_mlflow_install_juju dies when the minio component is not enabled" {
+  export FED_COMPONENTS=mlflow
+  run fed_mlflow_install_juju
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"minio"* ]]
+}
+
+@test "fed_mlflow_install_juju performs no real side effects under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_mlflow_install_juju
+  [ -z "$(calls)" ]
+  grep -q "mlflow-server" "$FED_RENDER_DIR/juju-commands.txt"
 }
