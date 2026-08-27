@@ -108,3 +108,74 @@ fed_juju_ensure() {
     fi
   done
 }
+
+# fed_juju_deploy <model> <app> <charm> <channel> [extra deploy flags...]
+# Skips silently when the app already exists in the model.
+fed_juju_deploy() {
+  local model=$1 app=$2 charm=$3 channel=$4 controller
+  shift 4
+  controller=$(fed_juju_controller_name)
+  if [ "${FED_DRY_RUN:-0}" != "1" ]; then
+    if juju show-application -m "${controller}:${model}" "$app" >/dev/null 2>&1; then
+      fed_log "juju app '${app}' already deployed in model '${model}'"
+      return 0
+    fi
+    fed_log "deploying '${charm}' as '${app}' into model '${model}' (channel ${channel})"
+  fi
+  fed_juju deploy -m "${controller}:${model}" "$charm" "$app" --channel "$channel" "$@"
+}
+
+# fed_juju_config <model> <app> key=value...  (re-applying is a safe no-op)
+fed_juju_config() {
+  local model=$1 app=$2 controller
+  shift 2
+  controller=$(fed_juju_controller_name)
+  fed_juju config -m "${controller}:${model}" "$app" "$@"
+}
+
+# fed_juju_integrate <model> <endpoint-a> <endpoint-b>
+# `juju integrate` has no --ignore-existing; detect the benign failure by
+# message so re-runs stay green while real endpoint errors still fail.
+fed_juju_integrate() {
+  local model=$1 a=$2 b=$3 controller out rc=0
+  controller=$(fed_juju_controller_name)
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_juju integrate -m "${controller}:${model}" "$a" "$b"
+    return 0
+  fi
+  out=$(juju integrate -m "${controller}:${model}" "$a" "$b" 2>&1) || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    case "$out" in
+      *"already exists"*) fed_log "relation ${a} <-> ${b} already exists" ;;
+      *) fed_warn "juju integrate failed: ${out}"; return "$rc" ;;
+    esac
+  fi
+  return 0
+}
+
+fed_juju_app_active() {
+  local model=$1 app=$2 controller
+  controller=$(fed_juju_controller_name)
+  juju status -m "${controller}:${model}" "$app" --format=oneline 2>/dev/null \
+    | grep -q 'workload:active'
+}
+
+# Poll (never a fixed sleep — same budget rationale as fed_training_install's
+# pod wait) until the app's workload column reports active.
+fed_juju_wait_active() {
+  local model=$1 app=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would wait for '${app}' in model '${model}' to become active"
+    return 0
+  fi
+  fed_log "waiting for '${app}' in model '${model}' to become active"
+  fed_retry "$FED_POD_READY_ATTEMPTS" "$FED_RETRY_DELAY" fed_juju_app_active "$model" "$app"
+}
+
+# fed_juju_action <model> <unit> <action> [param=value...]
+fed_juju_action() {
+  local model=$1 unit=$2 action=$3 controller
+  shift 3
+  controller=$(fed_juju_controller_name)
+  fed_juju run -m "${controller}:${model}" "$unit" "$action" "$@"
+}

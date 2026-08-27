@@ -115,3 +115,69 @@ EOF
   fed_juju_ensure
   [ -z "$(calls)" ]
 }
+
+@test "fed_juju_deploy deploys with app name and channel when the app is absent" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable"
+}
+
+@test "fed_juju_deploy passes extra flags through" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  fed_juju_deploy kubeflow training-operator training-operator 1.8/stable --trust
+  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel 1.8/stable --trust"
+}
+
+@test "fed_juju_deploy skips an already-deployed app" {
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  refute_called "juju deploy"
+}
+
+@test "fed_juju_deploy records the deploy without probing under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  [ -z "$(calls)" ]
+  grep -q "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable" \
+    "$FED_RENDER_DIR/juju-commands.txt"
+}
+
+@test "fed_juju_config applies settings through the seam" {
+  fed_juju_config demo-ns minio access-key=ak secret-key=secret12
+  assert_called "juju config -m fed-demo:demo-ns minio access-key=ak secret-key=secret12"
+}
+
+@test "fed_juju_integrate relates two endpoints" {
+  fed_juju_integrate demo-ns mlflow-server:object-storage minio:object-storage
+  assert_called "juju integrate -m fed-demo:demo-ns mlflow-server:object-storage minio:object-storage"
+}
+
+@test "fed_juju_integrate tolerates an already-existing relation" {
+  export STUB_JUJU_FAIL_GLOB="integrate*"
+  export STUB_JUJU_OUT="ERROR cannot add relation: relation mlflow-server:object-storage minio:object-storage: relation already exists"
+  run fed_juju_integrate demo-ns a:x b:y
+  [ "$status" -eq 0 ]
+}
+
+@test "fed_juju_integrate propagates a real relation error" {
+  export STUB_JUJU_FAIL_GLOB="integrate*"
+  export STUB_JUJU_OUT="ERROR no relations found"
+  run fed_juju_integrate demo-ns a:x b:y
+  [ "$status" -ne 0 ]
+}
+
+@test "fed_juju_wait_active polls status until the workload reports active" {
+  export STUB_JUJU_OUT='- minio/0: agent:idle, workload:active'
+  fed_juju_wait_active demo-ns minio
+  assert_called "juju status -m fed-demo:demo-ns minio --format=oneline"
+}
+
+@test "fed_juju_wait_active is a no-op under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_juju_wait_active demo-ns minio
+  [ -z "$(calls)" ]
+}
+
+@test "fed_juju_action runs an action on a unit through the seam" {
+  fed_juju_action demo-ns temporal-admin-k8s/0 cli "args=operator namespace create --retention 3d default"
+  assert_called "juju run -m fed-demo:demo-ns temporal-admin-k8s/0 cli"
+}
