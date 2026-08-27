@@ -226,6 +226,40 @@ setup() {
   [[ "$output" == *"registration"* ]]
 }
 
+@test "fed_temporal_register_namespace passes the namespace with -n, not positionally" {
+  # The charm's bundled `temporal` CLI warns that a positional namespace is
+  # deprecated ("please switch to using -n instead"); both forms were tried
+  # live on the x86_64 e2e and -n is the accepted one.
+  fed_temporal_register_namespace demo-ns default
+  assert_called "args=operator namespace create --retention 3d -n default"
+}
+
+@test "fed_temporal_register_namespace treats an already-registered namespace as success" {
+  # Every idempotent re-run hits this: the action fails with
+  # "Namespace already exists." while `juju run` itself still exits 0.
+  export STUB_JUJU_OUT='Action id 4 failed: command failed: unable to create namespace default: Namespace already exists.'
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"already registered"* ]] || return 1
+  [[ "$output" != *"may have failed"* ]]
+}
+
+@test "fed_temporal_register_namespace reports success on a first registration" {
+  export STUB_JUJU_OUT='output: Namespace default successfully registered.'
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"may have failed"* ]]
+}
+
+@test "fed_temporal_register_namespace warns on an unrecognised failure even though juju run exits 0" {
+  # `juju run` exits 0 even when the action it ran failed, so a bare
+  # `|| fed_warn` could never fire -- a real failure must still be surfaced.
+  export STUB_JUJU_OUT='Action id 9 failed: command failed: connection refused'
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"may have failed"* ]]
+}
+
 @test "fed_temporal_install_juju performs no real side effects under FED_DRY_RUN=1" {
   export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
   fed_temporal_install_juju demo-ns

@@ -145,9 +145,18 @@ fed_temporal_install_juju() {
 # Consumers' workers heartbeat against the 'default' Temporal namespace; the
 # server does not create it. The admin charm's action is `cli` with a single
 # `args` string (spike findings §7; the old tctl action does not exist).
-# NOTE: the args payload below is the spike's best guess for the newer
-# `temporal` CLI and is verified/corrected during the x86_64 e2e —
-# registration of an existing namespace fails, so failure warns, not dies.
+#
+# Payload verified live on the x86_64 e2e (rev 28): the spike's guess at the
+# newer `temporal` CLI was right, and a first run prints
+# "Namespace default successfully registered." Re-registering an existing
+# namespace makes the ACTION fail with "Namespace already exists." — expected
+# on every idempotent re-run, so this must never abort the bootstrap.
+#
+# `juju run` exits 0 even when the action it ran failed (also verified live),
+# so a plain `|| fed_warn` is dead code and would let a real failure pass
+# silently. Inspect the output instead: swallow the already-exists case, warn
+# about anything else. Same shape as fed_juju_integrate's benign-failure
+# detection, and for the same reason.
 fed_temporal_register_namespace() {
   local model=$1 ns=$2
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then
@@ -155,7 +164,15 @@ fed_temporal_register_namespace() {
     return 0
   fi
   fed_log "registering temporal namespace '${ns}'"
-  fed_juju_action "$model" temporal-admin-k8s/0 cli \
-    "args=operator namespace create --retention 3d ${ns}" \
-    || fed_warn "temporal namespace '${ns}' registration reported failure (likely already registered)"
+  local out
+  out=$(fed_juju_action "$model" temporal-admin-k8s/0 cli \
+    "args=operator namespace create --retention 3d -n ${ns}" 2>&1) || true
+  case "$out" in
+    *"already exists"*)
+      fed_log "temporal namespace '${ns}' already registered" ;;
+    *"successfully registered"*|*"command succeeded"*)
+      fed_log "temporal namespace '${ns}' registered" ;;
+    *)
+      fed_warn "temporal namespace '${ns}' registration may have failed: ${out}" ;;
+  esac
 }
