@@ -24,8 +24,9 @@ any specific consumer — see [Repo agnosticism](#repo-agnosticism) below.
   [shellcheck](https://www.shellcheck.net/) for development.
 - `kind`, `kubectl`, `docker`, `envsubst`, `helm` on `PATH` for actually
   bringing up a cluster (not needed just to run the test suite, which stubs
-  them). `helm` is required unconditionally — manifests-mode `temporal`
-  uses it regardless of `FED_DEPLOY_MODE`.
+  them). `helm` is required whenever the `temporal` component is enabled
+  and resolves to manifests mode (the default on arm64) — juju mode's
+  `fed_temporal_install_juju` never calls `helm`.
 - `juju` 3.6.x — only for `FED_DEPLOY_MODE=juju`. Homebrew's `juju` formula
   installs 4.x, which cannot deploy these charms (they assert `juju <
   4.0.0`, and Juju 4 dropped support for the pod-spec charms this stack
@@ -56,10 +57,13 @@ repeatedly. Environment variables use the `FED_` prefix.
 - **`juju`** installs the same four components as Charmhub charms instead
   (`lib/juju.sh`, plus each component's `_install_juju` counterpart), backed
   by `mysql-k8s` (mlflow) and `postgresql-k8s` (temporal). It needs an
-  **amd64 Docker daemon** — every charm in this stack is amd64-only on every
-  channel (2026-08-28 arm64 spike). On Apple Silicon that means a dedicated
-  x86_64 Colima profile, not the default arm64 one. Requires the `juju`
-  3.6.x client — see [Requirements](#requirements).
+  **amd64 Docker daemon** — every charm in this stack is amd64-only on
+  every *stable* channel this project uses; the lone arm64 revision
+  anywhere is `mysql-k8s` on `8.0/edge` (2026-08-28 arm64 spike, §4), which
+  is untested here and not what `FED_MYSQL_CHANNEL` defaults to. On Apple
+  Silicon that means a dedicated x86_64 Colima profile, not the default
+  arm64 one. Requires the `juju` 3.6.x client — see
+  [Requirements](#requirements).
 - **`auto`** resolves to `juju` iff `docker version --format
   '{{.Server.Arch}}'` reports `amd64`; otherwise `manifests`. kind nodes
   inherit the Docker *daemon's* architecture, not the host CPU's, so this is
