@@ -126,6 +126,17 @@ fed_temporal_install_juju() {
   fed_juju_integrate "$model" temporal-k8s:visibility temporal-postgresql:database
   fed_juju_integrate "$model" temporal-k8s:admin temporal-admin-k8s:admin
   fed_juju_integrate "$model" temporal-ui-k8s:ui temporal-k8s:ui
+  # temporal-host-info is a *required* endpoint on both temporal-admin-k8s and
+  # temporal-ui-k8s (`juju info` lists it under `requires` for each), provided
+  # by temporal-k8s. The spike could only flag this as UNVERIFIED because no
+  # workload ever started; the x86_64 e2e confirmed temporal-ui-k8s sits
+  #   blocked: temporal-host-info relation not established
+  # indefinitely without it, even once temporal-k8s itself is active. The admin
+  # charm reaches active without it (it gets its database info over the `admin`
+  # relation) but needs the frontend address this relation carries to run the
+  # `cli` action, i.e. to register the namespace below.
+  fed_juju_integrate "$model" temporal-ui-k8s:temporal-host-info temporal-k8s:temporal-host-info
+  fed_juju_integrate "$model" temporal-admin-k8s:temporal-host-info temporal-k8s:temporal-host-info
   fed_juju_wait_active "$model" temporal-k8s
   fed_juju_wait_active "$model" temporal-ui-k8s
   fed_temporal_register_namespace "$model" default

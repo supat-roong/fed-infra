@@ -192,6 +192,27 @@ setup() {
   assert_called "juju integrate -m fed-demo:demo-ns temporal-ui-k8s:ui temporal-k8s:ui"
 }
 
+@test "fed_temporal_install_juju wires temporal-host-info for both the ui and admin charms" {
+  # A required endpoint on both charms. Without it temporal-ui-k8s stays
+  # blocked on "temporal-host-info relation not established" forever, even
+  # after temporal-k8s reaches active (observed live on the x86_64 e2e).
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-ui-k8s:temporal-host-info temporal-k8s:temporal-host-info"
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-admin-k8s:temporal-host-info temporal-k8s:temporal-host-info"
+}
+
+@test "fed_temporal_install_juju wires temporal-host-info before waiting for the ui charm" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  local rel_line wait_line
+  rel_line=$(grep -n "temporal-ui-k8s:temporal-host-info" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  wait_line=$(grep -n "status -m fed-demo:demo-ns temporal-ui-k8s" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  [ -n "$rel_line" ]
+  [ -n "$wait_line" ]
+  [ "$rel_line" -lt "$wait_line" ]
+}
+
 @test "fed_temporal_install_juju registers the default namespace via the cli action" {
   export STUB_JUJU_OUT='workload:active'
   fed_temporal_install_juju demo-ns
