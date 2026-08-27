@@ -23,6 +23,22 @@ fed_up() {
   # who doesn't have the juju CLI installed at all.
   FED_DEPLOY_MODE_RESOLVED=$(fed_deploy_mode)
   export FED_DEPLOY_MODE_RESOLVED
+
+  # Design Addendum §8 ("Multi profile and dashboards: unchanged -- bash
+  # only, as before.") keeps FED_PROFILE=multi on the manifests path
+  # unconditionally, so pin the resolution here -- before fed_juju_require
+  # and fed_up_install_components ever see it -- rather than trusting every
+  # call site to re-check FED_PROFILE. Without this, `auto` on an amd64
+  # daemon (or an explicit FED_DEPLOY_MODE=juju) would resolve to "juju" and
+  # walk a multi-profile consumer into the untested juju branches.
+  if [ "$FED_PROFILE" = "multi" ]; then
+    if [ "${FED_DEPLOY_MODE:-auto}" = "juju" ]; then
+      fed_warn "FED_DEPLOY_MODE=juju has no effect under FED_PROFILE=multi; multi stays on the manifests path (design Addendum §8)"
+    fi
+    FED_DEPLOY_MODE_RESOLVED=manifests
+    export FED_DEPLOY_MODE_RESOLVED
+  fi
+
   if [ "$FED_DEPLOY_MODE_RESOLVED" = "juju" ] && fed_juju_components_enabled \
      && [ "${FED_DRY_RUN:-0}" != "1" ]; then
     fed_juju_require

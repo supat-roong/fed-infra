@@ -38,9 +38,15 @@ fed_juju_require() {
   esac
 }
 
-# Single execution seam: every mutating juju call goes through here so a dry
-# run can log (and record under FED_RENDER_DIR, keeping `make contracts`'s
-# non-empty-render-dir check meaningful for juju-mode fixtures).
+# Execution seam for juju's deploy/config/integrate/action calls: routing
+# them through here lets a dry run log (and record under FED_RENDER_DIR,
+# keeping `make contracts`'s non-empty-render-dir check meaningful for
+# juju-mode fixtures) instead of executing. fed_juju_ensure and
+# fed_juju_teardown intentionally bypass this seam -- each calls `juju`
+# directly, guarded by its own FED_DRY_RUN check -- because their
+# idempotency probes (juju show-cloud/show-controller/show-model) need real
+# command output to branch on, which the seam's log-and-return can't give
+# them.
 fed_juju() {
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then
     fed_log "dry-run: juju $*"

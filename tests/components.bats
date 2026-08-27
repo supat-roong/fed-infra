@@ -309,6 +309,33 @@ source_multi_libs() {
   refute_called "kubectl apply -k"
 }
 
+# Design Addendum §8: "Multi profile and dashboards: unchanged -- bash only,
+# as before." A multi-profile consumer must never reach the juju branches,
+# even if they explicitly asked for FED_DEPLOY_MODE=juju -- fed_up is
+# expected to force manifests and say why, rather than silently ignoring the
+# setting or (worse) honoring it.
+@test "fed_up multi stays on the manifests path with FED_DEPLOY_MODE=juju, and warns" {
+  source_multi_libs
+  export FED_DEPLOY_MODE=juju
+  export FED_COMPONENTS="minio"
+  run fed_up
+  [ "$status" -eq 0 ]
+  refute_called "juju "
+  [[ "$output" == *"FED_DEPLOY_MODE=juju has no effect under FED_PROFILE=multi"* ]]
+}
+
+@test "fed_up multi stays on the manifests path under auto on an amd64 daemon" {
+  source_multi_libs
+  # source_multi_libs sets STUB_DOCKER_OUT=10.0.0.5 for fed_karmada_join's IP
+  # patch; override it after the call so `docker version --format
+  # '{{.Server.Arch}}'` (fed_deploy_mode's auto probe) reports amd64, the
+  # signal that would resolve to juju outside the multi profile.
+  export STUB_DOCKER_OUT=amd64
+  export FED_COMPONENTS="minio"
+  fed_up
+  refute_called "juju "
+}
+
 @test "fed_up installs the Kubernetes Dashboard when k8s-dashboard is listed, using FED_K8S_DASHBOARD_VERSION" {
   source_multi_libs
   export FED_COMPONENTS="k8s-dashboard" FED_K8S_DASHBOARD_VERSION=v9.9.9
