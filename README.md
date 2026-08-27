@@ -22,8 +22,17 @@ any specific consumer — see [Repo agnosticism](#repo-agnosticism) below.
   `${var,,}`, no `mapfile`).
 - [bats-core](https://github.com/bats-core/bats-core) and
   [shellcheck](https://www.shellcheck.net/) for development.
-- `kind`, `kubectl`, `docker`, `envsubst` on `PATH` for actually bringing up
-  a cluster (not needed just to run the test suite, which stubs them).
+- `kind`, `kubectl`, `docker`, `envsubst`, `helm` on `PATH` for actually
+  bringing up a cluster (not needed just to run the test suite, which stubs
+  them). `helm` is required unconditionally — manifests-mode `temporal`
+  uses it regardless of `FED_DEPLOY_MODE`.
+- `juju` 3.6.x — only for `FED_DEPLOY_MODE=juju`. Homebrew's `juju` formula
+  installs 4.x, which cannot deploy these charms (they assert `juju <
+  4.0.0`, and Juju 4 dropped support for the pod-spec charms this stack
+  uses); install a 3.6.x client from the [GitHub releases
+  page](https://github.com/juju/juju/releases) instead. `fed_juju_require`
+  checks this and dies with the same guidance if it's missing or the wrong
+  major version. See [Deploy modes](#deploy-modes).
 
 ## Development
 
@@ -35,6 +44,60 @@ make test    # bats only
 
 Every function is prefixed `fed_` and must be idempotent — safe to run
 repeatedly. Environment variables use the `FED_` prefix.
+
+## Deploy modes
+
+`FED_DEPLOY_MODE` (`auto` by default) picks how the `minio`, `mlflow`,
+`temporal`, and `training` components get installed:
+
+- **`manifests`** is the primary, always-works path: the bash/kustomize/Helm
+  install described throughout this README. It runs on any architecture,
+  arm64 included, and needs no `juju` client.
+- **`juju`** installs the same four components as Charmhub charms instead
+  (`lib/juju.sh`, plus each component's `_install_juju` counterpart), backed
+  by `mysql-k8s` (mlflow) and `postgresql-k8s` (temporal). It needs an
+  **amd64 Docker daemon** — every charm in this stack is amd64-only on every
+  channel (2026-08-28 arm64 spike). On Apple Silicon that means a dedicated
+  x86_64 Colima profile, not the default arm64 one. Requires the `juju`
+  3.6.x client — see [Requirements](#requirements).
+- **`auto`** resolves to `juju` iff `docker version --format
+  '{{.Server.Arch}}'` reports `amd64`; otherwise `manifests`. kind nodes
+  inherit the Docker *daemon's* architecture, not the host CPU's, so this is
+  the correct signal even when the daemon itself runs a foreign-arch VM.
+  `auto` never probes docker under `FED_DRY_RUN=1` (dry run performs no
+  side effects at all, not even a read-only probe) and always resolves to
+  `manifests` there; set `FED_DEPLOY_MODE=juju` explicitly to dry-run the
+  juju command stream instead.
+
+A few things hold regardless of mode:
+
+- **`kfp` always uses the kustomize path**, in both modes — see the comment
+  header of `lib/kfp.sh`. The kfp charm family is amd64-only on every
+  Charmhub channel with no arm64 revisions anywhere, so a charm-based kfp
+  stays out of scope for now.
+- **`FED_PROFILE=multi` and the dashboard components
+  (`k8s-dashboard`/`karmada-dashboard`) are manifests-only.** There is no
+  juju equivalent for either, and `FED_DEPLOY_MODE` has no effect on them.
+- **Service names differ by mode**, since manifests-mode Deployments/
+  StatefulSets and juju-mode charm applications aren't the same objects —
+  e.g. standalone MinIO is Service `minio-service` under manifests but
+  `minio` under juju; MLflow is `mlflow-service` under manifests but
+  `mlflow-server` under juju. These differences live entirely inside
+  `lib/components.sh`'s per-mode branches; the NodePort/hostPort contract a
+  consumer actually depends on is identical in both modes.
+- **`FED_S3_ACCESS_KEY`/`FED_S3_SECRET_KEY` double as the `minio` charm's
+  `access-key`/`secret-key` config** in juju mode. The charm requires
+  `secret-key` to be at least 8 characters; if either variable is unset,
+  `fed_minio_install_juju` warns and leaves the charm on its own random
+  default rather than failing setup. See the "Consumer-supplied, no
+  default" table below for the manifests-mode meaning of the same two
+  variables.
+- **juju's cloud, controller, and model names are derived, never
+  user-set**: cloud `fed-<FED_CLUSTER_NAME>-k8s`, controller
+  `fed-<FED_CLUSTER_NAME>`, and models named after the namespaces they
+  back — `$FED_NAMESPACE` for `minio`/`mlflow`/`temporal`, plus the
+  hardcoded `kubeflow` model when `training` is enabled (deduplicated if a
+  consumer happens to set `FED_NAMESPACE=kubeflow`).
 
 ## The `infra.env` contract
 
@@ -75,6 +138,15 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_HOSTPORT_MINIO_CONSOLE` | `9001` | Host port mapped to `FED_NODEPORT_MINIO_CONSOLE`. |
 | `FED_DRY_RUN` | `0` | Set to `1` to render manifests and log intended actions without touching Docker/kind/kubectl. See [Dry run](#dry-run). |
 | `FED_RENDER_DIR` | `` (empty) | Output directory for rendered manifests when `FED_DRY_RUN=1`. Required in that mode — `fed_apply` dies if it's unset. |
+| `FED_DEPLOY_MODE` | `auto` | `auto` \| `manifests` \| `juju`. See [Deploy modes](#deploy-modes). |
+| `FED_MINIO_CHANNEL` | `ckf-1.9/stable` | **juju mode only.** Charmhub channel for the `minio` charm (`fed_minio_install_juju`). |
+| `FED_MYSQL_CHANNEL` | `8.0/stable` | **juju mode only.** Charmhub channel for the `mysql-k8s` charm backing `mlflow-server` (`fed_mlflow_install_juju`). |
+| `FED_MLFLOW_CHANNEL` | `2.15/stable` | **juju mode only.** Charmhub channel for the `mlflow-server` charm. |
+| `FED_POSTGRESQL_CHANNEL` | `14/stable` | **juju mode only.** Charmhub channel for the `postgresql-k8s` charm backing Temporal (`fed_temporal_install_juju`). |
+| `FED_TEMPORAL_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-k8s` charm. No `latest` track exists for this charm family. |
+| `FED_TEMPORAL_ADMIN_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-admin-k8s` charm. |
+| `FED_TEMPORAL_UI_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-ui-k8s` charm. |
+| `FED_TRAINING_CHANNEL` | `1.8/stable` | **juju mode only.** Charmhub channel for the `training-operator` charm (`fed_training_install_juju`). |
 
 ### Consumer-supplied, no default (required in practice, not schema-enforced)
 
@@ -84,8 +156,8 @@ fail partway through if they're missing and needed:
 
 | Variable | Used by | Meaning |
 |---|---|---|
-| `FED_S3_ENDPOINT` | `mlflow`, and the post-install bucket step for both `mlflow` and `kfp` | `host:port` of the S3-compatible store backing MLflow's artifact root — this can be the consumer's own standalone MinIO (`minio-service.<FED_NAMESPACE>...`) or a shared one (e.g. KFP's own bundled MinIO in `kubeflow`). |
-| `FED_S3_ACCESS_KEY` / `FED_S3_SECRET_KEY` | same as above | Credentials for that endpoint. Rendered into the MLflow Deployment's env and used by the `mc`-based bucket-provisioning pod. |
+| `FED_S3_ENDPOINT` | `mlflow`, and the post-install bucket step for both `mlflow` and `kfp` — **manifests mode only**; juju mode hardcodes the minio charm's in-cluster Service address instead and never reads this variable. | `host:port` of the S3-compatible store backing MLflow's artifact root — this can be the consumer's own standalone MinIO (`minio-service.<FED_NAMESPACE>...`) or a shared one (e.g. KFP's own bundled MinIO in `kubeflow`). `fed_config_validate` requires it whenever `mlflow` is enabled regardless of `FED_DEPLOY_MODE`, since the effective mode (relevant for `auto`) isn't known until later — so it must be set even for a consumer that expects to land in juju mode. |
+| `FED_S3_ACCESS_KEY` / `FED_S3_SECRET_KEY` | same as above, in both modes | In manifests mode: credentials for `FED_S3_ENDPOINT`, rendered into the MLflow Deployment's env and used by the `mc`-based bucket-provisioning pod. In juju mode: these double as the `minio` charm's `access-key`/`secret-key` config (`fed_minio_install_juju`) — the charm requires `secret-key` to be at least 8 characters; if either variable is unset, the charm keeps its own random default instead of failing setup. See [Deploy modes](#deploy-modes). |
 
 ### Internal / derived (never set in `infra.env`)
 
