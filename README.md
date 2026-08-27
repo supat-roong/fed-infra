@@ -63,7 +63,11 @@ repeatedly. Environment variables use the `FED_` prefix.
   is untested here and not what `FED_MYSQL_CHANNEL` defaults to. On Apple
   Silicon that means a dedicated x86_64 Colima profile, not the default
   arm64 one. Requires the `juju` 3.6.x client — see
-  [Requirements](#requirements).
+  [Requirements](#requirements). In juju mode, `mlflow` requires the `minio`
+  component too: mlflow-server's artifact store is the `minio` charm, wired
+  through the `object-storage` relation, and `fed_mlflow_install_juju` dies
+  immediately if `minio` is missing from `FED_COMPONENTS`. Manifests mode has
+  no such coupling — any S3-compatible endpoint at `FED_S3_ENDPOINT` works.
 - **`auto`** resolves to `juju` iff `docker version --format
   '{{.Server.Arch}}'` reports `amd64`; otherwise `manifests`. kind nodes
   inherit the Docker *daemon's* architecture, not the host CPU's, so this is
@@ -161,8 +165,8 @@ fail partway through if they're missing and needed:
 
 | Variable | Used by | Meaning |
 |---|---|---|
-| `FED_S3_ENDPOINT` | `mlflow`, and the post-install bucket step for both `mlflow` and `kfp` — **manifests mode only**; juju mode hardcodes the minio charm's in-cluster Service address instead and never reads this variable. | `host:port` of the S3-compatible store backing MLflow's artifact root — this can be the consumer's own standalone MinIO (`minio-service.<FED_NAMESPACE>...`) or a shared one (e.g. KFP's own bundled MinIO in `kubeflow`). `fed_config_validate` requires it whenever `mlflow` is enabled regardless of `FED_DEPLOY_MODE`, since the effective mode (relevant for `auto`) isn't known until later — so it must be set even for a consumer that expects to land in juju mode. |
-| `FED_S3_ACCESS_KEY` / `FED_S3_SECRET_KEY` | same as above, in both modes | In manifests mode: credentials for `FED_S3_ENDPOINT`, rendered into the MLflow Deployment's env and used by the `mc`-based bucket-provisioning pod. In juju mode: these double as the `minio` charm's `access-key`/`secret-key` config (`fed_minio_install_juju`) — the charm requires `secret-key` to be at least 8 characters; if either variable is unset, the charm keeps its own random default instead of failing setup. See [Deploy modes](#deploy-modes). |
+| `FED_S3_ENDPOINT` | `mlflow` only, **manifests mode only** — rendered into the MLflow Deployment's env and read again by mlflow's own post-install bucket step (`fed_minio_ensure_bucket`); juju mode hardcodes the minio charm's in-cluster Service address instead and never reads this variable. **Not** read by kfp's post-install bucket step in either mode — that step always hardcodes KFP's own bundled-minio defaults (`minio`/`minio123`), never `FED_S3_*`. | `host:port` of the S3-compatible store backing MLflow's artifact root — this can be the consumer's own standalone MinIO (`minio-service.<FED_NAMESPACE>...`) or a shared one (e.g. KFP's own bundled MinIO in `kubeflow`). `fed_config_validate` requires it whenever `mlflow` is enabled regardless of `FED_DEPLOY_MODE`, since the effective mode (relevant for `auto`) isn't known until later — so it must be set even for a consumer that expects to land in juju mode. |
+| `FED_S3_ACCESS_KEY` / `FED_S3_SECRET_KEY` | `minio` and `mlflow`, in manifests mode; `minio` only, in juju mode | In manifests mode: `minio`'s own root credentials (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`), and — paired with `FED_S3_ENDPOINT` above — credentials for `mlflow`'s Deployment env and its `mc`-based bucket-provisioning step. In juju mode: these double as the `minio` charm's `access-key`/`secret-key` config (`fed_minio_install_juju`) — the charm requires `secret-key` to be at least 8 characters; if either variable is unset, the charm keeps its own random default instead of failing setup. juju-mode `mlflow` never reads these directly; it gets credentials from the minio charm via the `object-storage` relation instead. See [Deploy modes](#deploy-modes). |
 
 ### Internal / derived (never set in `infra.env`)
 
