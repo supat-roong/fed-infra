@@ -96,3 +96,41 @@ fed_temporal_install() {
   fed_log "waiting for the Temporal frontend"
   kubectl rollout status deployment/temporal-frontend -n "$ns" --timeout=600s || return 1
 }
+
+# Juju-mode counterpart: Charmed Temporal (temporal-k8s family) backed by
+# postgresql-k8s. The server needs postgresql related twice — default (db)
+# store and visibility store — and the admin charm initializes both schemas.
+# Channels are 1.23/stable: the temporal charms publish NO latest track
+# (spike findings §4).
+fed_temporal_install_juju() {
+  local model=$1
+  fed_juju_deploy "$model" temporal-k8s temporal-k8s "$FED_TEMPORAL_CHANNEL"
+  fed_juju_deploy "$model" temporal-admin-k8s temporal-admin-k8s "$FED_TEMPORAL_ADMIN_CHANNEL"
+  fed_juju_deploy "$model" temporal-ui-k8s temporal-ui-k8s "$FED_TEMPORAL_UI_CHANNEL"
+  fed_juju_deploy "$model" temporal-postgresql postgresql-k8s "$FED_POSTGRESQL_CHANNEL" --trust
+  fed_juju_integrate "$model" temporal-k8s:db temporal-postgresql:database
+  fed_juju_integrate "$model" temporal-k8s:visibility temporal-postgresql:database
+  fed_juju_integrate "$model" temporal-k8s:admin temporal-admin-k8s:admin
+  fed_juju_integrate "$model" temporal-ui-k8s:ui temporal-k8s:ui
+  fed_juju_wait_active "$model" temporal-k8s
+  fed_juju_wait_active "$model" temporal-ui-k8s
+  fed_temporal_register_namespace "$model" default
+}
+
+# Consumers' workers heartbeat against the 'default' Temporal namespace; the
+# server does not create it. The admin charm's action is `cli` with a single
+# `args` string (spike findings §7; the old tctl action does not exist).
+# NOTE: the args payload below is the spike's best guess for the newer
+# `temporal` CLI and is verified/corrected during the x86_64 e2e —
+# registration of an existing namespace fails, so failure warns, not dies.
+fed_temporal_register_namespace() {
+  local model=$1 ns=$2
+  if [ "${FED_DRY_RUN:-0}" = "1" ]; then
+    fed_log "dry-run: would register temporal namespace '${ns}'"
+    return 0
+  fi
+  fed_log "registering temporal namespace '${ns}'"
+  fed_juju_action "$model" temporal-admin-k8s/0 cli \
+    "args=operator namespace create --retention 3d ${ns}" \
+    || fed_warn "temporal namespace '${ns}' registration reported failure (likely already registered)"
+}

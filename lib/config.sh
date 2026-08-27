@@ -84,6 +84,13 @@ fed_config_defaults() {
   # fed_mlflow_install_juju): mlflow-server and its mysql-k8s backing store.
   : "${FED_MLFLOW_CHANNEL:=2.15/stable}"
   : "${FED_MYSQL_CHANNEL:=8.0/stable}"
+  # Charm channels for juju-mode temporal (lib/temporal.sh's
+  # fed_temporal_install_juju): the temporal-k8s family publishes NO latest
+  # track (spike findings §4), and its backing postgresql-k8s store.
+  : "${FED_TEMPORAL_CHANNEL:=1.23/stable}"
+  : "${FED_TEMPORAL_ADMIN_CHANNEL:=1.23/stable}"
+  : "${FED_TEMPORAL_UI_CHANNEL:=1.23/stable}"
+  : "${FED_POSTGRESQL_CHANNEL:=14/stable}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -98,7 +105,9 @@ fed_config_defaults() {
          FED_K8S_DASHBOARD_VERSION FED_NODEPORT_K8S_DASHBOARD FED_HOSTPORT_K8S_DASHBOARD \
          FED_NODEPORT_KARMADA_DASHBOARD FED_HOSTPORT_KARMADA_DASHBOARD \
          FED_POD_READY_ATTEMPTS FED_RETRY_DELAY \
-         FED_DEPLOY_MODE FED_MINIO_CHANNEL FED_MLFLOW_CHANNEL FED_MYSQL_CHANNEL
+         FED_DEPLOY_MODE FED_MINIO_CHANNEL FED_MLFLOW_CHANNEL FED_MYSQL_CHANNEL \
+         FED_TEMPORAL_CHANNEL FED_TEMPORAL_ADMIN_CHANNEL FED_TEMPORAL_UI_CHANNEL \
+         FED_POSTGRESQL_CHANNEL
 }
 
 fed_config_validate() {

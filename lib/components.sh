@@ -108,7 +108,11 @@ fed_up_install_components() {
   fi
 
   if fed_has_component temporal; then
-    fed_temporal_install "$FED_TEMPORAL_NAMESPACE" "$FED_TEMPORAL_VERSION"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_temporal_install_juju "$FED_NAMESPACE"
+    else
+      fed_temporal_install "$FED_TEMPORAL_NAMESPACE" "$FED_TEMPORAL_VERSION"
+    fi
   fi
 
   if fed_has_component minio; then
@@ -152,8 +156,13 @@ fed_up_install_components() {
   fi
 
   if fed_has_component temporal; then
-    fed_expose_nodeport temporal-web "$FED_TEMPORAL_NAMESPACE" \
-      "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_expose_nodeport temporal-ui-k8s "$FED_NAMESPACE" \
+        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
+    else
+      fed_expose_nodeport temporal-web "$FED_TEMPORAL_NAMESPACE" \
+        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
+    fi
   fi
 
   if fed_has_component mlflow; then

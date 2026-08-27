@@ -6,9 +6,11 @@ setup() {
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/config.sh"
   source "$FED_INFRA_ROOT/lib/render.sh"
+  source "$FED_INFRA_ROOT/lib/juju.sh"
   source "$FED_INFRA_ROOT/lib/temporal.sh"
   fed_config_defaults
   export FED_NAMESPACE=demo-ns
+  export FED_CLUSTER_NAME=demo FED_COMPONENTS=temporal
   # Default precondition: no Temporal release yet, i.e. a clean cluster, which
   # is what every install-path test below assumes. `helm status` succeeding is
   # the "already installed" case and is opted into explicitly by the tests
@@ -139,4 +141,43 @@ setup() {
   fed_temporal_install demo-ns 0.62.0
   refute_called "helm upgrade"
   assert_called "rollout status deployment/temporal-frontend"
+}
+
+@test "fed_temporal_install_juju deploys server, admin, ui, and postgresql charms" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-k8s temporal-k8s --channel ${FED_TEMPORAL_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-admin-k8s temporal-admin-k8s --channel ${FED_TEMPORAL_ADMIN_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-ui-k8s temporal-ui-k8s --channel ${FED_TEMPORAL_UI_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:demo-ns postgresql-k8s temporal-postgresql --channel ${FED_POSTGRESQL_CHANNEL} --trust"
+}
+
+@test "fed_temporal_install_juju integrates db, visibility, admin, and ui relations" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-k8s:db temporal-postgresql:database"
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-k8s:visibility temporal-postgresql:database"
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-k8s:admin temporal-admin-k8s:admin"
+  assert_called "juju integrate -m fed-demo:demo-ns temporal-ui-k8s:ui temporal-k8s:ui"
+}
+
+@test "fed_temporal_install_juju registers the default namespace via the cli action" {
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  assert_called "juju run -m fed-demo:demo-ns temporal-admin-k8s/0 cli"
+}
+
+@test "fed_temporal_register_namespace warns but succeeds when the action fails" {
+  export STUB_JUJU_FAIL_GLOB="run *"
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"registration"* ]]
+}
+
+@test "fed_temporal_install_juju performs no real side effects under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_temporal_install_juju demo-ns
+  [ -z "$(calls)" ]
+  grep -q "temporal-k8s" "$FED_RENDER_DIR/juju-commands.txt"
 }
