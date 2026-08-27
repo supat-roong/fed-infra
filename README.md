@@ -151,6 +151,7 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_TEMPORAL_ADMIN_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-admin-k8s` charm. |
 | `FED_TEMPORAL_UI_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-ui-k8s` charm. |
 | `FED_TRAINING_CHANNEL` | `1.8/stable` | **juju mode only.** Charmhub channel for the `training-operator` charm (`fed_training_install_juju`). |
+| `FED_TEMPORAL_NUM_HISTORY_SHARDS` | `4` | **juju mode only.** The `temporal-k8s` charm's `num-history-shards` config, which has no charm-side default — the charm stays `blocked` until it is set to a positive power of 2. **Schema-locked:** Temporal pins the shard count permanently when the schema is first initialized, so this can only be chosen on the *first* bring-up; changing it later has no effect and requires destroying and recreating the deployment. `4` suits a single-node local cluster — raise it up front for anything larger. |
 
 ### Consumer-supplied, no default (required in practice, not schema-enforced)
 
