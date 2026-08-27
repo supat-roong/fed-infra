@@ -162,7 +162,7 @@ fed_up_install_components() {
   if fed_has_component temporal; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
       fed_expose_nodeport temporal-ui-k8s "$FED_NAMESPACE" \
-        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
+        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]" merge
     else
       fed_expose_nodeport temporal-web "$FED_TEMPORAL_NAMESPACE" \
         "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
@@ -172,7 +172,7 @@ fed_up_install_components() {
   if fed_has_component mlflow; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
       fed_expose_nodeport mlflow-server "$FED_NAMESPACE" \
-        "[{\"port\":5000,\"targetPort\":5000,\"nodePort\":${FED_NODEPORT_MLFLOW}}]"
+        "[{\"port\":5000,\"targetPort\":5000,\"nodePort\":${FED_NODEPORT_MLFLOW}}]" merge
       fed_minio_ensure_bucket "$FED_NAMESPACE" "minio.${FED_NAMESPACE}.svc.cluster.local:9000" \
         "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
     else
@@ -184,7 +184,7 @@ fed_up_install_components() {
   if fed_has_component minio; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
       fed_expose_nodeport minio "$FED_NAMESPACE" \
-        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
+        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]" merge
     else
       fed_expose_nodeport minio-service "$FED_NAMESPACE" \
         "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"

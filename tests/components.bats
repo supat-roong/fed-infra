@@ -193,6 +193,22 @@ source_multi_libs() {
   assert_called '"type":"NodePort"'
 }
 
+@test "fed_expose_nodeport omits --type entirely when no patch type is given" {
+  # The manifests path must keep issuing exactly the command it always has:
+  # kubectl's default (strategic) patch, with no --type flag at all.
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/nodeport.sh"
+  fed_expose_nodeport mysvc myns '[{"port":80,"targetPort":3000,"nodePort":30080}]'
+  refute_called "--type"
+}
+
+@test "fed_expose_nodeport passes a requested patch type through to kubectl" {
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/nodeport.sh"
+  fed_expose_nodeport mysvc myns '[{"port":80,"targetPort":3000,"nodePort":30080}]' merge
+  assert_called "kubectl patch service mysvc -n myns --type=merge"
+}
+
 # --- fed_up / fed_down: multi profile ---
 
 @test "fed_up multi creates the host cluster and the default number of member clusters" {
@@ -434,6 +450,33 @@ juju_mode_env() {
   fed_up
   assert_called "kubectl patch service minio -n demo-ns"
   refute_called "kubectl patch service minio-service"
+}
+
+@test "fed_up in juju mode uses a merge patch for every charm NodePort" {
+  # Charm Services carry a named placeholder:65535 port. A strategic patch
+  # merges our port in beside it, producing a multi-port Service with an
+  # unnamed port, which Kubernetes rejects outright:
+  #   spec.ports[0].name: Required value
+  # Observed live on temporal-ui-k8s during the x86_64 e2e; a merge patch
+  # replaces the ports list instead. mlflow-server has the same placeholder.
+  juju_mode_env
+  export FED_COMPONENTS="minio,mlflow,temporal"
+  fed_up
+  assert_called "kubectl patch service temporal-ui-k8s -n demo-ns --type=merge"
+  assert_called "kubectl patch service mlflow-server -n demo-ns --type=merge"
+  assert_called "kubectl patch service minio -n demo-ns --type=merge"
+}
+
+@test "fed_up in manifests mode never uses a merge patch for NodePorts" {
+  # Guards the manifests path against the juju fix leaking into it.
+  source_libs
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_PROFILE=single
+  export FED_COMPONENTS="minio,mlflow,temporal"
+  export FED_DEPLOY_MODE=manifests
+  export FED_S3_ENDPOINT=minio.demo-ns:9000 FED_S3_ACCESS_KEY=a FED_S3_SECRET_KEY=bbbbbbbb
+  fed_config_defaults
+  fed_up
+  refute_called "--type=merge"
 }
 
 @test "fed_up in manifests mode never calls juju" {
