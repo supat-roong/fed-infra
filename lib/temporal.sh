@@ -157,22 +157,70 @@ fed_temporal_install_juju() {
 # silently. Inspect the output instead: swallow the already-exists case, warn
 # about anything else. Same shape as fed_juju_integrate's benign-failure
 # detection, and for the same reason.
+#
+# Detection alone is not enough, though: on a cold bring-up the action fires
+# at a workload container that may not exist yet ("cannot connect to
+# container" was exactly the spike's failure), so the path waits for the admin
+# unit first and then retries, rather than warning once and walking away.
 fed_temporal_register_namespace() {
   local model=$1 ns=$2
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then
     fed_log "dry-run: would register temporal namespace '${ns}'"
     return 0
   fi
+
+  # The `cli` action runs INSIDE the admin charm's workload container, so
+  # firing it before that unit is active fails for a reason that has nothing
+  # to do with the namespace. Non-fatal on purpose: if the unit never reports
+  # active the retry loop below is still a better answer than aborting, and it
+  # keeps this whole function never-die. The two sibling waits in
+  # fed_temporal_install_juju stay fatal because a dead server or UI really is
+  # a failed bring-up; a missing namespace is recoverable by hand.
+  fed_juju_wait_active "$model" temporal-admin-k8s \
+    || fed_warn "temporal-admin-k8s did not report active; attempting namespace registration anyway"
+
   fed_log "registering temporal namespace '${ns}'"
-  local out
-  out=$(fed_juju_action "$model" temporal-admin-k8s/0 cli \
-    "args=operator namespace create --retention 3d -n ${ns}" 2>&1) || true
-  case "$out" in
+  FED_TEMPORAL_REGISTER_OUT=""
+  if fed_retry "$FED_POD_READY_ATTEMPTS" "$FED_RETRY_DELAY" \
+       fed_temporal_register_attempt "$model" "$ns"; then
+    return 0
+  fi
+
+  # Never die -- a consumer's workers can be pointed at a namespace registered
+  # after the fact, so a failure here must not cost them the whole cluster.
+  # But say exactly how to finish the job.
+  fed_warn "temporal namespace '${ns}' registration did not succeed after ${FED_POD_READY_ATTEMPTS} attempts; continuing without it"
+  fed_warn "last output: ${FED_TEMPORAL_REGISTER_OUT}"
+  fed_warn "register it by hand with: juju run -m $(fed_juju_controller_name):${model} temporal-admin-k8s/0 cli args=\"$(fed_temporal_register_args "$ns")\""
+  return 0
+}
+
+# The verified `args` payload for registering one namespace. Factored out so
+# the failure path above can print the exact command an operator has to run --
+# a warning that only says "it failed" is not actionable.
+fed_temporal_register_args() {
+  printf 'operator namespace create --retention 3d -n %s' "$1"
+}
+
+# One registration attempt, shaped for fed_retry: returns 0 once the namespace
+# is registered (whether this call created it or an earlier run did) and
+# non-zero for anything else, so a real failure is retried while success and
+# the already-registered case stop the loop immediately.
+#
+# The output is published in a global rather than returned, because fed_retry
+# invokes this in the current shell and cannot capture its stdout.
+fed_temporal_register_attempt() {
+  local model=$1 ns=$2
+  FED_TEMPORAL_REGISTER_OUT=$(fed_juju_action "$model" temporal-admin-k8s/0 cli \
+    "args=$(fed_temporal_register_args "$ns")" 2>&1) || true
+  case "$FED_TEMPORAL_REGISTER_OUT" in
     *"already exists"*)
-      fed_log "temporal namespace '${ns}' already registered" ;;
+      fed_log "temporal namespace '${ns}' already registered"
+      return 0 ;;
     *"successfully registered"*|*"command succeeded"*)
-      fed_log "temporal namespace '${ns}' registered" ;;
+      fed_log "temporal namespace '${ns}' registered"
+      return 0 ;;
     *)
-      fed_warn "temporal namespace '${ns}' registration may have failed: ${out}" ;;
+      return 1 ;;
   esac
 }

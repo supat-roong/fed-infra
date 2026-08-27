@@ -8,6 +8,11 @@ setup() {
   source "$FED_INFRA_ROOT/lib/render.sh"
   source "$FED_INFRA_ROOT/lib/juju.sh"
   source "$FED_INFRA_ROOT/lib/temporal.sh"
+  # Set BEFORE fed_config_defaults (which uses `:=`) so the retry-driven paths
+  # -- fed_juju_wait_active and namespace registration -- resolve in one pass
+  # instead of sleeping FED_RETRY_DELAY between 30 attempts. Tests that care
+  # about retry counts override these locally.
+  export FED_POD_READY_ATTEMPTS=1 FED_RETRY_DELAY=0
   fed_config_defaults
   export FED_NAMESPACE=demo-ns
   export FED_CLUSTER_NAME=demo FED_COMPONENTS=temporal
@@ -251,13 +256,76 @@ setup() {
   [[ "$output" != *"may have failed"* ]]
 }
 
+@test "fed_temporal_register_namespace waits for the admin unit before running the action" {
+  # The `cli` action runs inside the admin charm's workload container, so a
+  # cold bring-up must not fire it at a unit that has not started yet -- the
+  # spike saw exactly that as "cannot connect to container".
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_register_namespace demo-ns default
+  local wait_line action_line
+  wait_line=$(grep -n "status -m fed-demo:demo-ns temporal-admin-k8s" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  action_line=$(grep -n "run -m fed-demo:demo-ns temporal-admin-k8s/0 cli" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  [ -n "$wait_line" ]
+  [ -n "$action_line" ]
+  [ "$wait_line" -lt "$action_line" ]
+}
+
+@test "fed_temporal_register_namespace still attempts registration when the admin unit never activates" {
+  # Non-fatal wait: retrying is a better answer than aborting the bootstrap.
+  fed_temporal_register_namespace demo-ns default
+  assert_called "run -m fed-demo:demo-ns temporal-admin-k8s/0 cli"
+}
+
+@test "fed_temporal_register_namespace retries a real failure up to FED_POD_READY_ATTEMPTS" {
+  export FED_POD_READY_ATTEMPTS=3 FED_RETRY_DELAY=0
+  export STUB_JUJU_OUT='Action id 9 failed: command failed: cannot connect to container'
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  # One `cli` invocation per attempt.
+  local attempts
+  attempts=$(grep -cF "temporal-admin-k8s/0 cli" "$STUB_LOG")
+  [ "$attempts" -eq 3 ]
+}
+
+@test "fed_temporal_register_namespace warns actionably with the manual command on final failure" {
+  export FED_POD_READY_ATTEMPTS=2 FED_RETRY_DELAY=0
+  export STUB_JUJU_OUT='Action id 9 failed: command failed: cannot connect to container'
+  run fed_temporal_register_namespace demo-ns default
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"did not succeed after 2 attempts"* ]] || return 1
+  # The warning must carry the exact recovery command, with the working
+  # -n payload, not just "it failed".
+  [[ "$output" == *"juju run -m fed-demo:demo-ns temporal-admin-k8s/0 cli"* ]] || return 1
+  [[ "$output" == *"operator namespace create --retention 3d -n default"* ]]
+}
+
+@test "fed_temporal_register_namespace does not retry after a successful registration" {
+  export FED_POD_READY_ATTEMPTS=5 FED_RETRY_DELAY=0
+  export STUB_JUJU_OUT='output: Namespace default successfully registered.'
+  fed_temporal_register_namespace demo-ns default
+  local attempts
+  attempts=$(grep -cF "temporal-admin-k8s/0 cli" "$STUB_LOG")
+  [ "$attempts" -eq 1 ]
+}
+
+@test "fed_temporal_register_namespace does not retry when the namespace already exists" {
+  export FED_POD_READY_ATTEMPTS=5 FED_RETRY_DELAY=0
+  export STUB_JUJU_OUT='Action id 4 failed: command failed: unable to create namespace default: Namespace already exists.'
+  fed_temporal_register_namespace demo-ns default
+  local attempts
+  attempts=$(grep -cF "temporal-admin-k8s/0 cli" "$STUB_LOG")
+  [ "$attempts" -eq 1 ]
+}
+
 @test "fed_temporal_register_namespace warns on an unrecognised failure even though juju run exits 0" {
   # `juju run` exits 0 even when the action it ran failed, so a bare
   # `|| fed_warn` could never fire -- a real failure must still be surfaced.
   export STUB_JUJU_OUT='Action id 9 failed: command failed: connection refused'
   run fed_temporal_register_namespace demo-ns default
   [ "$status" -eq 0 ]
-  [[ "$output" == *"may have failed"* ]]
+  [[ "$output" == *"did not succeed"* ]] || return 1
+  # The real message is surfaced, not swallowed.
+  [[ "$output" == *"connection refused"* ]]
 }
 
 @test "fed_temporal_install_juju performs no real side effects under FED_DRY_RUN=1" {
