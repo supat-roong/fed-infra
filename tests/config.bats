@@ -131,3 +131,9 @@ EOF
   run bash -c "source '$FED_INFRA_ROOT/lib/common.sh'; source '$FED_INFRA_ROOT/lib/config.sh'; fed_config_load '$ENVFILE'"
   [ "$status" -eq 0 ]
 }
+
+@test "fed_config_load defaults FED_DEPLOY_MODE and the minio channel" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_DEPLOY_MODE" = "auto" ]
+  [ "$FED_MINIO_CHANNEL" = "ckf-1.9/stable" ]
+}

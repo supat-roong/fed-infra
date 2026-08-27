@@ -15,6 +15,19 @@ fed_up() {
     fed_require_cmd kind kubectl docker envsubst
   fi
 
+  # Resolved once here so both the single and multi paths below inherit it
+  # via fed_up_install_components. juju is only required outside a dry run --
+  # a dry run never shells out to it (fed_juju_ensure/deploy/config/wait_active
+  # all log-and-record instead), so requiring the binary here would break the
+  # "renders manifests, touches nothing real" dry-run contract for a consumer
+  # who doesn't have the juju CLI installed at all.
+  FED_DEPLOY_MODE_RESOLVED=$(fed_deploy_mode)
+  export FED_DEPLOY_MODE_RESOLVED
+  if [ "$FED_DEPLOY_MODE_RESOLVED" = "juju" ] && fed_juju_components_enabled \
+     && [ "${FED_DRY_RUN:-0}" != "1" ]; then
+    fed_juju_require
+  fi
+
   # multi is the only other profile fed_config_validate accepts, so this
   # single check covers both branches; the single-profile body below is
   # untouched from before this branch existed.
@@ -80,6 +93,10 @@ fed_up_multi() {
 }
 
 fed_up_install_components() {
+  if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ] && fed_juju_components_enabled; then
+    fed_juju_ensure
+  fi
+
   if fed_has_component kfp; then
     fed_kfp_install "$FED_KFP_VERSION"
     fed_kfp_patch_arm "$FED_KFP_VERSION"
@@ -95,7 +112,11 @@ fed_up_install_components() {
   fi
 
   if fed_has_component minio; then
-    fed_minio_install
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_minio_install_juju
+    else
+      fed_minio_install
+    fi
   fi
 
   if fed_has_component mlflow; then
@@ -137,8 +158,13 @@ fed_up_install_components() {
   fi
 
   if fed_has_component minio; then
-    fed_expose_nodeport minio-service "$FED_NAMESPACE" \
-      "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_expose_nodeport minio "$FED_NAMESPACE" \
+        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
+    else
+      fed_expose_nodeport minio-service "$FED_NAMESPACE" \
+        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
+    fi
   fi
 
   # karmada-dashboard patches its own Service NodePort inside

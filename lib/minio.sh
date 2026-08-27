@@ -13,6 +13,21 @@ fed_minio_install() {
   kubectl rollout status statefulset/minio -n "$FED_NAMESPACE" --timeout=180s
 }
 
+# Juju-mode counterpart of fed_minio_install: the Charmhub minio charm in the
+# consumer model. Service name is `minio` (ports 9000/9001), unlike the
+# manifests path's `minio-service` — components.sh branches accordingly.
+fed_minio_install_juju() {
+  fed_juju_deploy "$FED_NAMESPACE" minio minio "$FED_MINIO_CHANNEL"
+  if [ -n "${FED_S3_ACCESS_KEY:-}" ] && [ -n "${FED_S3_SECRET_KEY:-}" ]; then
+    # Charm rule: secret-key must be >= 8 characters.
+    fed_juju_config "$FED_NAMESPACE" minio \
+      "access-key=${FED_S3_ACCESS_KEY}" "secret-key=${FED_S3_SECRET_KEY}"
+  else
+    fed_warn "FED_S3_ACCESS_KEY/FED_S3_SECRET_KEY not both set; minio charm keeps its defaults (random secret-key)"
+  fi
+  fed_juju_wait_active "$FED_NAMESPACE" minio
+}
+
 fed_minio_ensure_bucket() {
   local ns=$1 endpoint=$2 access=$3 secret=$4 bucket=$5
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then

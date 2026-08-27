@@ -5,8 +5,10 @@ setup() {
   setup_stubs
   source "$FED_INFRA_ROOT/lib/common.sh"
   source "$FED_INFRA_ROOT/lib/config.sh"
+  source "$FED_INFRA_ROOT/lib/juju.sh"
   source "$FED_INFRA_ROOT/lib/render.sh"
   source "$FED_INFRA_ROOT/lib/minio.sh"
+  export FED_CLUSTER_NAME=demo FED_COMPONENTS=minio
   fed_config_defaults
   export FED_NAMESPACE=demo-ns
   export FED_S3_ACCESS_KEY=ak FED_S3_SECRET_KEY=sk
@@ -62,4 +64,32 @@ setup() {
   [[ "$output" == *"namespace: demo-ns"* ]] || return 1
   [[ "$output" == *'value: "ak"'* ]] || return 1
   [[ "$output" == *"kind: StatefulSet"* ]]
+}
+
+@test "fed_minio_install_juju deploys the minio charm into the consumer model" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='- minio/0: agent:idle, workload:active'
+  fed_minio_install_juju
+  assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ${FED_MINIO_CHANNEL}"
+}
+
+@test "fed_minio_install_juju applies the S3 credentials as charm config and waits" {
+  export STUB_JUJU_OUT='- minio/0: agent:idle, workload:active'
+  fed_minio_install_juju
+  assert_called "juju config -m fed-demo:demo-ns minio access-key=ak secret-key=sk"
+  assert_called "juju status -m fed-demo:demo-ns minio --format=oneline"
+}
+
+@test "fed_minio_install_juju keeps charm credential defaults when FED_S3 vars are unset" {
+  unset FED_S3_ACCESS_KEY FED_S3_SECRET_KEY
+  export STUB_JUJU_OUT='- minio/0: agent:idle, workload:active'
+  fed_minio_install_juju
+  refute_called "juju config"
+}
+
+@test "fed_minio_install_juju performs no real side effects under FED_DRY_RUN=1" {
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_minio_install_juju
+  [ -z "$(calls)" ]
+  grep -q "juju deploy" "$FED_RENDER_DIR/juju-commands.txt"
 }

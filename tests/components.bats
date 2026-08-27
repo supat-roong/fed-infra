@@ -398,3 +398,71 @@ source_multi_libs() {
   del=$(grep -n "kind delete cluster --name host" "$STUB_LOG" | head -1 | cut -d: -f1)
   [ -n "$unreg" ] && [ -n "$del" ] && [ "$unreg" -lt "$del" ]
 }
+
+# --- fed_up: juju deploy mode dispatch ---
+
+# STUB_JUJU_OUT does triple duty in the juju-mode fed_up tests: it must start
+# with "3." (fed_juju_require's version check), contain "workload:active"
+# (fed_juju_wait_active's grep), and the show-* probes succeed by default so
+# ensure/deploy take their already-exists branches.
+juju_mode_env() {
+  source_libs
+  source "$FED_INFRA_ROOT/lib/juju.sh"
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_PROFILE=single
+  export FED_DEPLOY_MODE=juju
+  export STUB_JUJU_OUT='3.6.27 workload:active'
+  # Matches write_env()'s convention above of always supplying S3 creds: the
+  # "ensures cloud before config" test below needs fed_minio_install_juju to
+  # actually reach its `juju config` call (it only does when both are set) to
+  # exercise the ordering it asserts.
+  export FED_S3_ACCESS_KEY=ak FED_S3_SECRET_KEY=sk
+}
+
+@test "fed_up in juju mode ensures cloud/controller/models before installing components" {
+  juju_mode_env
+  export FED_COMPONENTS="minio"
+  fed_up
+  local ensure cfg
+  ensure=$(grep -n "juju show-cloud" "$STUB_LOG" | head -1 | cut -d: -f1)
+  cfg=$(grep -n "juju config -m fed-demo:demo-ns minio" "$STUB_LOG" | head -1 | cut -d: -f1)
+  [ -n "$ensure" ] && [ -n "$cfg" ] && [ "$ensure" -lt "$cfg" ]
+}
+
+@test "fed_up in juju mode exposes the minio charm service, not minio-service" {
+  juju_mode_env
+  export FED_COMPONENTS="minio"
+  fed_up
+  assert_called "kubectl patch service minio -n demo-ns"
+  refute_called "kubectl patch service minio-service"
+}
+
+@test "fed_up in manifests mode never calls juju" {
+  source_libs
+  source "$FED_INFRA_ROOT/lib/juju.sh"
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_PROFILE=single
+  export FED_DEPLOY_MODE=manifests FED_COMPONENTS="minio"
+  export FED_S3_ACCESS_KEY=ak FED_S3_SECRET_KEY=sk
+  fed_up
+  refute_called "juju "
+  assert_called "kubectl apply -f -"
+}
+
+@test "fed_up in juju mode requires the juju CLI in addition to the base set" {
+  juju_mode_env
+  export FED_COMPONENTS="minio"
+  local log="$BATS_TEST_TMPDIR/require_cmd.log"
+  : > "$log"
+  fed_require_cmd() { printf '%s\n' "$*" >> "$log"; }
+  fed_up
+  grep -qx "kind kubectl docker envsubst" "$log"
+  grep -qx "juju" "$log"
+}
+
+@test "fed-infra-up juju-mode dry-run renders juju commands and touches nothing real" {
+  write_env "minio,mlflow"
+  echo "FED_DEPLOY_MODE=juju" >> "$ENVFILE"
+  run "$FED_INFRA_ROOT/bin/fed-infra-up" --env "$ENVFILE" --dry-run --render-dir "$RENDER"
+  [ "$status" -eq 0 ]
+  [ -z "$(calls)" ]
+  grep -q "juju deploy" "$RENDER/juju-commands.txt"
+}

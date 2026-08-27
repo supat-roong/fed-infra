@@ -78,6 +78,8 @@ fed_config_defaults() {
   # otherwise (see lib/juju.sh's fed_deploy_mode and the 2026-08-28 spike
   # findings for why the daemon's arch, not the host's, decides).
   : "${FED_DEPLOY_MODE:=auto}"
+  # Charm channel for juju-mode minio (lib/minio.sh's fed_minio_install_juju).
+  : "${FED_MINIO_CHANNEL:=ckf-1.9/stable}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -92,7 +94,7 @@ fed_config_defaults() {
          FED_K8S_DASHBOARD_VERSION FED_NODEPORT_K8S_DASHBOARD FED_HOSTPORT_K8S_DASHBOARD \
          FED_NODEPORT_KARMADA_DASHBOARD FED_HOSTPORT_KARMADA_DASHBOARD \
          FED_POD_READY_ATTEMPTS FED_RETRY_DELAY \
-         FED_DEPLOY_MODE
+         FED_DEPLOY_MODE FED_MINIO_CHANNEL
 }
 
 fed_config_validate() {
