@@ -2,6 +2,15 @@
 # kfp.sh — Kubeflow Pipelines install, ARM/kind stability patches, readiness.
 # The patches exist because the upstream images published to gcr.io are either
 # amd64-only or no longer served; ghcr.io hosts working multi-arch equivalents.
+#
+# kfp runs this kustomize path in BOTH deploy modes (manifests and juju) —
+# there is no juju-mode counterpart here, unlike minio/mlflow/temporal/
+# training. The kfp charm family (kfp-api and friends) is amd64-only on
+# every Charmhub channel, with no arm64 revisions anywhere; deploying it via
+# Juju would only work on amd64 infrastructure, which is already served by
+# this same kustomize path, so a charm-based kfp is out of scope for now
+# (spike findings §9, 2026-08-28). Revisit if/when Charmhub publishes arm64
+# rocks for the kfp charms.
 
 FED_KFP_NAMESPACE=kubeflow
 FED_ARGOEXEC_IMAGE="quay.io/argoproj/argoexec:v3.4.17"
