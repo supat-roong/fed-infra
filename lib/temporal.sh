@@ -105,6 +105,20 @@ fed_temporal_install() {
 fed_temporal_install_juju() {
   local model=$1
   fed_juju_deploy "$model" temporal-k8s temporal-k8s "$FED_TEMPORAL_CHANNEL"
+  # num-history-shards has NO charm default (`juju config temporal-k8s` reports
+  # it as an int whose default is null), and the charm refuses to start without
+  # it, sitting blocked on:
+  #   value of 'num-history-shards' config must be set to a positive power of 2
+  #   (e.g. 1, 2, 4)
+  # The arm64 spike never saw this because the workload container never
+  # started, so §4's charm table recorded no config requirement. Set before any
+  # relation so the charm's first config-changed already has it. Temporal
+  # cannot change this value after the schema is initialized -- it decides the
+  # history-shard count for the life of the deployment -- hence a variable
+  # rather than a literal, so a consumer sizing a real cluster can raise it at
+  # install time instead of patching this library.
+  fed_juju_config "$model" temporal-k8s \
+    "num-history-shards=${FED_TEMPORAL_NUM_HISTORY_SHARDS}"
   fed_juju_deploy "$model" temporal-admin-k8s temporal-admin-k8s "$FED_TEMPORAL_ADMIN_CHANNEL"
   fed_juju_deploy "$model" temporal-ui-k8s temporal-ui-k8s "$FED_TEMPORAL_UI_CHANNEL"
   fed_juju_deploy "$model" temporal-postgresql postgresql-k8s "$FED_POSTGRESQL_CHANNEL" --trust

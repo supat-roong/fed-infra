@@ -153,6 +153,36 @@ setup() {
   assert_called "juju deploy -m fed-demo:demo-ns postgresql-k8s temporal-postgresql --channel ${FED_POSTGRESQL_CHANNEL} --trust"
 }
 
+@test "fed_temporal_install_juju sets the mandatory num-history-shards charm config" {
+  # The charm has NO default for num-history-shards and sits blocked on
+  # "value of 'num-history-shards' config must be set to a positive power of 2"
+  # until it is set -- observed live on rev 68 during the x86_64 e2e.
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  assert_called "juju config -m fed-demo:demo-ns temporal-k8s num-history-shards=${FED_TEMPORAL_NUM_HISTORY_SHARDS}"
+}
+
+@test "fed_temporal_install_juju honors FED_TEMPORAL_NUM_HISTORY_SHARDS" {
+  export STUB_JUJU_OUT='workload:active'
+  export FED_TEMPORAL_NUM_HISTORY_SHARDS=512
+  fed_temporal_install_juju demo-ns
+  assert_called "temporal-k8s num-history-shards=512"
+}
+
+@test "fed_temporal_install_juju configures num-history-shards before wiring relations" {
+  # Ordering matters: the charm's first config-changed must already see the
+  # value, otherwise it blocks and the relation hooks run against a charm that
+  # refuses to start.
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  local cfg_line rel_line
+  cfg_line=$(grep -n "num-history-shards" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  rel_line=$(grep -n "integrate" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  [ -n "$cfg_line" ]
+  [ -n "$rel_line" ]
+  [ "$cfg_line" -lt "$rel_line" ]
+}
+
 @test "fed_temporal_install_juju integrates db, visibility, admin, and ui relations" {
   export STUB_JUJU_OUT='workload:active'
   fed_temporal_install_juju demo-ns

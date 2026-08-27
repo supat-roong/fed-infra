@@ -91,6 +91,12 @@ fed_config_defaults() {
   : "${FED_TEMPORAL_ADMIN_CHANNEL:=1.23/stable}"
   : "${FED_TEMPORAL_UI_CHANNEL:=1.23/stable}"
   : "${FED_POSTGRESQL_CHANNEL:=14/stable}"
+  # Mandatory temporal-k8s charm config with no charm-side default: the charm
+  # stays blocked until it is a positive power of 2 (verified on rev 68 during
+  # the x86_64 e2e). 4 suits a single-node local cluster; Temporal fixes the
+  # shard count at schema-init time, so a consumer sizing a real cluster must
+  # raise this on the FIRST bring-up.
+  : "${FED_TEMPORAL_NUM_HISTORY_SHARDS:=4}"
   # Charm channel for juju-mode training (lib/training.sh's
   # fed_training_install_juju): the training-operator charm.
   : "${FED_TRAINING_CHANNEL:=1.8/stable}"
@@ -110,7 +116,8 @@ fed_config_defaults() {
          FED_POD_READY_ATTEMPTS FED_RETRY_DELAY \
          FED_DEPLOY_MODE FED_MINIO_CHANNEL FED_MLFLOW_CHANNEL FED_MYSQL_CHANNEL \
          FED_TEMPORAL_CHANNEL FED_TEMPORAL_ADMIN_CHANNEL FED_TEMPORAL_UI_CHANNEL \
-         FED_POSTGRESQL_CHANNEL FED_TRAINING_CHANNEL
+         FED_POSTGRESQL_CHANNEL FED_TRAINING_CHANNEL \
+         FED_TEMPORAL_NUM_HISTORY_SHARDS
 }
 
 fed_config_validate() {
