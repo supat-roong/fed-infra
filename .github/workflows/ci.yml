@@ -159,6 +159,22 @@ jobs:
             sleep 10
           done
           sudo apt-get install -y gettext-base
+      - name: Disable the host mysqld AppArmor profile
+        # ubuntu-latest ships MySQL preinstalled, so the host kernel loads
+        # the path-based usr.sbin.mysqld AppArmor profile — and path-based
+        # profiles confine ANY process executing /usr/sbin/mysqld, including
+        # the mysql-k8s charm's mysqld inside the kind node. Observed live
+        # (run 33142816060): InnoDB init succeeds but reading the charm's
+        # /home/mysql/create-operator-user.sql bootstrap file fails with
+        # errno 13 on every pebble restart, because /home/mysql is outside
+        # the host profile's allowed paths. Unload the profile (and stop the
+        # host's own mysqld, which nothing here uses).
+        run: |
+          sudo systemctl stop mysql 2>/dev/null || true
+          if [ -f /etc/apparmor.d/usr.sbin.mysqld ]; then
+            sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld || true
+          fi
+          sudo aa-status 2>/dev/null | grep -i mysql || echo "no mysqld apparmor profile loaded"
       - name: Install juju 3.6
         # Pinned tarball, not a package manager: the charms assert
         # `juju < 4.0.0` and juju 4 dropped pod-spec support, so a floating
