@@ -143,7 +143,7 @@ setup_juju() {
   assert_called "juju deploy -m fed-demo:kubeflow kfp-viewer kfp-viewer --channel ${FED_KFP_CHANNEL} --trust"
   assert_called "juju deploy -m fed-demo:kubeflow kfp-viz kfp-viz --channel ${FED_KFP_CHANNEL}"
   assert_called "juju deploy -m fed-demo:kubeflow kfp-ui kfp-ui --channel ${FED_KFP_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-metadata-writer kfp-metadata-writer --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-metadata-writer kfp-metadata-writer --channel ${FED_KFP_CHANNEL} --trust"
   assert_called "juju deploy -m fed-demo:kubeflow mlmd mlmd --channel ${FED_MLMD_CHANNEL} --trust"
   assert_called "juju deploy -m fed-demo:kubeflow envoy envoy --channel ${FED_ENVOY_CHANNEL}"
   assert_called "juju deploy -m fed-demo:kubeflow argo-controller argo-controller --channel ${FED_ARGO_CHANNEL} --trust"
