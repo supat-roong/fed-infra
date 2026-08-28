@@ -1,2 +1,9 @@
 .DS_Store
 *.log
+
+# Local planning / subagent process docs, kept out of history
+.superpowers/
+docs/superpowers/
+docs/karmada-gate-readiness.md
+docs/p0-backlog-closeout.md
+docs/p4-dashboards.md
