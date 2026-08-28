@@ -1,0 +1,124 @@
+[0;34m[fed-infra][0m creating kind cluster 'fed-e2e'
+Creating cluster "fed-e2e" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦   ...
+ ✓ Preparing nodes 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-fed-e2e"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-fed-e2e
+
+Thanks for using kind! 😊
+[0;34m[fed-infra][0m inotify limits on fed-e2e-control-plane already at 1280, leaving them alone
+Switched to context "kind-fed-e2e".
+[0;34m[fed-infra][0m registering kind cluster as juju cloud 'fed-fed-e2e-k8s'
+
+k8s substrate added as cloud "fed-fed-e2e-k8s".
+You can now bootstrap to this cloud by running 'juju bootstrap fed-fed-e2e-k8s'.
+[0;34m[fed-infra][0m bootstrapping juju controller 'fed-fed-e2e' (about a minute warm, longer cold)
+Creating Juju controller "fed-fed-e2e" on fed-fed-e2e-k8s
+Bootstrap to generic Kubernetes cluster
+Creating k8s resources for controller "controller-fed-fed-e2e"
+Downloading images
+Starting controller pod
+Bootstrap agent now started
+Contacting Juju controller at 10.96.241.18 to verify accessibility...
+
+Bootstrap complete, controller "fed-fed-e2e" is now available in namespace "controller-fed-fed-e2e"
+
+Now you can run
+	juju add-model <model-name>
+to create a new model to deploy k8s workloads.
+[0;34m[fed-infra][0m creating juju model 'fed-e2e'
+Added 'fed-e2e' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m creating juju model 'kubeflow'
+Added 'kubeflow' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m deploying 'training-operator' as 'training-operator' into model 'kubeflow' (channel 1.8/stable)
+Deployed "training-operator" from charm-hub charm "training-operator", revision 545 in channel 1.8/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'training-operator' in model 'kubeflow' to become active
+[0;33m[fed-infra][0m attempt 1/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/60 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+customresourcedefinition.apiextensions.k8s.io/pytorchjobs.kubeflow.org condition met
+[0;34m[fed-infra][0m deploying 'temporal-k8s' as 'temporal-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-k8s" from charm-hub charm "temporal-k8s", revision 68 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-admin-k8s' as 'temporal-admin-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-admin-k8s" from charm-hub charm "temporal-admin-k8s", revision 28 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-ui-k8s' as 'temporal-ui-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-ui-k8s" from charm-hub charm "temporal-ui-k8s", revision 31 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'postgresql-k8s' as 'temporal-postgresql' into model 'fed-e2e' (channel 14/stable)
+Deployed "temporal-postgresql" from charm-hub charm "postgresql-k8s", revision 925 in channel 14/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m waiting for 'temporal-k8s' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 13/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 14/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 15/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 16/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 17/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 18/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 19/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 20/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 21/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 22/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 23/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 24/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 25/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 26/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 27/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 28/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 29/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 30/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 31/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 32/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 33/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 34/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 35/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 36/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 37/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 38/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 39/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 40/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 41/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 42/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 43/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 44/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 45/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 46/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 47/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 48/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 49/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 50/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 51/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 52/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 53/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 54/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 55/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 56/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 57/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 58/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 59/60 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
