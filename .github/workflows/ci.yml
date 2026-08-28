@@ -120,6 +120,120 @@ jobs:
         if: always()
         run: bin/fed-infra-down --env tests/fixtures/consumer-a.env
 
+  juju-e2e:
+    # Nightly only, like smoke -- brings up the juju deploy mode against a
+    # real kind cluster. ubuntu-latest is natively amd64, which is exactly
+    # what the charm stack requires (see the 2026-08-28 spike findings: every
+    # charm is amd64-only, and the local arm64 laptop can only emulate).
+    # This job is the standing answer to the e2e items the emulated x86_64
+    # run could not close: mlflow end-to-end, live namespace registration,
+    # fresh-deploy config ordering, NodePort durability, temporal-ui's port.
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Report available disk
+        # Same measurement rationale as smoke: costs nothing, and a
+        # runner-image change that shrinks free disk shows up here rather
+        # than as a mystery pull failure further down.
+        run: df -h /
+      - uses: helm/kind-action@v1
+        with:
+          install_only: true
+      - name: Install envsubst
+        # Same apt hang-vs-retry reasoning as the other jobs in this file.
+        run: |
+          for i in 1 2 3; do
+            sudo timeout 60 apt-get update && break
+            echo "apt-get update failed (attempt $i/3), retrying..." >&2
+            sleep 10
+          done
+          sudo apt-get install -y gettext-base
+      - name: Install juju 3.6
+        # Pinned tarball, not a package manager: the charms assert
+        # `juju < 4.0.0` and juju 4 dropped pod-spec support, so a floating
+        # install that drifts to 4.x would break every deploy (spike
+        # findings, section 1). fed_juju_require re-checks this at runtime.
+        run: |
+          curl -fsSL -o /tmp/juju.tar.xz \
+            https://github.com/juju/juju/releases/download/v3.6.27/juju-3.6.27-linux-amd64.tar.xz
+          sudo tar -xJf /tmp/juju.tar.xz -C /usr/local/bin juju
+          juju version
+      - name: Write the e2e env
+        # No FED_DEPLOY_MODE on purpose: the runner's Docker daemon is
+        # amd64, so this proves the `auto` resolution path end to end.
+        run: |
+          cat > "$RUNNER_TEMP/e2e.env" <<'EOF'
+          FED_CLUSTER_NAME=fed-e2e
+          FED_NAMESPACE=fed-e2e
+          FED_PROFILE=single
+          FED_COMPONENTS=training,temporal,minio,mlflow
+          FED_S3_ENDPOINT=minio.fed-e2e.svc.cluster.local:9000
+          FED_S3_ACCESS_KEY=minioadmin
+          FED_S3_SECRET_KEY=minioadmin123
+          FED_S3_BUCKET=mlflow-artifacts
+          FED_POD_READY_ATTEMPTS=60
+          EOF
+      - name: Bring up the juju deploy mode
+        run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env"
+      - name: Verify the deployed stack
+        run: |
+          juju status -m fed-fed-e2e:fed-e2e
+          juju status -m fed-fed-e2e:kubeflow
+          for app in minio mlflow-mysql mlflow-server temporal-k8s temporal-admin-k8s temporal-ui-k8s temporal-postgresql; do
+            juju status -m fed-fed-e2e:fed-e2e "$app" --format=oneline | grep -q 'workload:active' \
+              || { echo "FAIL: $app not active" >&2; exit 1; }
+          done
+          juju status -m fed-fed-e2e:kubeflow training-operator --format=oneline | grep -q 'workload:active'
+          kubectl get crd pytorchjobs.kubeflow.org
+          # Hostports come from the kind extraPortMappings the env above
+          # left at their defaults (5050/8233/9001).
+          curl -fsS -o /dev/null http://localhost:5050
+          curl -fsS -o /dev/null http://localhost:8233
+          curl -fsS -o /dev/null http://localhost:9001
+          # Evidence for the spike findings' open items: real Service ports,
+          # and whether the default Temporal namespace registered. Informative
+          # only -- failures above are what gate the job.
+          kubectl get svc -n fed-e2e -o wide
+          juju run -m fed-fed-e2e:fed-e2e temporal-admin-k8s/0 cli \
+            args="operator namespace describe default" || true
+      - name: Verify the run is idempotent
+        # Same non-decorative rationale as smoke: re-runnability regressions
+        # only ever surface on a second run against live state.
+        run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env"
+      - name: Diagnostics
+        if: failure()
+        run: |
+          juju status -m fed-fed-e2e:fed-e2e --format=tabular || true
+          juju status -m fed-fed-e2e:kubeflow --format=tabular || true
+          kubectl get pods -A || true
+          kubectl describe pods -n fed-e2e | tail -150 || true
+          juju debug-log -m fed-fed-e2e:fed-e2e --replay --limit 300 2>/dev/null | tail -200 || true
+      - name: Report disk after
+        if: always()
+        run: df -h /
+      - name: Tear down
+        if: always()
+        run: bin/fed-infra-down --env "$RUNNER_TEMP/e2e.env"
+      - name: Verify teardown hygiene
+        if: always()
+        # `if grep; then fail` rather than `grep && fail`: under the
+        # runner's `bash -e`, a no-match grep would otherwise fail the
+        # step on its own exit status -- the same set -e trap lib/minio.sh
+        # documents for `[ test ] && return`.
+        run: |
+          if kind get clusters 2>&1 | grep -q fed-e2e; then
+            echo "FAIL: kind cluster survived teardown" >&2; exit 1
+          fi
+          if juju controllers 2>&1 | grep -q fed-fed-e2e; then
+            echo "FAIL: controller record survived teardown" >&2; exit 1
+          fi
+          if juju clouds --client 2>&1 | grep -q fed-fed-e2e-k8s; then
+            echo "FAIL: cloud record survived teardown" >&2; exit 1
+          fi
+          echo "teardown hygiene verified"
+
   consumer-contracts-guard:
     # The job below degrades to a skip, not a failure, when
     # CONSUMER_CONTRACT_REPOS is unset -- deliberately, so a fork or a fresh
