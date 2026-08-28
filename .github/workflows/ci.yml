@@ -160,10 +160,18 @@ jobs:
         # `juju < 4.0.0` and juju 4 dropped pod-spec support, so a floating
         # install that drifts to 4.x would break every deploy (spike
         # findings, section 1). fed_juju_require re-checks this at runtime.
+        # Extract to a scratch dir and install the binary from there rather
+        # than asking GNU tar for a named member: the archive's member may
+        # be `./juju` rather than `juju`, and a member-name miss fails the
+        # extraction outright.
         run: |
           curl -fsSL -o /tmp/juju.tar.xz \
             https://github.com/juju/juju/releases/download/v3.6.27/juju-3.6.27-linux-amd64.tar.xz
-          sudo tar -xJf /tmp/juju.tar.xz -C /usr/local/bin juju
+          scratch=$(mktemp -d)
+          tar -xJf /tmp/juju.tar.xz -C "$scratch"
+          found=$(find "$scratch" -type f -name juju | head -1)
+          test -n "$found" || { echo "juju binary not found in tarball" >&2; find "$scratch" >&2; exit 1; }
+          sudo install -m 0755 "$found" /usr/local/bin/juju
           juju version
       - name: Write the e2e env
         # No FED_DEPLOY_MODE on purpose: the runner's Docker daemon is
