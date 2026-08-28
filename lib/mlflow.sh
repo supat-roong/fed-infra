@@ -40,7 +40,14 @@ fed_mlflow_install_juju() {
   if ! fed_has_component minio; then
     fed_die "FED_DEPLOY_MODE=juju requires the minio component when mlflow is enabled (mlflow-server's artifact store is the minio charm), got: $FED_COMPONENTS"
   fi
-  fed_juju_deploy "$FED_NAMESPACE" mlflow-mysql mysql-k8s "$FED_MYSQL_CHANNEL" --trust
+  # profile=testing at deploy time: mysql-k8s's default `production` profile
+  # sizes itself for real hardware and was observed live (CI e2e, run
+  # 33141010420) sitting in "Initialising mysqld" for 20+ minutes on a kind
+  # node with the pod healthy — a pebble-level stall invisible to kubectl
+  # events. fed-infra targets local development clusters, so the small
+  # testing profile is the right default; override via FED_MYSQL_PROFILE.
+  fed_juju_deploy "$FED_NAMESPACE" mlflow-mysql mysql-k8s "$FED_MYSQL_CHANNEL" --trust \
+    --config "profile=${FED_MYSQL_PROFILE}"
   fed_juju_deploy "$FED_NAMESPACE" mlflow-server mlflow-server "$FED_MLFLOW_CHANNEL"
   fed_juju_integrate "$FED_NAMESPACE" mlflow-server:relational-db mlflow-mysql:database
   fed_juju_integrate "$FED_NAMESPACE" mlflow-server:object-storage minio:object-storage

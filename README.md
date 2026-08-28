@@ -149,6 +149,7 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_DEPLOY_MODE` | `auto` | `auto` \| `manifests` \| `juju`. See [Deploy modes](#deploy-modes). |
 | `FED_MINIO_CHANNEL` | `ckf-1.9/stable` | **juju mode only.** Charmhub channel for the `minio` charm (`fed_minio_install_juju`). |
 | `FED_MYSQL_CHANNEL` | `8.0/stable` | **juju mode only.** Charmhub channel for the `mysql-k8s` charm backing `mlflow-server` (`fed_mlflow_install_juju`). |
+| `FED_MYSQL_PROFILE` | `testing` | **juju mode only.** mysql-k8s `profile` config applied at deploy time. `testing` sizes mysqld for local dev/kind clusters; the charm's own `production` default sizes itself for real hardware and has been observed stalling in "Initialising mysqld" on kind. Set `production` only on machine-grade nodes. |
 | `FED_MLFLOW_CHANNEL` | `2.15/stable` | **juju mode only.** Charmhub channel for the `mlflow-server` charm. |
 | `FED_POSTGRESQL_CHANNEL` | `14/stable` | **juju mode only.** Charmhub channel for the `postgresql-k8s` charm backing Temporal (`fed_temporal_install_juju`). |
 | `FED_TEMPORAL_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-k8s` charm. No `latest` track exists for this charm family. |

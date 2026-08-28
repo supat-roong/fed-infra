@@ -142,6 +142,7 @@ EOF
   fed_config_load "$ENVFILE"
   [ "$FED_MLFLOW_CHANNEL" = "2.15/stable" ]
   [ "$FED_MYSQL_CHANNEL" = "8.0/stable" ]
+  [ "$FED_MYSQL_PROFILE" = "testing" ]
 }
 
 @test "fed_config_load defaults the temporal and postgresql channels" {

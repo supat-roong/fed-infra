@@ -76,6 +76,21 @@ setup() {
   assert_called "juju deploy -m fed-demo:demo-ns mlflow-server mlflow-server --channel ${FED_MLFLOW_CHANNEL}"
 }
 
+@test "fed_mlflow_install_juju deploys mysql with the dev-sized testing profile" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='workload:active'
+  fed_mlflow_install_juju
+  assert_called "--config profile=testing"
+}
+
+@test "fed_mlflow_install_juju honors a FED_MYSQL_PROFILE override" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  export STUB_JUJU_OUT='workload:active'
+  export FED_MYSQL_PROFILE=production
+  fed_mlflow_install_juju
+  assert_called "--config profile=production"
+}
+
 @test "fed_mlflow_install_juju integrates the database and object-storage relations" {
   export STUB_JUJU_OUT='workload:active'
   fed_mlflow_install_juju

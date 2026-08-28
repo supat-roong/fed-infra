@@ -84,6 +84,9 @@ fed_config_defaults() {
   # fed_mlflow_install_juju): mlflow-server and its mysql-k8s backing store.
   : "${FED_MLFLOW_CHANNEL:=2.15/stable}"
   : "${FED_MYSQL_CHANNEL:=8.0/stable}"
+  # testing profile: sized for local dev/kind, not real hardware -- see
+  # fed_mlflow_install_juju for the live evidence behind this default.
+  : "${FED_MYSQL_PROFILE:=testing}"
   # Charm channels for juju-mode temporal (lib/temporal.sh's
   # fed_temporal_install_juju): the temporal-k8s family publishes NO latest
   # track (spike findings §4), and its backing postgresql-k8s store.
@@ -115,6 +118,7 @@ fed_config_defaults() {
          FED_NODEPORT_KARMADA_DASHBOARD FED_HOSTPORT_KARMADA_DASHBOARD \
          FED_POD_READY_ATTEMPTS FED_RETRY_DELAY \
          FED_DEPLOY_MODE FED_MINIO_CHANNEL FED_MLFLOW_CHANNEL FED_MYSQL_CHANNEL \
+         FED_MYSQL_PROFILE \
          FED_TEMPORAL_CHANNEL FED_TEMPORAL_ADMIN_CHANNEL FED_TEMPORAL_UI_CHANNEL \
          FED_POSTGRESQL_CHANNEL FED_TRAINING_CHANNEL \
          FED_TEMPORAL_NUM_HISTORY_SHARDS
