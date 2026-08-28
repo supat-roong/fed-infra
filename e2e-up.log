@@ -1,0 +1,309 @@
+[0;34m[fed-infra][0m creating kind cluster 'fed-e2e'
+Creating cluster "fed-e2e" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦   ...
+ ✓ Preparing nodes 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-fed-e2e"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-fed-e2e
+
+Have a nice day! 👋
+[0;34m[fed-infra][0m inotify limits on fed-e2e-control-plane already at 1280, leaving them alone
+Switched to context "kind-fed-e2e".
+[0;34m[fed-infra][0m registering kind cluster as juju cloud 'fed-fed-e2e-k8s'
+
+k8s substrate added as cloud "fed-fed-e2e-k8s".
+You can now bootstrap to this cloud by running 'juju bootstrap fed-fed-e2e-k8s'.
+[0;34m[fed-infra][0m bootstrapping juju controller 'fed-fed-e2e' (about a minute warm, longer cold)
+Creating Juju controller "fed-fed-e2e" on fed-fed-e2e-k8s
+Bootstrap to generic Kubernetes cluster
+Creating k8s resources for controller "controller-fed-fed-e2e"
+Downloading images
+Starting controller pod
+Bootstrap agent now started
+Contacting Juju controller at 10.96.199.60 to verify accessibility...
+
+Bootstrap complete, controller "fed-fed-e2e" is now available in namespace "controller-fed-fed-e2e"
+
+Now you can run
+	juju add-model <model-name>
+to create a new model to deploy k8s workloads.
+[0;34m[fed-infra][0m creating juju model 'fed-e2e'
+Added 'fed-e2e' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m creating juju model 'kubeflow'
+Added 'kubeflow' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m deploying 'mysql-k8s' as 'kfp-db' into model 'kubeflow' (channel 8.0/stable)
+Deployed "kfp-db" from charm-hub charm "mysql-k8s", revision 423 in channel 8.0/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m deploying 'minio' as 'kfp-minio' into model 'kubeflow' (channel ckf-1.9/stable)
+Deployed "kfp-minio" from charm-hub charm "minio", revision 383 in channel ckf-1.9/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-api' as 'kfp-api' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-api" from charm-hub charm "kfp-api", revision 2557 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-persistence' as 'kfp-persistence' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-persistence" from charm-hub charm "kfp-persistence", revision 2568 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-schedwf' as 'kfp-schedwf' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-schedwf" from charm-hub charm "kfp-schedwf", revision 2575 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-viewer' as 'kfp-viewer' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-viewer" from charm-hub charm "kfp-viewer", revision 2598 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-viz' as 'kfp-viz' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-viz" from charm-hub charm "kfp-viz", revision 2513 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-ui' as 'kfp-ui' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-ui" from charm-hub charm "kfp-ui", revision 2575 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'kfp-metadata-writer' as 'kfp-metadata-writer' into model 'kubeflow' (channel 2.15/stable)
+Deployed "kfp-metadata-writer" from charm-hub charm "kfp-metadata-writer", revision 1623 in channel 2.15/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'mlmd' as 'mlmd' into model 'kubeflow' (channel ckf-1.10/stable)
+Deployed "mlmd" from charm-hub charm "mlmd", revision 425 in channel ckf-1.10/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'envoy' as 'envoy' into model 'kubeflow' (channel 2.4/stable)
+Deployed "envoy" from charm-hub charm "envoy", revision 533 in channel 2.4/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'argo-controller' as 'argo-controller' into model 'kubeflow' (channel 3.7/stable)
+Deployed "argo-controller" from charm-hub charm "argo-controller", revision 881 in channel 3.7/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m waiting for 'kfp-api' in model 'kubeflow' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 13/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 14/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 15/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 16/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 17/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 18/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 19/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 20/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 21/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 22/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 23/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 24/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 25/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 26/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 27/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 28/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 29/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 30/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 31/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 32/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 33/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 34/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 35/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 36/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 37/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 38/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 39/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 40/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 41/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 42/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 43/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 44/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 45/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 46/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 47/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 48/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 49/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 50/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 51/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 52/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 53/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 54/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 55/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 56/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 57/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 58/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 59/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 60/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 61/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 62/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 63/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 64/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 65/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 66/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 67/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 68/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 69/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 70/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 71/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 72/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 73/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 74/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 75/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 76/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 77/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 78/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 79/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 80/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 81/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 82/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 83/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 84/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 85/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 86/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 87/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 88/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 89/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 90/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 91/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 92/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 93/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 94/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 95/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 96/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 97/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 98/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 99/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 100/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;33m[fed-infra][0m attempt 101/240 failed: fed_juju_app_active kubeflow kfp-api (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'kfp-ui' in model 'kubeflow' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active kubeflow kfp-ui (retrying in 5s)
+[0;34m[fed-infra][0m deploying 'training-operator' as 'training-operator' into model 'kubeflow' (channel 1.8/stable)
+Deployed "training-operator" from charm-hub charm "training-operator", revision 545 in channel 1.8/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'training-operator' in model 'kubeflow' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/240 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+customresourcedefinition.apiextensions.k8s.io/pytorchjobs.kubeflow.org condition met
+[0;34m[fed-infra][0m deploying 'temporal-k8s' as 'temporal-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-k8s" from charm-hub charm "temporal-k8s", revision 68 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-admin-k8s' as 'temporal-admin-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-admin-k8s" from charm-hub charm "temporal-admin-k8s", revision 28 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-ui-k8s' as 'temporal-ui-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-ui-k8s" from charm-hub charm "temporal-ui-k8s", revision 31 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'postgresql-k8s' as 'temporal-postgresql' into model 'fed-e2e' (channel 14/stable)
+Deployed "temporal-postgresql" from charm-hub charm "postgresql-k8s", revision 925 in channel 14/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m waiting for 'temporal-k8s' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 13/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 14/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 15/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 16/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 17/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 18/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 19/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 20/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 21/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 22/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 23/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 24/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 25/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 26/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 27/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 28/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 29/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 30/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 31/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 32/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 33/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 34/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 35/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 36/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 37/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 38/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 39/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 40/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 41/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 42/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 43/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 44/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 45/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 46/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 47/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 48/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 49/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 50/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 51/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 52/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 53/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 54/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 55/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 56/240 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'temporal-ui-k8s' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'temporal-admin-k8s' in model 'fed-e2e' to become active
+[0;34m[fed-infra][0m registering temporal namespace 'default'
+[0;34m[fed-infra][0m temporal namespace 'default' registered
+[0;34m[fed-infra][0m deploying 'minio' as 'minio' into model 'fed-e2e' (channel ckf-1.9/stable)
+Deployed "minio" from charm-hub charm "minio", revision 383 in channel ckf-1.9/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'minio' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;34m[fed-infra][0m deploying 'mysql-k8s' as 'mlflow-mysql' into model 'fed-e2e' (channel 8.0/stable)
+Deployed "mlflow-mysql" from charm-hub charm "mysql-k8s", revision 423 in channel 8.0/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m deploying 'mlflow-server' as 'mlflow-server' into model 'fed-e2e' (channel 2.15/stable)
+Deployed "mlflow-server" from charm-hub charm "mlflow-server", revision 762 in channel 2.15/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'mlflow-mysql' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/240 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'mlflow-server' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/240 failed: fed_juju_app_active fed-e2e mlflow-server (retrying in 5s)
+[0;34m[fed-infra][0m ensuring bucket 'mlpipeline' at kfp-minio.kubeflow.svc.cluster.local:9000
+pod/fed-mc-mlpipeline created
+pod/fed-mc-mlpipeline condition met
+[0;34m[fed-infra][0m exposing kfp-ui in kubeflow as NodePort
+service/kfp-ui patched
+[0;34m[fed-infra][0m exposing temporal-ui-k8s in fed-e2e as NodePort
+service/temporal-ui-k8s patched
+[0;34m[fed-infra][0m exposing mlflow-server in fed-e2e as NodePort
+service/mlflow-server patched
+[0;34m[fed-infra][0m ensuring bucket 'mlflow-artifacts' at minio.fed-e2e.svc.cluster.local:9000
+pod/fed-mc-mlflowartifacts created
+pod/fed-mc-mlflowartifacts condition met
+[0;34m[fed-infra][0m exposing minio in fed-e2e as NodePort
+service/minio patched
+[0;34m[fed-infra][0m 
+[0;34m[fed-infra][0m Setup complete. Services:
+[0;34m[fed-infra][0m   Kubeflow Pipelines : http://localhost:8080
+[0;34m[fed-infra][0m   MLflow             : http://localhost:5050
+[0;34m[fed-infra][0m   Temporal UI        : http://localhost:8233
+[0;34m[fed-infra][0m   MinIO Console      : http://localhost:9001
