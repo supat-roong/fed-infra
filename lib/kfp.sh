@@ -3,14 +3,11 @@
 # The patches exist because the upstream images published to gcr.io are either
 # amd64-only or no longer served; ghcr.io hosts working multi-arch equivalents.
 #
-# kfp runs this kustomize path in BOTH deploy modes (manifests and juju) —
-# there is no juju-mode counterpart here, unlike minio/mlflow/temporal/
-# training. The kfp charm family (kfp-api and friends) is amd64-only on
-# every Charmhub channel, with no arm64 revisions anywhere; deploying it via
-# Juju would only work on amd64 infrastructure, which is already served by
-# this same kustomize path, so a charm-based kfp is out of scope for now
-# (spike findings §9, 2026-08-28). Revisit if/when Charmhub publishes arm64
-# rocks for the kfp charms.
+# In manifests mode this kustomize path runs everywhere (it is also the only
+# kfp on arm64: the kfp charm family is amd64-only on every Charmhub channel,
+# spike findings §9). In juju mode, fed_kfp_install_juju below deploys the
+# charm family instead — juju mode itself is already arch-gated to amd64
+# daemons, so the charms' arch restriction costs nothing there.
 
 FED_KFP_NAMESPACE=kubeflow
 FED_ARGOEXEC_IMAGE="quay.io/argoproj/argoexec:v3.4.17"
@@ -96,4 +93,42 @@ fed_kfp_wait() {
   for d in workflow-controller minio ml-pipeline ml-pipeline-ui; do
     kubectl rollout status "deployment/$d" -n "$ns" --timeout=15m || return 1
   done
+}
+
+# Juju-mode counterpart: the standalone Kubeflow Pipelines charm family in
+# the kubeflow model. App set and relation topology follow the upstream
+# kubeflow-pipelines bundle plus the KFP-2.x metadata plumbing
+# (mlmd + envoy + kfp-metadata-writer); kfp-profile-controller and
+# metacontroller are deliberately absent — they serve multi-user Kubeflow
+# profiles, which this standalone deployment has no use for. kfp-minio is
+# kfp's own object store (mirroring upstream's bundled MinIO) and keeps the
+# same fixed minio/minio123 credentials the manifests path already uses for
+# the mlpipeline bucket step.
+fed_kfp_install_juju() {
+  local model=${FED_KFP_NAMESPACE:-kubeflow}
+  fed_juju_deploy "$model" kfp-db mysql-k8s "$FED_MYSQL_CHANNEL" --trust \
+    --config "profile=${FED_MYSQL_PROFILE}"
+  fed_juju_deploy "$model" kfp-minio minio "$FED_MINIO_CHANNEL"
+  fed_juju_config "$model" kfp-minio access-key=minio secret-key=minio123
+  fed_juju_deploy "$model" kfp-api kfp-api "$FED_KFP_CHANNEL" --trust
+  fed_juju_deploy "$model" kfp-persistence kfp-persistence "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-schedwf kfp-schedwf "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-viewer kfp-viewer "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-viz kfp-viz "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-ui kfp-ui "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-metadata-writer kfp-metadata-writer "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" mlmd mlmd "$FED_MLMD_CHANNEL"
+  fed_juju_deploy "$model" envoy envoy "$FED_ENVOY_CHANNEL"
+  fed_juju_deploy "$model" argo-controller argo-controller "$FED_ARGO_CHANNEL" --trust
+  fed_juju_integrate "$model" kfp-api:relational-db kfp-db:database
+  fed_juju_integrate "$model" kfp-api:object-storage kfp-minio:object-storage
+  fed_juju_integrate "$model" kfp-api:kfp-viz kfp-viz:kfp-viz
+  fed_juju_integrate "$model" kfp-persistence:kfp-api kfp-api:kfp-api
+  fed_juju_integrate "$model" kfp-ui:kfp-api kfp-api:kfp-api
+  fed_juju_integrate "$model" kfp-ui:object-storage kfp-minio:object-storage
+  fed_juju_integrate "$model" argo-controller:object-storage kfp-minio:object-storage
+  fed_juju_integrate "$model" kfp-metadata-writer:grpc mlmd:grpc
+  fed_juju_integrate "$model" envoy:grpc mlmd:grpc
+  fed_juju_wait_active "$model" kfp-api
+  fed_juju_wait_active "$model" kfp-ui
 }

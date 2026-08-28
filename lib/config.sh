@@ -103,6 +103,14 @@ fed_config_defaults() {
   # Charm channel for juju-mode training (lib/training.sh's
   # fed_training_install_juju): the training-operator charm.
   : "${FED_TRAINING_CHANNEL:=1.8/stable}"
+  # Charm channels for juju-mode kfp (lib/kfp.sh's fed_kfp_install_juju).
+  # 2.15 is the current stable track across the kfp-* family; mlmd, envoy and
+  # argo-controller version on their own tracks but the defaults below are
+  # the same CKF 1.10 release train (all published 2026-04-13).
+  : "${FED_KFP_CHANNEL:=2.15/stable}"
+  : "${FED_MLMD_CHANNEL:=ckf-1.10/stable}"
+  : "${FED_ENVOY_CHANNEL:=2.4/stable}"
+  : "${FED_ARGO_CHANNEL:=3.7/stable}"
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -121,6 +129,7 @@ fed_config_defaults() {
          FED_MYSQL_PROFILE \
          FED_TEMPORAL_CHANNEL FED_TEMPORAL_ADMIN_CHANNEL FED_TEMPORAL_UI_CHANNEL \
          FED_POSTGRESQL_CHANNEL FED_TRAINING_CHANNEL \
+         FED_KFP_CHANNEL FED_MLMD_CHANNEL FED_ENVOY_CHANNEL FED_ARGO_CHANNEL \
          FED_TEMPORAL_NUM_HISTORY_SHARDS
 }
 

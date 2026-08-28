@@ -114,9 +114,13 @@ fed_up_install_components() {
   fi
 
   if fed_has_component kfp; then
-    fed_kfp_install "$FED_KFP_VERSION"
-    fed_kfp_patch_arm "$FED_KFP_VERSION"
-    fed_kfp_patch_minio
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      fed_kfp_install_juju
+    else
+      fed_kfp_install "$FED_KFP_VERSION"
+      fed_kfp_patch_arm "$FED_KFP_VERSION"
+      fed_kfp_patch_minio
+    fi
   fi
 
   if fed_has_component training; then
@@ -167,12 +171,25 @@ fed_up_install_components() {
   done
 
   if fed_has_component kfp; then
-    fed_kfp_wait
-    fed_minio_ensure_bucket "$FED_KFP_NAMESPACE" \
-      "minio-service.${FED_KFP_NAMESPACE}.svc.cluster.local:9000" \
-      minio minio123 mlpipeline
-    fed_expose_nodeport ml-pipeline-ui "$FED_KFP_NAMESPACE" \
-      "[{\"port\":80,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]"
+    if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
+      # Charm service names/ports differ from the kustomize deployment's:
+      # the UI app is kfp-ui (port 3000), and kfp's object store is the
+      # kfp-minio charm with the same fixed credentials the manifests
+      # branch below uses for KFP's bundled MinIO. `merge` for the same
+      # placeholder-port reason as every charm Service.
+      fed_minio_ensure_bucket "$FED_KFP_NAMESPACE" \
+        "kfp-minio.${FED_KFP_NAMESPACE}.svc.cluster.local:9000" \
+        minio minio123 mlpipeline
+      fed_expose_nodeport kfp-ui "$FED_KFP_NAMESPACE" \
+        "[{\"port\":3000,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]" merge
+    else
+      fed_kfp_wait
+      fed_minio_ensure_bucket "$FED_KFP_NAMESPACE" \
+        "minio-service.${FED_KFP_NAMESPACE}.svc.cluster.local:9000" \
+        minio minio123 mlpipeline
+      fed_expose_nodeport ml-pipeline-ui "$FED_KFP_NAMESPACE" \
+        "[{\"port\":80,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]"
+    fi
   fi
 
   if fed_has_component temporal; then

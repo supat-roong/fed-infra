@@ -79,10 +79,15 @@ repeatedly. Environment variables use the `FED_` prefix.
 
 A few things hold regardless of mode:
 
-- **`kfp` always uses the kustomize path**, in both modes — see the comment
-  header of `lib/kfp.sh`. The kfp charm family is amd64-only on every
-  Charmhub channel with no arm64 revisions anywhere, so a charm-based kfp
-  stays out of scope for now.
+- **`kfp` follows the mode like every other juju component**: manifests mode
+  runs the upstream kustomize install (the only kfp that works on arm64 —
+  the kfp charm family is amd64-only on every Charmhub channel), while juju
+  mode deploys the standalone charm family into the `kubeflow` model
+  (`kfp-api`/`kfp-ui`/`kfp-persistence`/`kfp-schedwf`/`kfp-viewer`/`kfp-viz`/
+  `kfp-metadata-writer` + `mlmd`, `envoy`, `argo-controller`, and kfp's own
+  `kfp-db`/`kfp-minio` backing stores). `FED_KFP_VERSION` drives only the
+  manifests path; the `FED_KFP_CHANNEL`/`FED_MLMD_CHANNEL`/
+  `FED_ENVOY_CHANNEL`/`FED_ARGO_CHANNEL` quartet drives the charms.
 - **`FED_PROFILE=multi` and the dashboard components
   (`k8s-dashboard`/`karmada-dashboard`) are manifests-only.** There is no
   juju equivalent for either, and `FED_DEPLOY_MODE` has no effect on them.
@@ -127,7 +132,7 @@ sources it, applies defaults, and validates it before anything else runs.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `FED_KFP_VERSION` | `2.4.0` | Kubeflow Pipelines manifest ref (`?ref=` on the kustomize URLs) and the tag used for the ARM-friendly `ghcr.io/kubeflow/kfp-*` image patches. |
+| `FED_KFP_VERSION` | `2.4.0` | **manifests mode only.** Kubeflow Pipelines manifest ref (`?ref=` on the kustomize URLs) and the tag used for the ARM-friendly `ghcr.io/kubeflow/kfp-*` image patches. Juju mode uses `FED_KFP_CHANNEL` instead. |
 | `FED_TRAINING_OPERATOR_VERSION` | `v1.7.0` | Kubeflow Training Operator manifest ref. |
 | `FED_KIND_WORKERS` | `0` | Number of extra `role: worker` nodes appended to the kind cluster (beyond the always-present control-plane node). |
 | `FED_POD_READY_ATTEMPTS` | `30` | How many times to poll for a pod to become ready before giving up (~17 minutes at the default delay). Raise it on a slow machine, or for a cold `multi` bring-up where three kind clusters pull the whole KFP image set at once. A high ceiling costs nothing when things are healthy — polling returns on the first success. |
@@ -136,7 +141,7 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_MLFLOW_IMAGE` | `fed-mlflow:${FED_MLFLOW_VERSION}` | Local image tag built by `fed_mlflow_build_image` (adds `boto3` on top of upstream MLflow) and loaded into kind. |
 | `FED_IMAGES` | `` (empty) | Space-separated list of consumer-built images (e.g. a worker/aggregator image) to `kind load docker-image` into the cluster. fed-infra does not build these — the consumer builds them before calling `fed-infra-up`. |
 | `FED_S3_BUCKET` | `mlflow-artifacts` | Bucket name `fed_minio_ensure_bucket` creates for MLflow's artifact store. |
-| `FED_NODEPORT_KFP` | `30080` | Node port the KFP UI Service (`ml-pipeline-ui`) is patched to expose. |
+| `FED_NODEPORT_KFP` | `30080` | Node port the KFP UI Service is patched to expose (`ml-pipeline-ui` in manifests mode, `kfp-ui` in juju mode). |
 | `FED_NODEPORT_MLFLOW` | `30500` | Node port the MLflow Service is created with. |
 | `FED_NODEPORT_MINIO_API` | `30900` | Node port the standalone MinIO S3 API is exposed on. |
 | `FED_NODEPORT_MINIO_CONSOLE` | `30901` | Node port the standalone MinIO web console is exposed on. |
@@ -156,6 +161,10 @@ sources it, applies defaults, and validates it before anything else runs.
 | `FED_TEMPORAL_ADMIN_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-admin-k8s` charm. |
 | `FED_TEMPORAL_UI_CHANNEL` | `1.23/stable` | **juju mode only.** Charmhub channel for the `temporal-ui-k8s` charm. |
 | `FED_TRAINING_CHANNEL` | `1.8/stable` | **juju mode only.** Charmhub channel for the `training-operator` charm (`fed_training_install_juju`). |
+| `FED_KFP_CHANNEL` | `2.15/stable` | **juju mode only.** Charmhub channel for every `kfp-*` charm (`fed_kfp_install_juju`). The manifests path uses `FED_KFP_VERSION` instead. |
+| `FED_MLMD_CHANNEL` | `ckf-1.10/stable` | **juju mode only.** Charmhub channel for the `mlmd` metadata store backing kfp. |
+| `FED_ENVOY_CHANNEL` | `2.4/stable` | **juju mode only.** Charmhub channel for the `envoy` charm (grpc-web front for mlmd). |
+| `FED_ARGO_CHANNEL` | `3.7/stable` | **juju mode only.** Charmhub channel for the `argo-controller` workflow engine backing kfp. |
 | `FED_TEMPORAL_NUM_HISTORY_SHARDS` | `4` | **juju mode only.** The `temporal-k8s` charm's `num-history-shards` config, which has no charm-side default — the charm stays `blocked` until it is set to a positive power of 2. **Schema-locked:** Temporal pins the shard count permanently when the schema is first initialized, so this can only be chosen on the *first* bring-up; changing it later has no effect and requires destroying and recreating the deployment. `4` suits a single-node local cluster — raise it up front for anything larger. |
 
 ### Consumer-supplied, no default (required in practice, not schema-enforced)

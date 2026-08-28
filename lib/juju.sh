@@ -59,21 +59,21 @@ fed_juju() {
   juju "$@"
 }
 
-# kfp deliberately absent: it stays on kustomize in both modes (spike §9).
 fed_juju_components_enabled() {
   fed_has_component minio || fed_has_component mlflow \
-    || fed_has_component temporal || fed_has_component training
+    || fed_has_component temporal || fed_has_component training \
+    || fed_has_component kfp
 }
 
 # Models needed for the enabled components: the consumer model
 # ($FED_NAMESPACE) for minio/mlflow/temporal, the hardcoded kubeflow model
-# for training. Deduplicated: a consumer may set FED_NAMESPACE=kubeflow.
+# for training/kfp. Deduplicated: a consumer may set FED_NAMESPACE=kubeflow.
 fed_juju_models() {
   local models=""
   if fed_has_component minio || fed_has_component mlflow || fed_has_component temporal; then
     models="$FED_NAMESPACE"
   fi
-  if fed_has_component training; then
+  if fed_has_component training || fed_has_component kfp; then
     case " $models " in
       *" ${FED_KFP_NAMESPACE:-kubeflow} "*) ;;
       *) models="${models:+$models }${FED_KFP_NAMESPACE:-kubeflow}" ;;

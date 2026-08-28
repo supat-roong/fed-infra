@@ -122,3 +122,72 @@ setup() {
   refute_called "rollout status deployment/ml-pipeline -n kubeflow"
   refute_called "rollout status deployment/ml-pipeline-ui -n kubeflow"
 }
+
+# --- juju mode ---
+
+setup_juju() {
+  source "$FED_INFRA_ROOT/lib/juju.sh"
+  export FED_CLUSTER_NAME=demo FED_NAMESPACE=demo-ns FED_COMPONENTS=kfp
+  export STUB_JUJU_OUT='workload:active'
+}
+
+@test "fed_kfp_install_juju deploys the kfp charm family into the kubeflow model" {
+  setup_juju
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  fed_kfp_install_juju
+  assert_called "juju deploy -m fed-demo:kubeflow mysql-k8s kfp-db --channel ${FED_MYSQL_CHANNEL} --trust --config profile=testing"
+  assert_called "juju deploy -m fed-demo:kubeflow minio kfp-minio --channel ${FED_MINIO_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-api kfp-api --channel ${FED_KFP_CHANNEL} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-persistence kfp-persistence --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-schedwf kfp-schedwf --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-viewer kfp-viewer --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-viz kfp-viz --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-ui kfp-ui --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-metadata-writer kfp-metadata-writer --channel ${FED_KFP_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow mlmd mlmd --channel ${FED_MLMD_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow envoy envoy --channel ${FED_ENVOY_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:kubeflow argo-controller argo-controller --channel ${FED_ARGO_CHANNEL} --trust"
+}
+
+@test "fed_kfp_install_juju fixes kfp-minio to the manifests-path bundled-minio credentials" {
+  setup_juju
+  fed_kfp_install_juju
+  assert_called "juju config -m fed-demo:kubeflow kfp-minio access-key=minio secret-key=minio123"
+}
+
+@test "fed_kfp_install_juju wires the nine kfp relations" {
+  setup_juju
+  fed_kfp_install_juju
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-api:relational-db kfp-db:database"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-api:object-storage kfp-minio:object-storage"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-api:kfp-viz kfp-viz:kfp-viz"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-persistence:kfp-api kfp-api:kfp-api"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-ui:kfp-api kfp-api:kfp-api"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-ui:object-storage kfp-minio:object-storage"
+  assert_called "juju integrate -m fed-demo:kubeflow argo-controller:object-storage kfp-minio:object-storage"
+  assert_called "juju integrate -m fed-demo:kubeflow kfp-metadata-writer:grpc mlmd:grpc"
+  assert_called "juju integrate -m fed-demo:kubeflow envoy:grpc mlmd:grpc"
+}
+
+@test "fed_kfp_install_juju waits for the api and ui workloads" {
+  setup_juju
+  fed_kfp_install_juju
+  assert_called "juju status -m fed-demo:kubeflow kfp-api --format=oneline"
+  assert_called "juju status -m fed-demo:kubeflow kfp-ui --format=oneline"
+}
+
+@test "fed_kfp_install_juju never touches kustomize, git, or the ARM patches" {
+  setup_juju
+  fed_kfp_install_juju
+  refute_called "git clone"
+  refute_called "kubectl apply -k"
+  refute_called "kubectl set image"
+}
+
+@test "fed_kfp_install_juju performs no real side effects under FED_DRY_RUN=1" {
+  setup_juju
+  export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
+  fed_kfp_install_juju
+  [ -z "$(calls)" ]
+  grep -q "kfp-api" "$FED_RENDER_DIR/juju-commands.txt"
+}

@@ -157,3 +157,11 @@ EOF
   fed_config_load "$ENVFILE"
   [ "$FED_TRAINING_CHANNEL" = "1.8/stable" ]
 }
+
+@test "fed_config_load defaults the kfp charm-family channels" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_KFP_CHANNEL" = "2.15/stable" ]
+  [ "$FED_MLMD_CHANNEL" = "ckf-1.10/stable" ]
+  [ "$FED_ENVOY_CHANNEL" = "2.4/stable" ]
+  [ "$FED_ARGO_CHANNEL" = "3.7/stable" ]
+}

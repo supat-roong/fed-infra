@@ -90,9 +90,19 @@ EOF
   export FED_COMPONENTS="minio"
   run fed_juju_components_enabled
   [ "$status" -eq 0 ]
-  export FED_COMPONENTS="karmada,k8s-dashboard,kfp"
+  export FED_COMPONENTS="kfp"
+  run fed_juju_components_enabled
+  [ "$status" -eq 0 ]
+  export FED_COMPONENTS="karmada,k8s-dashboard"
   run fed_juju_components_enabled
   [ "$status" -eq 1 ]
+}
+
+@test "fed_juju_models adds the kubeflow model for kfp" {
+  export FED_COMPONENTS="kfp"
+  [ "$(fed_juju_models)" = "kubeflow" ]
+  export FED_COMPONENTS="minio,kfp"
+  [ "$(fed_juju_models)" = "demo-ns kubeflow" ]
 }
 
 @test "fed_juju_ensure registers cloud, bootstraps, and adds models when nothing exists" {
