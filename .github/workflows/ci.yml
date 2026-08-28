@@ -128,7 +128,12 @@ jobs:
     # This job is the standing answer to the e2e items the emulated x86_64
     # run could not close: mlflow end-to-end, live namespace registration,
     # fresh-deploy config ordering, NodePort durability, temporal-ui's port.
-    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # A push whose head commit message contains [juju-e2e] also runs it --
+    # an opt-in escape hatch for exercising this job without API access to
+    # workflow_dispatch (ordinary pushes stay fast).
+    if: >-
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'push' && contains(github.event.head_commit.message, '[juju-e2e]'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
