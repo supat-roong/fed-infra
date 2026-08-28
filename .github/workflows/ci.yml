@@ -201,7 +201,7 @@ jobs:
           FED_CLUSTER_NAME=fed-e2e
           FED_NAMESPACE=fed-e2e
           FED_PROFILE=single
-          FED_COMPONENTS=training,temporal,minio,mlflow
+          FED_COMPONENTS=training,temporal,minio,mlflow,kfp
           FED_S3_ENDPOINT=minio.fed-e2e.svc.cluster.local:9000
           FED_S3_ACCESS_KEY=minioadmin
           FED_S3_SECRET_KEY=minioadmin123
@@ -223,8 +223,13 @@ jobs:
           done
           juju status -m fed-fed-e2e:kubeflow training-operator --format=oneline | grep -q 'workload:active'
           kubectl get crd pytorchjobs.kubeflow.org
+          for app in kfp-db kfp-minio kfp-api kfp-persistence kfp-schedwf kfp-viewer kfp-viz kfp-ui kfp-metadata-writer mlmd envoy argo-controller; do
+            juju status -m fed-fed-e2e:kubeflow "$app" --format=oneline | grep -q 'workload:active' \
+              || { echo "FAIL: $app not active" >&2; exit 1; }
+          done
           # Hostports come from the kind extraPortMappings the env above
-          # left at their defaults (5050/8233/9001).
+          # left at their defaults (8080/5050/8233/9001).
+          curl -fsS -o /dev/null http://localhost:8080
           curl -fsS -o /dev/null http://localhost:5050
           curl -fsS -o /dev/null http://localhost:8233
           curl -fsS -o /dev/null http://localhost:9001
@@ -254,9 +259,11 @@ jobs:
             # Pebble-level service churn never surfaces as kubectl events
             # (learned from the mysql "Initialising mysqld" stall): capture
             # every container's own log for the non-active units too.
-            for p in $(kubectl get pods -n fed-e2e -o name); do
-              echo "== logs $p =="
-              kubectl logs -n fed-e2e "$p" --all-containers --tail=80 || true
+            for ns in fed-e2e kubeflow; do
+              for p in $(kubectl get pods -n "$ns" -o name); do
+                echo "== logs $ns/$p =="
+                kubectl logs -n "$ns" "$p" --all-containers --tail=80 || true
+              done
             done
           } > "$RUNNER_TEMP/diag/diag.txt" 2>&1
           tail -100 "$RUNNER_TEMP/diag/diag.txt"
