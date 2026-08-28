@@ -71,6 +71,14 @@ jobs:
     if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Pinned on purpose (the inverse of juju-e2e, which leaves it unset):
+      # smoke proves the manifests path, and its assertions
+      # (deployment/mlflow-server) only exist there. On `auto`, the runner's
+      # amd64 Docker daemon resolves to the juju mode, which this job does
+      # not install a client for -- nightly run 33181560483 died at bring-up
+      # with "required command not found: juju". juju-e2e owns the juju path.
+      FED_DEPLOY_MODE: manifests
     steps:
       - uses: actions/checkout@v4
       - name: Report available disk
