@@ -1,0 +1,269 @@
+[0;34m[fed-infra][0m creating kind cluster 'fed-e2e'
+Creating cluster "fed-e2e" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦   ...
+ ✓ Preparing nodes 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-fed-e2e"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-fed-e2e
+
+Have a nice day! 👋
+[0;34m[fed-infra][0m inotify limits on fed-e2e-control-plane already at 1280, leaving them alone
+Switched to context "kind-fed-e2e".
+[0;34m[fed-infra][0m registering kind cluster as juju cloud 'fed-fed-e2e-k8s'
+
+k8s substrate added as cloud "fed-fed-e2e-k8s".
+You can now bootstrap to this cloud by running 'juju bootstrap fed-fed-e2e-k8s'.
+[0;34m[fed-infra][0m bootstrapping juju controller 'fed-fed-e2e' (about a minute warm, longer cold)
+Creating Juju controller "fed-fed-e2e" on fed-fed-e2e-k8s
+Bootstrap to generic Kubernetes cluster
+Creating k8s resources for controller "controller-fed-fed-e2e"
+Downloading images
+Starting controller pod
+Bootstrap agent now started
+Contacting Juju controller at 10.96.79.133 to verify accessibility...
+
+Bootstrap complete, controller "fed-fed-e2e" is now available in namespace "controller-fed-fed-e2e"
+
+Now you can run
+	juju add-model <model-name>
+to create a new model to deploy k8s workloads.
+[0;34m[fed-infra][0m creating juju model 'fed-e2e'
+Added 'fed-e2e' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m creating juju model 'kubeflow'
+Added 'kubeflow' model on fed-fed-e2e-k8s with credential 'fed-fed-e2e-k8s' for user 'admin'
+[0;34m[fed-infra][0m deploying 'training-operator' as 'training-operator' into model 'kubeflow' (channel 1.8/stable)
+Deployed "training-operator" from charm-hub charm "training-operator", revision 545 in channel 1.8/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'training-operator' in model 'kubeflow' to become active
+[0;33m[fed-infra][0m attempt 1/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/120 failed: fed_juju_app_active kubeflow training-operator (retrying in 5s)
+customresourcedefinition.apiextensions.k8s.io/pytorchjobs.kubeflow.org condition met
+[0;34m[fed-infra][0m deploying 'temporal-k8s' as 'temporal-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-k8s" from charm-hub charm "temporal-k8s", revision 68 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-admin-k8s' as 'temporal-admin-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-admin-k8s" from charm-hub charm "temporal-admin-k8s", revision 28 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'temporal-ui-k8s' as 'temporal-ui-k8s' into model 'fed-e2e' (channel 1.23/stable)
+Deployed "temporal-ui-k8s" from charm-hub charm "temporal-ui-k8s", revision 31 in channel 1.23/stable on ubuntu@24.04/stable
+[0;34m[fed-infra][0m deploying 'postgresql-k8s' as 'temporal-postgresql' into model 'fed-e2e' (channel 14/stable)
+Deployed "temporal-postgresql" from charm-hub charm "postgresql-k8s", revision 925 in channel 14/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m waiting for 'temporal-k8s' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 13/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 14/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 15/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 16/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 17/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 18/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 19/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 20/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 21/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 22/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 23/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 24/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 25/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 26/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 27/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 28/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 29/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 30/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 31/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 32/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 33/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 34/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 35/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 36/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 37/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 38/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 39/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 40/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 41/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 42/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 43/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 44/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 45/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 46/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 47/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 48/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 49/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 50/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 51/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 52/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 53/120 failed: fed_juju_app_active fed-e2e temporal-k8s (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'temporal-ui-k8s' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/120 failed: fed_juju_app_active fed-e2e temporal-ui-k8s (retrying in 5s)
+[0;34m[fed-infra][0m waiting for 'temporal-admin-k8s' in model 'fed-e2e' to become active
+[0;34m[fed-infra][0m registering temporal namespace 'default'
+[0;34m[fed-infra][0m temporal namespace 'default' registered
+[0;34m[fed-infra][0m deploying 'minio' as 'minio' into model 'fed-e2e' (channel ckf-1.9/stable)
+Deployed "minio" from charm-hub charm "minio", revision 383 in channel ckf-1.9/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'minio' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/120 failed: fed_juju_app_active fed-e2e minio (retrying in 5s)
+[0;34m[fed-infra][0m deploying 'mysql-k8s' as 'mlflow-mysql' into model 'fed-e2e' (channel 8.0/stable)
+Deployed "mlflow-mysql" from charm-hub charm "mysql-k8s", revision 423 in channel 8.0/stable on ubuntu@22.04/stable
+[0;34m[fed-infra][0m deploying 'mlflow-server' as 'mlflow-server' into model 'fed-e2e' (channel 2.15/stable)
+Deployed "mlflow-server" from charm-hub charm "mlflow-server", revision 762 in channel 2.15/stable on ubuntu@20.04/stable
+[0;34m[fed-infra][0m waiting for 'mlflow-mysql' in model 'fed-e2e' to become active
+[0;33m[fed-infra][0m attempt 1/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 2/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 3/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 4/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 5/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 6/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 7/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 8/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 9/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 10/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 11/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 12/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 13/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 14/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 15/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 16/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 17/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 18/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 19/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 20/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 21/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 22/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 23/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 24/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 25/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 26/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 27/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 28/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 29/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 30/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 31/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 32/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 33/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 34/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 35/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 36/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 37/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 38/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 39/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 40/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 41/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 42/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 43/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 44/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 45/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 46/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 47/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 48/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 49/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 50/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 51/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 52/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 53/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 54/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 55/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 56/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 57/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 58/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 59/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 60/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 61/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 62/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 63/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 64/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 65/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 66/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 67/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 68/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 69/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 70/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 71/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 72/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 73/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 74/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 75/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 76/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 77/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 78/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 79/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 80/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 81/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 82/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 83/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 84/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 85/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 86/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 87/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 88/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 89/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 90/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 91/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 92/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 93/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 94/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 95/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 96/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 97/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 98/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 99/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 100/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 101/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 102/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 103/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 104/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 105/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 106/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 107/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 108/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 109/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 110/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 111/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 112/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 113/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 114/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 115/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 116/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 117/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 118/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)
+[0;33m[fed-infra][0m attempt 119/120 failed: fed_juju_app_active fed-e2e mlflow-mysql (retrying in 5s)

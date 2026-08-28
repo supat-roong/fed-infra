@@ -1,0 +1,1325 @@
+model:
+  name: fed-e2e
+  type: caas
+  controller: fed-fed-e2e
+  cloud: fed-fed-e2e-k8s
+  version: 3.6.27
+  model-status:
+    current: available
+    since: 28 Aug 2026 03:50:04Z
+  sla: unsupported
+machines: {}
+applications:
+  minio:
+    charm: minio
+    base:
+      name: ubuntu
+      channel: "20.04"
+    charm-origin: charmhub
+    charm-name: minio
+    charm-rev: 383
+    charm-channel: ckf-1.9/stable
+    scale: 1
+    provider-id: 0e62068d-9393-4ca1-aa28-9b0bdd1c95cc
+    address: 10.96.179.152
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:58:00Z
+    relations:
+      object-storage:
+      - related-application: mlflow-server
+        interface: object-storage
+        scope: global
+    units:
+      minio/0:
+        workload-status:
+          current: active
+          since: 28 Aug 2026 03:58:00Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:58:01Z
+        leader: true
+        open-ports:
+        - 9000/TCP
+        - 9001/TCP
+        address: 10.244.0.19
+        provider-id: minio-0
+    version: registry.jujucharms.com/charm/81j63o4a2ldarn1umc22iyjz1q9l9g0sx5b8j/oci-image@sha256:220b31a68d3264f53a746a364207f28868887a7c62c61cc650fd52d8e557641a
+    endpoint-bindings:
+      "": alpha
+      grafana-dashboard: alpha
+      metrics-endpoint: alpha
+      object-storage: alpha
+  mlflow-mysql:
+    charm: mysql-k8s
+    base:
+      name: ubuntu
+      channel: "22.04"
+    charm-origin: charmhub
+    charm-name: mysql-k8s
+    charm-rev: 423
+    charm-channel: 8.0/stable
+    scale: 1
+    provider-id: 1f903c2b-eb7e-499d-89de-c2d0d5f5f8f9
+    address: 10.96.89.82
+    exposed: false
+    application-status:
+      current: maintenance
+      message: Initialising mysqld
+      since: 28 Aug 2026 03:58:00Z
+    relations:
+      database:
+      - related-application: mlflow-server
+        interface: mysql_client
+        scope: global
+      database-peers:
+      - related-application: mlflow-mysql
+        interface: mysql_peers
+        scope: global
+      restart:
+      - related-application: mlflow-mysql
+        interface: rolling_op
+        scope: global
+      upgrade:
+      - related-application: mlflow-mysql
+        interface: upgrade
+        scope: global
+    units:
+      mlflow-mysql/0:
+        workload-status:
+          current: maintenance
+          message: Initialising mysqld
+          since: 28 Aug 2026 03:58:00Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:58:02Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.21
+        provider-id: mlflow-mysql-0
+    endpoint-bindings:
+      "": alpha
+      certificates: alpha
+      database: alpha
+      database-peers: alpha
+      grafana-dashboard: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      mysql: alpha
+      mysql-root: alpha
+      replication: alpha
+      replication-offer: alpha
+      restart: alpha
+      s3-parameters: alpha
+      tracing: alpha
+      upgrade: alpha
+  mlflow-server:
+    charm: mlflow-server
+    base:
+      name: ubuntu
+      channel: "20.04"
+    charm-origin: charmhub
+    charm-name: mlflow-server
+    charm-rev: 762
+    charm-channel: 2.15/stable
+    scale: 1
+    provider-id: 1b20564f-5beb-42d0-8a60-debe740b1f4d
+    address: 10.96.183.54
+    exposed: false
+    application-status:
+      current: waiting
+      message: Waiting for relational-db relation data
+      since: 28 Aug 2026 03:58:01Z
+    relations:
+      object-storage:
+      - related-application: minio
+        interface: object-storage
+        scope: global
+      relational-db:
+      - related-application: mlflow-mysql
+        interface: mysql_client
+        scope: global
+    units:
+      mlflow-server/0:
+        workload-status:
+          current: waiting
+          message: Waiting for relational-db relation data
+          since: 28 Aug 2026 03:58:01Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:59:41Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.22
+        provider-id: mlflow-server-0
+    endpoint-bindings:
+      "": alpha
+      dashboard-links: alpha
+      grafana-dashboard: alpha
+      ingress: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      object-storage: alpha
+      pod-defaults: alpha
+      relational-db: alpha
+      secrets: alpha
+  temporal-admin-k8s:
+    charm: temporal-admin-k8s
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: temporal-admin-k8s
+    charm-rev: 28
+    charm-channel: 1.23/stable
+    scale: 1
+    provider-id: ea0a36ae-033c-4683-8c8e-f955b4a8708b
+    address: 10.96.197.217
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:52:45Z
+    relations:
+      admin:
+      - related-application: temporal-k8s
+        interface: temporal
+        scope: global
+      peer:
+      - related-application: temporal-admin-k8s
+        interface: temporal-admin
+        scope: global
+      temporal-host-info:
+      - related-application: temporal-k8s
+        interface: temporal-host-info
+        scope: global
+    units:
+      temporal-admin-k8s/0:
+        workload-status:
+          current: active
+          since: 28 Aug 2026 03:52:45Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:56:21Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.13
+        provider-id: temporal-admin-k8s-0
+    version: 1.23.1
+    endpoint-bindings:
+      "": alpha
+      admin: alpha
+      peer: alpha
+      temporal-host-info: alpha
+  temporal-k8s:
+    charm: temporal-k8s
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: temporal-k8s
+    charm-rev: 68
+    charm-channel: 1.23/stable
+    scale: 1
+    provider-id: 9a67c799-b5b2-4f38-a01f-2e098f97e347
+    address: 10.96.180.93
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:55:32Z
+    relations:
+      admin:
+      - related-application: temporal-admin-k8s
+        interface: temporal
+        scope: global
+      db:
+      - related-application: temporal-postgresql
+        interface: postgresql_client
+        scope: global
+      peer:
+      - related-application: temporal-k8s
+        interface: temporal
+        scope: global
+      temporal-host-info:
+      - related-application: temporal-admin-k8s
+        interface: temporal-host-info
+        scope: global
+      - related-application: temporal-ui-k8s
+        interface: temporal-host-info
+        scope: global
+      ui:
+      - related-application: temporal-ui-k8s
+        interface: temporal
+        scope: global
+      visibility:
+      - related-application: temporal-postgresql
+        interface: postgresql_client
+        scope: global
+    units:
+      temporal-k8s/0:
+        workload-status:
+          current: active
+          since: 28 Aug 2026 03:55:32Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:52:50Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.12
+        provider-id: temporal-k8s-0
+    version: 1.23.1
+    endpoint-bindings:
+      "": alpha
+      admin: alpha
+      db: alpha
+      frontend-certificates: alpha
+      grafana-dashboard: alpha
+      log-proxy: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      nginx-route: alpha
+      openfga: alpha
+      peer: alpha
+      s3-parameters: alpha
+      temporal-host-info: alpha
+      ui: alpha
+      visibility: alpha
+  temporal-postgresql:
+    charm: postgresql-k8s
+    base:
+      name: ubuntu
+      channel: "22.04"
+    charm-origin: charmhub
+    charm-name: postgresql-k8s
+    charm-rev: 925
+    charm-channel: 14/stable
+    scale: 1
+    provider-id: 72d17c0b-f2de-4cf5-9968-8e9c4690bab2
+    address: 10.96.66.99
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:52:35Z
+    relations:
+      database:
+      - related-application: temporal-k8s
+        interface: postgresql_client
+        scope: global
+      database-peers:
+      - related-application: temporal-postgresql
+        interface: postgresql_peers
+        scope: global
+      restart:
+      - related-application: temporal-postgresql
+        interface: rolling_op
+        scope: global
+      upgrade:
+      - related-application: temporal-postgresql
+        interface: upgrade
+        scope: global
+    units:
+      temporal-postgresql/0:
+        workload-status:
+          current: active
+          message: Primary
+          since: 28 Aug 2026 03:52:38Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 04:07:29Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.16
+        provider-id: temporal-postgresql-0
+    version: "14.23"
+    endpoint-bindings:
+      "": alpha
+      certificates: alpha
+      database: alpha
+      database-peers: alpha
+      db: alpha
+      db-admin: alpha
+      grafana-dashboard: alpha
+      ldap: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      receive-ca-cert: alpha
+      replication: alpha
+      replication-offer: alpha
+      restart: alpha
+      s3-parameters: alpha
+      tracing: alpha
+      upgrade: alpha
+  temporal-ui-k8s:
+    charm: temporal-ui-k8s
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: temporal-ui-k8s
+    charm-rev: 31
+    charm-channel: 1.23/stable
+    scale: 1
+    provider-id: 689bb116-73d7-4328-8a66-db20c9ca62e8
+    address: 10.96.98.125
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:56:17Z
+    relations:
+      peer:
+      - related-application: temporal-ui-k8s
+        interface: temporal
+        scope: global
+      temporal-host-info:
+      - related-application: temporal-k8s
+        interface: temporal-host-info
+        scope: global
+      ui:
+      - related-application: temporal-k8s
+        interface: temporal
+        scope: global
+    units:
+      temporal-ui-k8s/0:
+        workload-status:
+          current: active
+          since: 28 Aug 2026 03:56:17Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:55:41Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.15
+        provider-id: temporal-ui-k8s-0
+    version: 2.27.1
+    endpoint-bindings:
+      "": alpha
+      ingress: alpha
+      nginx-route: alpha
+      peer: alpha
+      temporal-host-info: alpha
+      ui: alpha
+storage:
+  storage:
+    database/2:
+      kind: filesystem
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a
+        since: 28 Aug 2026 03:57:39Z
+      persistent: false
+      attachments:
+        units:
+          mlflow-mysql/0:
+            life: alive
+    minio-data/1:
+      kind: filesystem
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-22c585e0-6711-4325-85a6-85e46b53c22a
+        since: 28 Aug 2026 03:56:38Z
+      persistent: false
+      attachments:
+        units:
+          minio/0:
+            life: alive
+    pgdata/0:
+      kind: filesystem
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-b4474ee0-0d00-4d6a-811b-63ab864157f7
+        since: 28 Aug 2026 03:51:43Z
+      persistent: false
+      attachments:
+        units:
+          temporal-postgresql/0:
+            life: alive
+  filesystems:
+    "0":
+      provider-id: b4474ee0-0d00-4d6a-811b-63ab864157f7
+      volume: "0"
+      storage: pgdata/0
+      attachments:
+        containers:
+          temporal-postgresql/0:
+            mount-point: /var/lib/postgresql/data
+            read-only: false
+            life: alive
+        units:
+          temporal-postgresql/0:
+            life: alive
+      pool: kubernetes
+      size: 1024
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-b4474ee0-0d00-4d6a-811b-63ab864157f7
+        since: 28 Aug 2026 03:51:43Z
+    "1":
+      provider-id: 22c585e0-6711-4325-85a6-85e46b53c22a
+      volume: "1"
+      storage: minio-data/1
+      attachments:
+        containers:
+          minio/0:
+            mount-point: /data
+            read-only: false
+            life: alive
+        units:
+          minio/0:
+            life: alive
+      pool: kubernetes
+      size: 31
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-22c585e0-6711-4325-85a6-85e46b53c22a
+        since: 28 Aug 2026 03:56:38Z
+    "2":
+      provider-id: c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a
+      volume: "2"
+      storage: database/2
+      attachments:
+        containers:
+          mlflow-mysql/0:
+            mount-point: /var/lib/juju/storage/database/0
+            read-only: false
+            life: alive
+        units:
+          mlflow-mysql/0:
+            life: alive
+      pool: kubernetes
+      size: 1024
+      life: alive
+      status:
+        current: attached
+        message: Successfully provisioned volume pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a
+        since: 28 Aug 2026 03:57:39Z
+  volumes:
+    "0":
+      provider-id: pvc-b4474ee0-0d00-4d6a-811b-63ab864157f7
+      storage: pgdata/0
+      attachments:
+        containers:
+          temporal-postgresql/0:
+            read-only: false
+            life: alive
+        units:
+          temporal-postgresql/0:
+            life: alive
+      pool: kubernetes
+      size: 1024
+      persistent: true
+      life: alive
+      status:
+        current: attached
+        since: 28 Aug 2026 03:51:43Z
+    "1":
+      provider-id: pvc-22c585e0-6711-4325-85a6-85e46b53c22a
+      storage: minio-data/1
+      attachments:
+        containers:
+          minio/0:
+            read-only: false
+            life: alive
+        units:
+          minio/0:
+            life: alive
+      pool: kubernetes
+      size: 1288
+      persistent: true
+      life: alive
+      status:
+        current: attached
+        since: 28 Aug 2026 03:56:38Z
+    "2":
+      provider-id: pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a
+      storage: database/2
+      attachments:
+        containers:
+          mlflow-mysql/0:
+            read-only: false
+            life: alive
+        units:
+          mlflow-mysql/0:
+            life: alive
+      pool: kubernetes
+      size: 1024
+      persistent: true
+      life: alive
+      status:
+        current: attached
+        since: 28 Aug 2026 03:57:39Z
+controller:
+  timestamp: 04:07:30Z
+model:
+  name: kubeflow
+  type: caas
+  controller: fed-fed-e2e
+  cloud: fed-fed-e2e-k8s
+  version: 3.6.27
+  model-status:
+    current: available
+    since: 28 Aug 2026 03:50:05Z
+  sla: unsupported
+machines: {}
+applications:
+  training-operator:
+    charm: training-operator
+    base:
+      name: ubuntu
+      channel: "20.04"
+    charm-origin: charmhub
+    charm-name: training-operator
+    charm-rev: 545
+    charm-channel: 1.8/stable
+    scale: 1
+    provider-id: ef43020d-c9ee-43c8-9f66-c336e79a628b
+    address: 10.96.253.76
+    exposed: false
+    application-status:
+      current: active
+      since: 28 Aug 2026 03:50:50Z
+    units:
+      training-operator/0:
+        workload-status:
+          current: active
+          since: 28 Aug 2026 03:50:50Z
+        juju-status:
+          current: idle
+          since: 28 Aug 2026 03:50:51Z
+          version: 3.6.27
+        leader: true
+        address: 10.244.0.10
+        provider-id: training-operator-0
+    endpoint-bindings:
+      "": alpha
+      dashboard-links: alpha
+      grafana-dashboard: alpha
+      metrics-endpoint: alpha
+storage: {}
+controller:
+  timestamp: 04:07:30Z
+NAMESPACE                NAME                                            READY   STATUS    RESTARTS   AGE     IP            NODE                    NOMINATED NODE   READINESS GATES
+controller-fed-fed-e2e   controller-0                                    3/3     Running   0          18m     10.244.0.6    fed-e2e-control-plane   <none>           <none>
+controller-fed-fed-e2e   modeloperator-6dcf9d9d76-7h8tq                  1/1     Running   0          17m     10.244.0.9    fed-e2e-control-plane   <none>           <none>
+fed-e2e                  minio-0                                         1/1     Running   0          10m     10.244.0.19   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  minio-operator-0                                1/1     Running   0          11m     10.244.0.17   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  mlflow-mysql-0                                  2/2     Running   0          9m58s   10.244.0.21   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  mlflow-server-0                                 3/3     Running   0          9m49s   10.244.0.22   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  modeloperator-58d89dcb9-l2jjl                   1/1     Running   0          17m     10.244.0.7    fed-e2e-control-plane   <none>           <none>
+fed-e2e                  temporal-admin-k8s-0                            2/2     Running   0          16m     10.244.0.13   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  temporal-k8s-0                                  2/2     Running   0          16m     10.244.0.12   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  temporal-postgresql-0                           2/2     Running   0          15m     10.244.0.16   fed-e2e-control-plane   <none>           <none>
+fed-e2e                  temporal-ui-k8s-0                               2/2     Running   0          15m     10.244.0.15   fed-e2e-control-plane   <none>           <none>
+kube-system              coredns-7d764666f9-7tb9r                        1/1     Running   0          18m     10.244.0.4    fed-e2e-control-plane   <none>           <none>
+kube-system              coredns-7d764666f9-cw6s4                        1/1     Running   0          18m     10.244.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              etcd-fed-e2e-control-plane                      1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kindnet-svxvp                                   1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-apiserver-fed-e2e-control-plane            1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-controller-manager-fed-e2e-control-plane   1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-proxy-n9cgh                                1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-scheduler-fed-e2e-control-plane            1/1     Running   0          18m     172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kubeflow                 modeloperator-66f555b99d-csmpq                  1/1     Running   0          17m     10.244.0.8    fed-e2e-control-plane   <none>           <none>
+kubeflow                 training-operator-0                             1/1     Running   0          17m     10.244.0.10   fed-e2e-control-plane   <none>           <none>
+kubeflow                 training-operator-6bf78df4dd-b2cbk              1/1     Running   0          16m     10.244.0.11   fed-e2e-control-plane   <none>           <none>
+local-path-storage       local-path-provisioner-67b8995b4b-qjqds         1/1     Running   0          18m     10.244.0.3    fed-e2e-control-plane   <none>           <none>
+fed-e2e                  15m         Normal    Created                   pod/temporal-ui-k8s-0                                                             Container created
+fed-e2e                  15m         Normal    Scheduled                 pod/temporal-postgresql-0                                                         Successfully assigned fed-e2e/temporal-postgresql-0 to fed-e2e-control-plane
+fed-e2e                  15m         Normal    Started                   pod/temporal-postgresql-0                                                         Container started
+fed-e2e                  15m         Normal    Created                   pod/temporal-postgresql-0                                                         Container created
+fed-e2e                  15m         Normal    Pulled                    pod/temporal-postgresql-0                                                         Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  15m         Normal    Pulling                   pod/temporal-postgresql-0                                                         Pulling image "ghcr.io/juju/charm-base:ubuntu-22.04"
+fed-e2e                  15m         Normal    Started                   pod/temporal-admin-k8s-0                                                          Container started
+fed-e2e                  15m         Normal    Created                   pod/temporal-admin-k8s-0                                                          Container created
+fed-e2e                  15m         Normal    Pulled                    pod/temporal-admin-k8s-0                                                          Successfully pulled image "registry.jujucharms.com/charm/hsltt86ae7zqr1qxsvneehqjs11eg0mswonj0/temporal-admin-image@sha256:d429a4fa2ded4639a17fe3992f51648acb7e37b940c06132901c88422d8cffb2" in 13.488s (22.716s including waiting). Image size: 171440823 bytes.
+fed-e2e                  15m         Normal    Pulled                    pod/temporal-ui-k8s-0                                                             Successfully pulled image "registry.jujucharms.com/charm/jncz102036mcjljug0tnrvdrmllknge599wam/temporal-ui-image@sha256:f14a4b14f32a6850a78273a3796e7812ce5aa85cd2fee6853dba9f08547f5f68" in 6.972s (13.136s including waiting). Image size: 53599858 bytes.
+fed-e2e                  15m         Normal    Created                   pod/temporal-ui-k8s-0                                                             Container created
+fed-e2e                  15m         Normal    Started                   pod/temporal-ui-k8s-0                                                             Container started
+fed-e2e                  15m         Normal    Started                   pod/temporal-postgresql-0                                                         Container started
+fed-e2e                  15m         Normal    Pulled                    pod/temporal-postgresql-0                                                         Successfully pulled image "ghcr.io/juju/charm-base:ubuntu-22.04" in 3.611s (13.382s including waiting). Image size: 74540528 bytes.
+fed-e2e                  15m         Normal    Created                   pod/temporal-postgresql-0                                                         Container created
+fed-e2e                  15m         Normal    Pulling                   pod/temporal-postgresql-0                                                         Pulling image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0qkurhk/postgresql-image@sha256:e77fc5952a661ea8c4ecf1cc50989011e69925335e2cca85e3f4b70ceba41a47"
+fed-e2e                  15m         Normal    Pulled                    pod/temporal-postgresql-0                                                         Successfully pulled image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0qkurhk/postgresql-image@sha256:e77fc5952a661ea8c4ecf1cc50989011e69925335e2cca85e3f4b70ceba41a47" in 26.982s (26.982s including waiting). Image size: 321798403 bytes.
+fed-e2e                  15m         Normal    Created                   pod/temporal-postgresql-0                                                         Container created
+fed-e2e                  15m         Normal    Started                   pod/temporal-postgresql-0                                                         Container started
+fed-e2e                  11m         Normal    Scheduled                 pod/minio-operator-0                                                              Successfully assigned fed-e2e/minio-operator-0 to fed-e2e-control-plane
+fed-e2e                  11m         Normal    Pulled                    pod/minio-operator-0                                                              Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  11m         Normal    Created                   pod/minio-operator-0                                                              Container created
+fed-e2e                  11m         Normal    Started                   pod/minio-operator-0                                                              Container started
+fed-e2e                  11m         Normal    SuccessfulCreate          statefulset/minio-operator                                                        Create Pod minio-operator-0 in StatefulSet minio-operator successful
+fed-e2e                  11m         Normal    Pulled                    pod/minio-operator-0                                                              Container image "ghcr.io/juju/charm-base:ubuntu-20.04" already present on machine and can be accessed by the pod
+fed-e2e                  11m         Normal    Created                   pod/minio-operator-0                                                              Container created
+fed-e2e                  11m         Normal    Started                   pod/minio-operator-0                                                              Container started
+fed-e2e                  10m         Normal    SuccessfulCreate          statefulset/minio                                                                 Create Claim minio-data-7e213fbd-minio-0 Pod minio-0 in StatefulSet minio success
+fed-e2e                  10m         Normal    WaitForFirstConsumer      persistentvolumeclaim/minio-data-7e213fbd-minio-0                                 waiting for first consumer to be created before binding
+fed-e2e                  10m         Normal    SuccessfulCreate          statefulset/minio                                                                 Create Pod minio-0 in StatefulSet minio successful
+fed-e2e                  10m         Normal    Provisioning              persistentvolumeclaim/minio-data-7e213fbd-minio-0                                 External provisioner is provisioning volume for claim "fed-e2e/minio-data-7e213fbd-minio-0"
+local-path-storage       10m         Normal    Created                   pod/helper-pod-create-pvc-22c585e0-6711-4325-85a6-85e46b53c22a                    Container created
+local-path-storage       10m         Normal    Started                   pod/helper-pod-create-pvc-22c585e0-6711-4325-85a6-85e46b53c22a                    Container started
+local-path-storage       10m         Normal    Pulled                    pod/helper-pod-create-pvc-22c585e0-6711-4325-85a6-85e46b53c22a                    Container image "docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d" already present on machine and can be accessed by the pod
+fed-e2e                  10m         Normal    ExternalProvisioning      persistentvolumeclaim/minio-data-7e213fbd-minio-0                                 Waiting for a volume to be created either by the external provisioner 'rancher.io/local-path' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+fed-e2e                  10m         Normal    ProvisioningSucceeded     persistentvolumeclaim/minio-data-7e213fbd-minio-0                                 Successfully provisioned volume pvc-22c585e0-6711-4325-85a6-85e46b53c22a
+fed-e2e                  10m         Normal    Scheduled                 pod/minio-0                                                                       Successfully assigned fed-e2e/minio-0 to fed-e2e-control-plane
+fed-e2e                  10m         Normal    Created                   pod/minio-0                                                                       Container created
+fed-e2e                  10m         Normal    Pulled                    pod/minio-0                                                                       Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  10m         Normal    Started                   pod/minio-0                                                                       Container started
+fed-e2e                  10m         Normal    Pulling                   pod/minio-0                                                                       Pulling image "registry.jujucharms.com/charm/81j63o4a2ldarn1umc22iyjz1q9l9g0sx5b8j/oci-image@sha256:220b31a68d3264f53a746a364207f28868887a7c62c61cc650fd52d8e557641a"
+fed-e2e                  10m         Normal    Started                   pod/minio-0                                                                       Container started
+fed-e2e                  10m         Normal    Pulled                    pod/minio-0                                                                       Successfully pulled image "registry.jujucharms.com/charm/81j63o4a2ldarn1umc22iyjz1q9l9g0sx5b8j/oci-image@sha256:220b31a68d3264f53a746a364207f28868887a7c62c61cc650fd52d8e557641a" in 25.708s (25.708s including waiting). Image size: 262779637 bytes.
+fed-e2e                  10m         Normal    Created                   pod/minio-0                                                                       Container created
+fed-e2e                  9m58s       Normal    Provisioning              persistentvolumeclaim/mlflow-mysql-database-e4acd051-mlflow-mysql-0               External provisioner is provisioning volume for claim "fed-e2e/mlflow-mysql-database-e4acd051-mlflow-mysql-0"
+fed-e2e                  9m58s       Normal    WaitForFirstConsumer      persistentvolumeclaim/mlflow-mysql-database-e4acd051-mlflow-mysql-0               waiting for first consumer to be created before binding
+fed-e2e                  9m58s       Normal    SuccessfulCreate          statefulset/mlflow-mysql                                                          Create Pod mlflow-mysql-0 in StatefulSet mlflow-mysql successful
+fed-e2e                  9m58s       Normal    SuccessfulCreate          statefulset/mlflow-mysql                                                          Create Claim mlflow-mysql-database-e4acd051-mlflow-mysql-0 Pod mlflow-mysql-0 in StatefulSet mlflow-mysql success
+local-path-storage       9m57s       Normal    Started                   pod/helper-pod-create-pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a                    Container started
+local-path-storage       9m57s       Normal    Created                   pod/helper-pod-create-pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a                    Container created
+local-path-storage       9m57s       Normal    Pulled                    pod/helper-pod-create-pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a                    Container image "docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d" already present on machine and can be accessed by the pod
+fed-e2e                  9m56s       Normal    ExternalProvisioning      persistentvolumeclaim/mlflow-mysql-database-e4acd051-mlflow-mysql-0               Waiting for a volume to be created either by the external provisioner 'rancher.io/local-path' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+fed-e2e                  9m55s       Normal    ProvisioningSucceeded     persistentvolumeclaim/mlflow-mysql-database-e4acd051-mlflow-mysql-0               Successfully provisioned volume pvc-c0cb09d2-fdb0-4b88-8de9-6f1c2aa53b6a
+fed-e2e                  9m54s       Normal    Scheduled                 pod/mlflow-mysql-0                                                                Successfully assigned fed-e2e/mlflow-mysql-0 to fed-e2e-control-plane
+fed-e2e                  9m53s       Normal    Pulled                    pod/mlflow-mysql-0                                                                Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  9m53s       Normal    Created                   pod/mlflow-mysql-0                                                                Container created
+fed-e2e                  9m53s       Normal    Started                   pod/mlflow-mysql-0                                                                Container started
+fed-e2e                  9m52s       Normal    Started                   pod/mlflow-mysql-0                                                                Container started
+fed-e2e                  9m52s       Normal    Pulling                   pod/mlflow-mysql-0                                                                Pulling image "registry.jujucharms.com/charm/62ptdfbrjpw3n9tcnswjpart30jauc6wc5wbi/mysql-image@sha256:824b302484f83dbbd2cf4506f620a48e53f20053f6ff3c57aa6123e121705bfc"
+fed-e2e                  9m52s       Normal    Created                   pod/mlflow-mysql-0                                                                Container created
+fed-e2e                  9m52s       Normal    Pulled                    pod/mlflow-mysql-0                                                                Container image "ghcr.io/juju/charm-base:ubuntu-22.04" already present on machine and can be accessed by the pod
+fed-e2e                  9m49s       Normal    SuccessfulCreate          statefulset/mlflow-server                                                         Create Pod mlflow-server-0 in StatefulSet mlflow-server successful
+fed-e2e                  9m49s       Normal    Pulled                    pod/mlflow-server-0                                                               Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  9m49s       Normal    Scheduled                 pod/mlflow-server-0                                                               Successfully assigned fed-e2e/mlflow-server-0 to fed-e2e-control-plane
+fed-e2e                  9m48s       Normal    Created                   pod/mlflow-server-0                                                               Container created
+fed-e2e                  9m48s       Normal    Started                   pod/mlflow-server-0                                                               Container started
+fed-e2e                  9m47s       Normal    Pulling                   pod/mlflow-server-0                                                               Pulling image "registry.jujucharms.com/charm/4iqeug23ssiim237heocp936fy472ysygtqta/exporter-oci-image@sha256:98eb6f8ebffe973a3523000b861080cec7b558c79a97d4542b387399e449e881"
+fed-e2e                  9m47s       Normal    Started                   pod/mlflow-server-0                                                               Container started
+fed-e2e                  9m47s       Normal    Created                   pod/mlflow-server-0                                                               Container created
+fed-e2e                  9m47s       Normal    Pulled                    pod/mlflow-server-0                                                               Container image "ghcr.io/juju/charm-base:ubuntu-20.04" already present on machine and can be accessed by the pod
+fed-e2e                  9m32s       Normal    Started                   pod/mlflow-mysql-0                                                                Container started
+fed-e2e                  9m32s       Normal    Created                   pod/mlflow-mysql-0                                                                Container created
+fed-e2e                  9m32s       Normal    Pulled                    pod/mlflow-mysql-0                                                                Successfully pulled image "registry.jujucharms.com/charm/62ptdfbrjpw3n9tcnswjpart30jauc6wc5wbi/mysql-image@sha256:824b302484f83dbbd2cf4506f620a48e53f20053f6ff3c57aa6123e121705bfc" in 19.414s (19.414s including waiting). Image size: 218079866 bytes.
+fed-e2e                  8m41s       Normal    Pulled                    pod/mlflow-server-0                                                               Successfully pulled image "registry.jujucharms.com/charm/4iqeug23ssiim237heocp936fy472ysygtqta/exporter-oci-image@sha256:98eb6f8ebffe973a3523000b861080cec7b558c79a97d4542b387399e449e881" in 50.931s (1m5.268s including waiting). Image size: 926815219 bytes.
+fed-e2e                  8m41s       Normal    Created                   pod/mlflow-server-0                                                               Container created
+fed-e2e                  8m41s       Normal    Started                   pod/mlflow-server-0                                                               Container started
+fed-e2e                  8m41s       Normal    Pulling                   pod/mlflow-server-0                                                               Pulling image "registry.jujucharms.com/charm/4iqeug23ssiim237heocp936fy472ysygtqta/oci-image@sha256:d0e3de8ad8b7662a418734dee8ae87888b8a93f73d9b3063afb04328d490a070"
+fed-e2e                  7m53s       Normal    Pulled                    pod/mlflow-server-0                                                               Successfully pulled image "registry.jujucharms.com/charm/4iqeug23ssiim237heocp936fy472ysygtqta/oci-image@sha256:d0e3de8ad8b7662a418734dee8ae87888b8a93f73d9b3063afb04328d490a070" in 48.543s (48.543s including waiting). Image size: 892694347 bytes.
+fed-e2e                  7m53s       Normal    Created                   pod/mlflow-server-0                                                               Container created
+fed-e2e                  7m53s       Normal    Started                   pod/mlflow-server-0                                                               Container started
+  temporal-postgresql-pgdata-46957a46:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  temporal-postgresql-pgdata-46957a46-temporal-postgresql-0
+    ReadOnly:   false
+  charm-data:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  kube-api-access-srqsv:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              kubernetes.io/arch=amd64
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  15m   default-scheduler  Successfully assigned fed-e2e/temporal-postgresql-0 to fed-e2e-control-plane
+  Normal  Pulled     15m   kubelet            spec.initContainers{charm-init}: Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+  Normal  Created    15m   kubelet            spec.initContainers{charm-init}: Container created
+  Normal  Started    15m   kubelet            spec.initContainers{charm-init}: Container started
+  Normal  Pulling    15m   kubelet            spec.containers{charm}: Pulling image "ghcr.io/juju/charm-base:ubuntu-22.04"
+  Normal  Pulled     15m   kubelet            spec.containers{charm}: Successfully pulled image "ghcr.io/juju/charm-base:ubuntu-22.04" in 3.611s (13.382s including waiting). Image size: 74540528 bytes.
+  Normal  Created    15m   kubelet            spec.containers{charm}: Container created
+  Normal  Started    15m   kubelet            spec.containers{charm}: Container started
+  Normal  Pulling    15m   kubelet            spec.containers{postgresql}: Pulling image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0qkurhk/postgresql-image@sha256:e77fc5952a661ea8c4ecf1cc50989011e69925335e2cca85e3f4b70ceba41a47"
+  Normal  Pulled     15m   kubelet            spec.containers{postgresql}: Successfully pulled image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0qkurhk/postgresql-image@sha256:e77fc5952a661ea8c4ecf1cc50989011e69925335e2cca85e3f4b70ceba41a47" in 26.982s (26.982s including waiting). Image size: 321798403 bytes.
+  Normal  Created    15m   kubelet            spec.containers{postgresql}: Container created
+  Normal  Started    15m   kubelet            spec.containers{postgresql}: Container started
+
+
+Name:             temporal-ui-k8s-0
+Namespace:        fed-e2e
+Priority:         0
+Service Account:  temporal-ui-k8s
+Node:             fed-e2e-control-plane/172.18.0.2
+Start Time:       Fri, 28 Aug 2026 03:51:35 +0000
+Labels:           app.kubernetes.io/name=temporal-ui-k8s
+                  apps.kubernetes.io/pod-index=0
+                  controller-revision-hash=temporal-ui-k8s-5b95799987
+                  statefulset.kubernetes.io/pod-name=temporal-ui-k8s-0
+Annotations:      controller.juju.is/id: 2a2d2a84-39f5-407d-8801-5ebe4ae47b6b
+                  juju.is/version: 3.6.27
+                  model.juju.is/id: 9cce8720-cc23-45cb-898f-681cacfcd15f
+                  unit.juju.is/id: temporal-ui-k8s/0
+Status:           Running
+IP:               10.244.0.15
+IPs:
+  IP:           10.244.0.15
+Controlled By:  StatefulSet/temporal-ui-k8s
+Init Containers:
+  charm-init:
+    Container ID:  containerd://6025bc9cfe62c02a331479357e9b700776006f6ee083ebf90747f23df1f596c7
+    Image:         ghcr.io/juju/jujud-operator:3.6.27
+    Image ID:      ghcr.io/juju/jujud-operator@sha256:f93170650811aa86356eaeba5a04eabd37eadb8e0f0e4b4e3e3a7df71e06e595
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /opt/containeragent
+    Args:
+      init
+      --containeragent-pebble-dir
+      /containeragent/pebble
+      --charm-modified-version
+      0
+      --data-dir
+      /var/lib/juju
+      --bin-dir
+      /charm/bin
+      --profile-dir
+      /containeragent/etc/profile.d
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 28 Aug 2026 03:51:35 +0000
+      Finished:     Fri, 28 Aug 2026 03:51:35 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment Variables from:
+      temporal-ui-k8s-application-config  Secret  Optional: false
+    Environment:
+      JUJU_CONTAINER_NAMES:  temporal-ui
+      JUJU_K8S_POD_NAME:     temporal-ui-k8s-0 (v1:metadata.name)
+      JUJU_K8S_POD_UUID:      (v1:metadata.uid)
+    Mounts:
+      /charm/bin from charm-data (rw,path="charm/bin")
+      /charm/containers from charm-data (rw,path="charm/containers")
+      /containeragent/etc/profile.d from charm-data (rw,path="containeragent/etc/profile.d")
+      /containeragent/pebble from charm-data (rw,path="containeragent/pebble")
+      /var/lib/juju from charm-data (rw,path="var/lib/juju")
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wnp5k (ro)
+Containers:
+  charm:
+    Container ID:  containerd://afc9e876aacb3a34a3fbc4b979d14f810fa36af931311d06a47d73df42f21686
+    Image:         ghcr.io/juju/charm-base:ubuntu-24.04
+    Image ID:      ghcr.io/juju/charm-base@sha256:e2bc8aa61e02ec820a6789c0ff2e1c109696df78e14cdcea61ca0faaab3f7ccd
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /charm/bin/pebble
+    Args:
+      run
+      --http
+      :38812
+      --verbose
+    State:          Running
+      Started:      Fri, 28 Aug 2026 03:51:37 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      memory:  1Gi
+    Requests:
+      memory:   64Mi
+    Liveness:   http-get http://:38812/v1/health%3Flevel=alive delay=0s timeout=1s period=5s #success=1 #failure=3
+    Readiness:  http-get http://:38812/v1/health%3Flevel=ready delay=0s timeout=1s period=5s #success=1 #failure=1
+    Startup:    http-get http://:38812/v1/health%3Flevel=alive delay=0s timeout=1s period=1s #success=1 #failure=30
+    Environment:
+      JUJU_CONTAINER_NAMES:  temporal-ui
+      HTTP_PROBE_PORT:       3856
+    Mounts:
+      /charm/bin from charm-data (ro,path="charm/bin")
+      /charm/containers from charm-data (rw,path="charm/containers")
+      /etc/profile.d/juju-introspection.sh from charm-data (ro,path="containeragent/etc/profile.d/juju-introspection.sh")
+      /usr/bin/juju-exec from charm-data (ro,path="charm/bin/containeragent")
+      /usr/bin/juju-introspect from charm-data (ro,path="charm/bin/containeragent")
+      /var/lib/juju from charm-data (rw,path="var/lib/juju")
+      /var/lib/pebble/default from charm-data (rw,path="containeragent/pebble")
+      /var/log/juju from charm-data (rw,path="containeragent/var/log/juju")
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wnp5k (ro)
+  temporal-ui:
+    Container ID:  containerd://d17b4e67a1e6c3d6405352362a725c5b5de45a389672ae570791142dc0006840
+    Image:         registry.jujucharms.com/charm/jncz102036mcjljug0tnrvdrmllknge599wam/temporal-ui-image@sha256:f14a4b14f32a6850a78273a3796e7812ce5aa85cd2fee6853dba9f08547f5f68
+    Image ID:      registry.jujucharms.com/charm/jncz102036mcjljug0tnrvdrmllknge599wam/temporal-ui-image@sha256:f14a4b14f32a6850a78273a3796e7812ce5aa85cd2fee6853dba9f08547f5f68
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /charm/bin/pebble
+    Args:
+      run
+      --create-dirs
+      --hold
+      --http
+      :38813
+      --verbose
+    State:          Running
+      Started:      Fri, 28 Aug 2026 03:51:50 +0000
+    Ready:          True
+    Restart Count:  0
+    Liveness:       http-get http://:38813/v1/health%3Flevel=alive delay=0s timeout=1s period=5s #success=1 #failure=3
+    Readiness:      http-get http://:38813/v1/health%3Flevel=ready delay=0s timeout=1s period=5s #success=1 #failure=1
+    Startup:        http-get http://:38813/v1/health%3Flevel=alive delay=0s timeout=1s period=1s #success=1 #failure=30
+    Environment:
+      JUJU_CONTAINER_NAME:  temporal-ui
+      PEBBLE_SOCKET:        /charm/container/pebble.socket
+      PEBBLE:               /charm/container/pebble
+      PEBBLE_COPY_ONCE:     /var/lib/pebble/default
+    Mounts:
+      /charm/bin/pebble from charm-data (ro,path="charm/bin/pebble")
+      /charm/container from charm-data (rw,path="charm/containers/temporal-ui")
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wnp5k (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  charm-data:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  kube-api-access-wnp5k:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              kubernetes.io/arch=amd64
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  15m   default-scheduler  Successfully assigned fed-e2e/temporal-ui-k8s-0 to fed-e2e-control-plane
+  Normal  Pulled     15m   kubelet            spec.initContainers{charm-init}: Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+  Normal  Created    15m   kubelet            spec.initContainers{charm-init}: Container created
+  Normal  Started    15m   kubelet            spec.initContainers{charm-init}: Container started
+  Normal  Pulled     15m   kubelet            spec.containers{charm}: Container image "ghcr.io/juju/charm-base:ubuntu-24.04" already present on machine and can be accessed by the pod
+  Normal  Created    15m   kubelet            spec.containers{charm}: Container created
+  Normal  Started    15m   kubelet            spec.containers{charm}: Container started
+  Normal  Pulling    15m   kubelet            spec.containers{temporal-ui}: Pulling image "registry.jujucharms.com/charm/jncz102036mcjljug0tnrvdrmllknge599wam/temporal-ui-image@sha256:f14a4b14f32a6850a78273a3796e7812ce5aa85cd2fee6853dba9f08547f5f68"
+  Normal  Pulled     15m   kubelet            spec.containers{temporal-ui}: Successfully pulled image "registry.jujucharms.com/charm/jncz102036mcjljug0tnrvdrmllknge599wam/temporal-ui-image@sha256:f14a4b14f32a6850a78273a3796e7812ce5aa85cd2fee6853dba9f08547f5f68" in 6.972s (13.136s including waiting). Image size: 53599858 bytes.
+  Normal  Created    15m   kubelet            spec.containers{temporal-ui}: Container created
+  Normal  Started    15m   kubelet            spec.containers{temporal-ui}: Container started
+unit-temporal-k8s-0: 03:51:25 INFO juju.worker.uniter.operation ran "admin-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:26 WARNING unit.temporal-k8s/0.db-relation-created /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:26 WARNING unit.temporal-k8s/0.db-relation-created * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:26 WARNING unit.temporal-k8s/0.db-relation-created   warnings.warn(message, UserWarning)
+unit-temporal-admin-k8s-0: 03:51:26 INFO juju.worker.uniter.operation ran "admin-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-admin-k8s-0: 03:51:26 INFO juju.worker.uniter.operation ran "peer-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:26 INFO juju.worker.uniter.operation ran "db-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:26 INFO juju.worker.uniter found queued "leader-elected" hook
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.leader-elected /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.leader-elected * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.leader-elected   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:27 INFO juju.worker.uniter.operation ran "leader-elected" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.config-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.config-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:27 WARNING unit.temporal-k8s/0.config-changed   warnings.warn(message, UserWarning)
+unit-temporal-admin-k8s-0: 03:51:28 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:28 INFO unit.temporal-k8s/0.juju-log * running TemporalK8SCharm._on_config_changed
+unit-temporal-k8s-0: 03:51:28 INFO unit.temporal-k8s/0.juju-log * completed TemporalK8SCharm._on_config_changed
+unit-temporal-k8s-0: 03:51:28 INFO juju.worker.uniter.operation ran "config-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:28 INFO juju.worker.uniter found queued "start" hook
+unit-temporal-k8s-0: 03:51:28 WARNING unit.temporal-k8s/0.start /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:28 WARNING unit.temporal-k8s/0.start * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:28 WARNING unit.temporal-k8s/0.start   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:29 INFO juju.worker.uniter.operation ran "start" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:29 WARNING unit.temporal-k8s/0.admin-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:29 WARNING unit.temporal-k8s/0.admin-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:29 WARNING unit.temporal-k8s/0.admin-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:30 INFO unit.temporal-k8s/0.juju-log admin:8: * running Admin._on_admin_relation_joined
+unit-temporal-k8s-0: 03:51:30 INFO unit.temporal-k8s/0.juju-log admin:8: * completed Admin._on_admin_relation_joined
+unit-temporal-k8s-0: 03:51:30 INFO juju.worker.uniter.operation ran "admin-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:30 WARNING unit.temporal-k8s/0.temporal-pebble-ready /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:30 WARNING unit.temporal-k8s/0.temporal-pebble-ready * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:30 WARNING unit.temporal-k8s/0.temporal-pebble-ready   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log * running TemporalK8SCharm._on_temporal_pebble_ready
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log * completed TemporalK8SCharm._on_temporal_pebble_ready
+unit-temporal-k8s-0: 03:51:31 WARNING unit.temporal-k8s/0.juju-log No Loki endpoints available
+unit-temporal-k8s-0: 03:51:31 INFO juju.worker.uniter.operation ran "temporal-pebble-ready" hook (via hook dispatching script: dispatch)
+controller-0: 03:51:31 INFO juju.worker.caasapplicationprovisioner.temporal-postgresql scaling application "temporal-postgresql" to desired scale 1
+unit-temporal-k8s-0: 03:51:31 WARNING unit.temporal-k8s/0.admin-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:31 WARNING unit.temporal-k8s/0.admin-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:31 WARNING unit.temporal-k8s/0.admin-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log admin:8: * running Admin._on_admin_relation_changed
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log admin:8: * running Admin._on_schema_changed
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log admin:8: * completed Admin._on_schema_changed
+unit-temporal-k8s-0: 03:51:31 INFO unit.temporal-k8s/0.juju-log admin:8: * completed Admin._on_admin_relation_changed
+unit-temporal-k8s-0: 03:51:32 INFO juju.worker.uniter.operation ran "admin-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:32 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:32 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:32 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:32 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:33 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:33 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:33 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed   warnings.warn(message, UserWarning)
+controller-0: 03:51:33 INFO juju.worker.caasapplicationprovisioner.temporal-postgresql scaling application "temporal-postgresql" to desired scale 1
+unit-temporal-k8s-0: 03:51:33 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-changed" hook (via hook dispatching script: dispatch)
+controller-0: 03:51:34 INFO juju.worker.caasapplicationprovisioner.temporal-ui-k8s scaling application "temporal-ui-k8s" to desired scale 1
+unit-temporal-k8s-0: 03:51:35 WARNING unit.temporal-k8s/0.peer-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:35 WARNING unit.temporal-k8s/0.peer-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:35 WARNING unit.temporal-k8s/0.peer-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:35 INFO unit.temporal-k8s/0.juju-log peer:0: * running TemporalK8SCharm._on_peer_relation_changed
+unit-temporal-k8s-0: 03:51:35 INFO unit.temporal-k8s/0.juju-log peer:0: * completed TemporalK8SCharm._on_peer_relation_changed
+unit-temporal-k8s-0: 03:51:35 INFO juju.worker.uniter.operation ran "peer-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.cmd running containerAgent [3.6.27 4f49d69aab83fe68390126013713a228d57d0edf gc go1.26.5]
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.cmd.containeragent.unit start "unit"
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.upgradesteps upgrade steps for 3.6.27 have already been run.
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.probehttpserver starting http server on 127.0.0.1:65301
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.api connection established to "wss://10.96.79.133:17070/model/9cce8720-cc23-45cb-898f-681cacfcd15f/api"
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.apicaller [9cce87] "unit-temporal-ui-k8s-0" successfully connected to "wss://10.96.79.133:17070"
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.migrationminion migration migration phase is now: NONE
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.logger logger worker started
+unit-temporal-ui-k8s-0: 03:51:37 WARNING juju.worker.proxyupdater unable to set snap core settings [proxy.http= proxy.https= proxy.store=]: exec: "snap": executable file not found in $PATH, output: ""
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.leadership temporal-ui-k8s/0 promoted to leadership of temporal-ui-k8s
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.caasupgrader abort check blocked until version event received
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.caasupgrader unblocking abort check
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.agent.tools ensure jujuc symlinks in /var/lib/juju/tools/unit-temporal-ui-k8s-0
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.uniter unit "temporal-ui-k8s/0" started
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.uniter resuming charm install
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.worker.uniter.charm downloading ch:amd64/temporal-ui-k8s-31 from API server
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.downloader downloading from ch:amd64/temporal-ui-k8s-31
+unit-temporal-ui-k8s-0: 03:51:37 WARNING juju.worker.s3caller Response has no supported checksum. Not validating response payload.%!(EXTRA []interface {}=[])
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.downloader download complete ("ch:amd64/temporal-ui-k8s-31")
+unit-temporal-ui-k8s-0: 03:51:37 INFO juju.downloader download verified ("ch:amd64/temporal-ui-k8s-31")
+unit-temporal-ui-k8s-0: 03:51:38 INFO juju.worker.uniter hooks are retried true
+unit-temporal-ui-k8s-0: 03:51:38 INFO juju.worker.uniter found queued "install" hook
+unit-temporal-ui-k8s-0: 03:51:39 INFO unit.temporal-ui-k8s/0.juju-log * running TemporalUiK8SOperatorCharm._on_install
+unit-temporal-ui-k8s-0: 03:51:39 INFO unit.temporal-ui-k8s/0.juju-log * completed TemporalUiK8SOperatorCharm._on_install
+unit-temporal-ui-k8s-0: 03:51:39 INFO juju.worker.uniter.operation ran "install" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:40 WARNING unit.temporal-k8s/0.ui-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:40 WARNING unit.temporal-k8s/0.ui-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:40 WARNING unit.temporal-k8s/0.ui-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:51:41 INFO unit.temporal-k8s/0.juju-log ui:9: * running UI._on_ui_relation_joined
+unit-temporal-ui-k8s-0: 03:51:41 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:41 INFO unit.temporal-k8s/0.juju-log ui:9: * completed UI._on_ui_relation_joined
+unit-temporal-k8s-0: 03:51:41 INFO juju.worker.uniter.operation ran "ui-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:41 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:41 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:41 WARNING unit.temporal-k8s/0.temporal-host-info-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-ui-k8s-0: 03:51:41 INFO juju.worker.uniter.operation ran "ui-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:42 INFO juju.worker.uniter.operation ran "peer-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:42 INFO juju.worker.uniter found queued "leader-elected" hook
+unit-temporal-k8s-0: 03:51:42 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:42 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:42 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:42 WARNING unit.temporal-k8s/0.temporal-host-info-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-ui-k8s-0: 03:51:43 INFO juju.worker.uniter.operation ran "leader-elected" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:43 INFO unit.temporal-ui-k8s/0.juju-log * running TemporalUiK8SOperatorCharm._on_config_changed
+unit-temporal-ui-k8s-0: 03:51:43 INFO unit.temporal-ui-k8s/0.juju-log * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:43 INFO unit.temporal-ui-k8s/0.juju-log * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:43 INFO unit.temporal-ui-k8s/0.juju-log * completed TemporalUiK8SOperatorCharm._on_config_changed
+unit-temporal-k8s-0: 03:51:43 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:43 INFO juju.worker.uniter.operation ran "config-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:43 INFO juju.worker.uniter found queued "start" hook
+unit-temporal-k8s-0: 03:51:44 WARNING unit.temporal-k8s/0.ui-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:51:44 WARNING unit.temporal-k8s/0.ui-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:51:44 WARNING unit.temporal-k8s/0.ui-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-admin-k8s-0: 03:51:44 INFO juju.worker.uniter.operation ran "temporal-admin-pebble-ready" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:51:44 INFO unit.temporal-k8s/0.juju-log ui:9: * running UI._on_ui_relation_joined
+unit-temporal-k8s-0: 03:51:44 INFO unit.temporal-k8s/0.juju-log ui:9: * completed UI._on_ui_relation_joined
+unit-temporal-ui-k8s-0: 03:51:44 INFO juju.worker.uniter.operation ran "start" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:44 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-k8s-0: 03:51:44 INFO juju.worker.uniter.operation ran "ui-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:44 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:45 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._on_ui_relation_changed
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._on_ui_relation_changed
+unit-temporal-ui-k8s-0: 03:51:45 INFO juju.worker.uniter.operation ran "ui-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:45 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:46 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log temporal-host-info:10: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:46 INFO juju.worker.uniter.operation ran "temporal-host-info-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._on_ui_relation_joined
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:46 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._on_ui_relation_joined
+unit-temporal-ui-k8s-0: 03:51:47 INFO juju.worker.uniter.operation ran "ui-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._on_ui_relation_changed
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log ui:9: * completed TemporalUiK8SOperatorCharm._on_ui_relation_changed
+unit-temporal-ui-k8s-0: 03:51:47 INFO juju.worker.uniter.operation ran "ui-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log peer:2: * running TemporalUiK8SOperatorCharm._on_peer_relation_changed
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log peer:2: * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log peer:2: * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:47 INFO unit.temporal-ui-k8s/0.juju-log peer:2: * completed TemporalUiK8SOperatorCharm._on_peer_relation_changed
+unit-temporal-ui-k8s-0: 03:51:48 INFO juju.worker.uniter.operation ran "peer-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:51:50 INFO unit.temporal-ui-k8s/0.juju-log * running TemporalUiK8SOperatorCharm._on_temporal_ui_pebble_ready
+unit-temporal-ui-k8s-0: 03:51:50 INFO unit.temporal-ui-k8s/0.juju-log * running TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:50 INFO unit.temporal-ui-k8s/0.juju-log * completed TemporalUiK8SOperatorCharm._update
+unit-temporal-ui-k8s-0: 03:51:50 INFO unit.temporal-ui-k8s/0.juju-log * completed TemporalUiK8SOperatorCharm._on_temporal_ui_pebble_ready
+unit-temporal-ui-k8s-0: 03:51:51 INFO juju.worker.uniter.operation ran "temporal-ui-pebble-ready" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:51:54 INFO juju.cmd running containerAgent [3.6.27 4f49d69aab83fe68390126013713a228d57d0edf gc go1.26.5]
+unit-temporal-postgresql-0: 03:51:54 INFO juju.cmd.containeragent.unit start "unit"
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.upgradesteps upgrade steps for 3.6.27 have already been run.
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.probehttpserver starting http server on 127.0.0.1:65301
+unit-temporal-postgresql-0: 03:51:54 INFO juju.api connection established to "wss://10.96.79.133:17070/model/9cce8720-cc23-45cb-898f-681cacfcd15f/api"
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.apicaller [9cce87] "unit-temporal-postgresql-0" successfully connected to "wss://10.96.79.133:17070"
+unit-temporal-postgresql-0: 03:51:54 INFO juju.api connection established to "wss://controller-service.controller-fed-fed-e2e.svc.cluster.local:17070/model/9cce8720-cc23-45cb-898f-681cacfcd15f/api"
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.apicaller [9cce87] "unit-temporal-postgresql-0" successfully connected to "wss://controller-service.controller-fed-fed-e2e.svc.cluster.local:17070"
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.migrationminion migration migration phase is now: NONE
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.logger logger worker started
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.leadership temporal-postgresql/0 promoted to leadership of temporal-postgresql
+unit-temporal-postgresql-0: 03:51:54 WARNING juju.worker.proxyupdater unable to set snap core settings [proxy.http= proxy.https= proxy.store=]: exec: "snap": executable file not found in $PATH, output: ""
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.caasupgrader abort check blocked until version event received
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.caasupgrader unblocking abort check
+unit-temporal-postgresql-0: 03:51:54 INFO juju.agent.tools ensure jujuc symlinks in /var/lib/juju/tools/unit-temporal-postgresql-0
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.uniter unit "temporal-postgresql/0" started
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.uniter resuming charm install
+unit-temporal-postgresql-0: 03:51:54 INFO juju.worker.uniter.charm downloading ch:amd64/postgresql-k8s-925 from API server
+unit-temporal-postgresql-0: 03:51:54 INFO juju.downloader downloading from ch:amd64/postgresql-k8s-925
+unit-temporal-postgresql-0: 03:51:54 WARNING juju.worker.s3caller Response has no supported checksum. Not validating response payload.%!(EXTRA []interface {}=[])
+unit-temporal-postgresql-0: 03:51:54 INFO juju.downloader download complete ("ch:amd64/postgresql-k8s-925")
+unit-temporal-postgresql-0: 03:51:54 INFO juju.downloader download verified ("ch:amd64/postgresql-k8s-925")
+unit-temporal-postgresql-0: 03:51:58 INFO juju.worker.uniter hooks are retried true
+unit-temporal-postgresql-0: 03:51:58 INFO juju.worker.uniter found queued "install" hook
+unit-temporal-k8s-0: 03:52:00 WARNING unit.temporal-k8s/0.temporal-pebble-check-failed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:00 WARNING unit.temporal-k8s/0.temporal-pebble-check-failed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:00 WARNING unit.temporal-k8s/0.temporal-pebble-check-failed   warnings.warn(message, UserWarning)
+unit-temporal-postgresql-0: 03:52:00 INFO juju.worker.uniter.operation ran "install" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:01 INFO juju.worker.uniter.operation ran "temporal-pebble-check-failed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:01 WARNING unit.temporal-k8s/0.db-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:01 WARNING unit.temporal-k8s/0.db-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:01 WARNING unit.temporal-k8s/0.db-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:02 INFO juju.worker.uniter.operation ran "db-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:02 WARNING unit.temporal-k8s/0.db-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:02 WARNING unit.temporal-k8s/0.db-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:02 WARNING unit.temporal-k8s/0.db-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-postgresql-0: 03:52:02 INFO juju.worker.uniter.operation ran "database-peers-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:03 INFO juju.worker.uniter.operation ran "db-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:03 WARNING unit.temporal-k8s/0.visibility-relation-joined /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:03 WARNING unit.temporal-k8s/0.visibility-relation-joined * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:03 WARNING unit.temporal-k8s/0.visibility-relation-joined   warnings.warn(message, UserWarning)
+unit-temporal-postgresql-0: 03:52:03 INFO juju.worker.uniter.operation ran "database-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:03 INFO juju.worker.uniter.operation ran "visibility-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:04 WARNING unit.temporal-k8s/0.visibility-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:04 WARNING unit.temporal-k8s/0.visibility-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:04 WARNING unit.temporal-k8s/0.visibility-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:04 INFO juju.worker.uniter.operation ran "visibility-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:04 INFO juju.worker.uniter.operation ran "database-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:06 INFO juju.worker.uniter.operation ran "restart-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:07 INFO juju.worker.uniter.operation ran "upgrade-relation-created" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:07 INFO juju.worker.uniter found queued "leader-elected" hook
+unit-temporal-postgresql-0: 03:52:08 INFO juju.worker.uniter.operation ran "leader-elected" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:10 INFO juju.worker.uniter.operation ran "pgdata-storage-attached" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:11 INFO juju.worker.uniter.operation ran "config-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:11 INFO juju.worker.uniter found queued "start" hook
+unit-temporal-postgresql-0: 03:52:12 INFO juju.worker.uniter.operation ran "start" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:14 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:15 WARNING unit.temporal-k8s/0.db-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:15 WARNING unit.temporal-k8s/0.db-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:15 WARNING unit.temporal-k8s/0.db-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-admin-k8s-0: 03:52:15 INFO juju.worker.uniter.operation ran "temporal-admin-pebble-check-failed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:15 INFO juju.worker.uniter.operation ran "db-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:16 INFO juju.worker.uniter.operation ran "database-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:17 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:19 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:19 WARNING unit.temporal-k8s/0.visibility-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:19 WARNING unit.temporal-k8s/0.visibility-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:19 WARNING unit.temporal-k8s/0.visibility-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:20 INFO juju.worker.uniter.operation ran "visibility-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:21 INFO juju.worker.uniter.operation ran "database-relation-joined" hook (via hook dispatching script: dispatch)
+unit-temporal-ui-k8s-0: 03:52:21 INFO juju.worker.uniter.operation ran "temporal-ui-pebble-check-failed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:22 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:23 INFO unit.temporal-postgresql/0.juju-log Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:24 INFO unit.temporal-postgresql/0.juju-log Added updated layer 'postgresql' to Pebble plan
+unit-temporal-postgresql-0: 03:52:25 INFO unit.temporal-postgresql/0.juju-log Restarted postgresql service
+unit-temporal-postgresql-0: 03:52:25 INFO unit.temporal-postgresql/0.juju-log Updated health checks
+unit-temporal-postgresql-0: 03:52:27 INFO juju.worker.uniter.operation ran "postgresql-pebble-ready" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:27 WARNING unit.temporal-k8s/0.visibility-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:27 WARNING unit.temporal-k8s/0.visibility-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:27 WARNING unit.temporal-k8s/0.visibility-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:28 INFO juju.worker.uniter.operation ran "visibility-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:30 WARNING unit.temporal-k8s/0.db-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:30 WARNING unit.temporal-k8s/0.db-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:30 WARNING unit.temporal-k8s/0.db-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-postgresql-0: 03:52:30 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Updating Patroni config file
+unit-temporal-k8s-0: 03:52:31 INFO juju.worker.uniter.operation ran "db-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:31 INFO unit.temporal-postgresql/0.juju-log database-peers:5: PostgreSQL restart required
+unit-temporal-postgresql-0: 03:52:34 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Updated health checks
+unit-temporal-postgresql-0: 03:52:34 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Skipping notice (PostgresqlOperatorCharm/on/restart_process_locks[92]/PostgresqlOperatorCharm/RollingOpsManager/_on_process_locks) - already in the queue.
+unit-temporal-postgresql-0: 03:52:34 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Updated health checks
+unit-temporal-postgresql-0: 03:52:34 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:35 INFO unit.temporal-postgresql/0.juju-log database-peers:5: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:36 INFO juju.worker.uniter.operation ran "database-peers-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:36 WARNING unit.temporal-k8s/0.visibility-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:36 WARNING unit.temporal-k8s/0.visibility-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:36 WARNING unit.temporal-k8s/0.visibility-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:36 INFO unit.temporal-k8s/0.juju-log visibility:7: read-only-endpoints changed on 2026-08-28 03:52:36.604119
+unit-temporal-postgresql-0: 03:52:36 INFO unit.temporal-postgresql/0.juju-log database:6: Starting the authorisation rules observer
+unit-temporal-k8s-0: 03:52:36 INFO juju.worker.uniter.operation ran "visibility-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:36 INFO unit.temporal-postgresql/0.juju-log database:6: Started authorisation rules observer process with PID 10214
+unit-temporal-k8s-0: 03:52:37 WARNING unit.temporal-k8s/0.db-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:37 WARNING unit.temporal-k8s/0.db-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:37 WARNING unit.temporal-k8s/0.db-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-postgresql-0: 03:52:37 INFO unit.temporal-postgresql/0.juju-log database:6: Updating Patroni config file
+unit-temporal-k8s-0: 03:52:37 INFO unit.temporal-k8s/0.juju-log db:6: read-only-endpoints changed on 2026-08-28 03:52:37.413752
+unit-temporal-k8s-0: 03:52:37 INFO juju.worker.uniter.operation ran "db-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:38 INFO unit.temporal-postgresql/0.juju-log database:6: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:39 INFO unit.temporal-postgresql/0.juju-log database:6: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:39 INFO unit.temporal-postgresql/0.juju-log database:6: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:40 INFO unit.temporal-postgresql/0.juju-log database:6: Updating Patroni config file
+unit-temporal-postgresql-0: 03:52:41 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:41 WARNING unit.temporal-k8s/0.visibility-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:41 WARNING unit.temporal-k8s/0.visibility-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:41 WARNING unit.temporal-k8s/0.visibility-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:42 INFO unit.temporal-k8s/0.juju-log visibility:7: database created at 2026-08-28 03:52:42.035637
+unit-temporal-k8s-0: 03:52:42 INFO unit.temporal-k8s/0.juju-log visibility:7: * running Postgresql._on_database_changed
+unit-temporal-k8s-0: 03:52:42 INFO unit.temporal-k8s/0.juju-log visibility:7: * completed Postgresql._on_database_changed
+unit-temporal-k8s-0: 03:52:42 INFO unit.temporal-k8s/0.juju-log visibility:7: * running Admin._on_database_changed
+unit-temporal-k8s-0: 03:52:42 INFO unit.temporal-k8s/0.juju-log visibility:7: * completed Admin._on_database_changed
+unit-temporal-k8s-0: 03:52:42 INFO juju.worker.uniter.operation ran "visibility-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:42 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-k8s-0: 03:52:42 WARNING unit.temporal-k8s/0.db-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:42 WARNING unit.temporal-k8s/0.db-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:42 WARNING unit.temporal-k8s/0.db-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-k8s-0: 03:52:43 INFO unit.temporal-k8s/0.juju-log db:6: database created at 2026-08-28 03:52:43.231275
+unit-temporal-k8s-0: 03:52:43 INFO unit.temporal-k8s/0.juju-log db:6: * running Postgresql._on_database_changed
+unit-temporal-k8s-0: 03:52:43 INFO unit.temporal-k8s/0.juju-log db:6: * completed Postgresql._on_database_changed
+unit-temporal-k8s-0: 03:52:43 INFO unit.temporal-k8s/0.juju-log db:6: * running Admin._on_database_changed
+unit-temporal-k8s-0: 03:52:43 INFO unit.temporal-k8s/0.juju-log db:6: * completed Admin._on_database_changed
+unit-temporal-k8s-0: 03:52:43 INFO juju.worker.uniter.operation ran "db-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-postgresql-0: 03:52:43 INFO juju.worker.uniter.operation ran "database-relation-changed" hook (via hook dispatching script: dispatch)
+unit-temporal-admin-k8s-0: 03:52:44 INFO unit.temporal-admin-k8s/0.juju-log admin:8: initializing db schema
+unit-temporal-k8s-0: 03:52:44 WARNING unit.temporal-k8s/0.peer-relation-changed /var/lib/juju/agents/unit-temporal-k8s-0/charm/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+unit-temporal-k8s-0: 03:52:44 WARNING unit.temporal-k8s/0.peer-relation-changed * 'allow_population_by_field_name' has been renamed to 'validate_by_name'
+unit-temporal-k8s-0: 03:52:44 WARNING unit.temporal-k8s/0.peer-relation-changed   warnings.warn(message, UserWarning)
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.155Z	[34mINFO[0m	Starting schema setup	{"config": {"SchemaFilePath":"","SchemaName":"","InitialVersion":"0.0","Overwrite":false,"DisableVersioning":false}, "logging-call-at": "setuptask.go:63"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.155Z	[35mDEBUG[0m	Setting up version tables	{"logging-call-at": "setuptask.go:73"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.166Z	[35mDEBUG[0m	Setting initial schema version to 0.0	{"logging-call-at": "setuptask.go:136"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.167Z	[35mDEBUG[0m	Updating schema update log	{"logging-call-at": "setuptask.go:141"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.168Z	[34mINFO[0m	Schema setup complete	{"logging-call-at": "setuptask.go:149"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.218Z	[34mINFO[0m	UpdateSchemaTask started	{"config": {"DBName":"","TargetVersion":"","SchemaDir":"/etc/temporal/schema/postgresql/v12/temporal/versioned","SchemaName":"","IsDryRun":false}, "logging-call-at": "updatetask.go:102"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.220Z	[35mDEBUG[0m	Schema Dirs: [v1.0 v1.1 v1.2 v1.3 v1.4 v1.5 v1.6 v1.7 v1.8 v1.9 v1.10 v1.11]	{"logging-call-at": "updatetask.go:210"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.220Z	[34mINFO[0m	Processing schema file: v1.0/schema.sql	{"logging-call-at": "updatetask.go:254"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.220Z	[34mINFO[0m	Processing schema file: v1.1/cluster_metadata.sql	{"logging-call-at": "updatetask.go:254"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.220Z	[34mINFO[0m	Processing schema file: v1.2/queue.sql	{"logging-call-at": "updatetask.go:254"}
+unit-temporal-admin-k8s-0: 03:52:44 WARNING unit.temporal-admin-k8s/0.juju-log admin:8: temporal-sql-tool: 2026-08-28T03:52:44.221Z	[34mINFO[0m	Processing schema file: v1.3/visibility_tasks.sql	{"logging-call-at": "updatetask.go:254"}
+controller-0: 03:50:06 INFO juju.worker.apicaller [43a05d] "controller-0" successfully connected to "wss://localhost:17070"
+controller-0: 03:50:06 INFO juju.worker.logforwarder config change - log forwarding not enabled
+controller-0: 03:50:06 INFO juju.worker.logger logger worker started
+controller-0: 03:50:06 INFO juju.worker.pruner.action pruner config: max age: 336h0m0s, max collection size 5120M for kubeflow (43a05d76-835e-4fd9-8483-cdd600dd7809)
+controller-0: 03:50:06 INFO juju.worker.pruner.statushistory pruner config: max age: 336h0m0s, max collection size 5120M for kubeflow (43a05d76-835e-4fd9-8483-cdd600dd7809)
+controller-0: 03:50:07 INFO juju.worker.caasapplicationprovisioner.runner start "training-operator"
+model-43a05d76-835e-4fd9-8483-cdd600dd7809: 03:50:10 INFO juju.worker.caasupgrader abort check blocked until version event received
+model-43a05d76-835e-4fd9-8483-cdd600dd7809: 03:50:10 INFO juju.worker.caasupgrader unblocking abort check
+model-43a05d76-835e-4fd9-8483-cdd600dd7809: 03:50:10 INFO juju.worker.muxhttpserver starting http server on [::]:17071
+model-43a05d76-835e-4fd9-8483-cdd600dd7809: 03:50:10 INFO juju.worker.caasadmission ensuring model k8s webhook configurations
+controller-0: 03:50:16 INFO juju.worker.caasapplicationprovisioner.training-operator scaling application "training-operator" to desired scale 1
+unit-training-operator-0: 03:50:27 INFO juju.cmd running containerAgent [3.6.27 4f49d69aab83fe68390126013713a228d57d0edf gc go1.26.5]
+unit-training-operator-0: 03:50:27 INFO juju.cmd.containeragent.unit start "unit"
+unit-training-operator-0: 03:50:27 INFO juju.worker.upgradesteps upgrade steps for 3.6.27 have already been run.
+unit-training-operator-0: 03:50:27 INFO juju.worker.probehttpserver starting http server on 127.0.0.1:65301
+unit-training-operator-0: 03:50:27 INFO juju.api connection established to "wss://10.96.79.133:17070/model/43a05d76-835e-4fd9-8483-cdd600dd7809/api"
+unit-training-operator-0: 03:50:27 INFO juju.worker.apicaller [43a05d] "unit-training-operator-0" successfully connected to "wss://10.96.79.133:17070"
+unit-training-operator-0: 03:50:27 INFO juju.worker.migrationminion migration migration phase is now: NONE
+unit-training-operator-0: 03:50:27 INFO juju.worker.logger logger worker started
+unit-training-operator-0: 03:50:27 WARNING juju.worker.proxyupdater unable to set snap core settings [proxy.http= proxy.https= proxy.store=]: exec: "snap": executable file not found in $PATH, output: ""
+unit-training-operator-0: 03:50:27 INFO juju.worker.leadership training-operator/0 promoted to leadership of training-operator
+unit-training-operator-0: 03:50:27 INFO juju.worker.caasupgrader abort check blocked until version event received
+unit-training-operator-0: 03:50:27 INFO juju.worker.caasupgrader unblocking abort check
+unit-training-operator-0: 03:50:27 INFO juju.agent.tools ensure jujuc symlinks in /var/lib/juju/tools/unit-training-operator-0
+unit-training-operator-0: 03:50:27 INFO juju.worker.uniter unit "training-operator/0" started
+unit-training-operator-0: 03:50:27 INFO juju.worker.uniter resuming charm install
+unit-training-operator-0: 03:50:27 INFO juju.worker.uniter.charm downloading ch:amd64/training-operator-545 from API server
+unit-training-operator-0: 03:50:27 INFO juju.downloader downloading from ch:amd64/training-operator-545
+unit-training-operator-0: 03:50:27 WARNING juju.worker.s3caller Response has no supported checksum. Not validating response payload.%!(EXTRA []interface {}=[])
+unit-training-operator-0: 03:50:27 INFO juju.downloader download complete ("ch:amd64/training-operator-545")
+unit-training-operator-0: 03:50:27 INFO juju.downloader download verified ("ch:amd64/training-operator-545")
+unit-training-operator-0: 03:50:29 INFO juju.worker.uniter hooks are retried true
+unit-training-operator-0: 03:50:30 INFO juju.worker.uniter found queued "install" hook
+unit-training-operator-0: 03:50:30 INFO unit.training-operator/0.juju-log Running legacy hooks/install.
+unit-training-operator-0: 03:50:30 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:50:30 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:30 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:34 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mpijobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:34 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/xgboostjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:35 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/tfjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:35 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/pytorchjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:35 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/paddlejobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mxjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/secrets/training-operator-webhook-cert?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/serviceaccounts/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-admin?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-edit?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-view?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:36 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:37 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apps/v1/namespaces/kubeflow/deployments/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:37 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations/validator.training-operator.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:37 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/services/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 201 Created"
+unit-training-operator-0: 03:50:37 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:37 INFO juju.worker.uniter.operation ran "install" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 03:50:37 INFO juju.worker.uniter found queued "leader-elected" hook
+unit-training-operator-0: 03:50:38 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:50:38 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:38 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:42 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mpijobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:42 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/xgboostjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:42 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/tfjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/pytorchjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/paddlejobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mxjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/secrets/training-operator-webhook-cert?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:43 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/serviceaccounts/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-admin?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-edit?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-view?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apps/v1/namespaces/kubeflow/deployments/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations/validator.training-operator.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/services/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:44 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:45 INFO juju.worker.uniter.operation ran "leader-elected" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 03:50:45 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:50:45 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:45 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:48 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mpijobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:49 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/xgboostjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:49 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/tfjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:49 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/pytorchjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:49 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/paddlejobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions/mxjobs.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: GET https://10.96.0.1/apis/apiextensions.k8s.io/v1/customresourcedefinitions "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log Rendering manifests
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/secrets/training-operator-webhook-cert?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/serviceaccounts/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-admin?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-edit?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterroles/kubeflow-training-view?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/apps/v1/namespaces/kubeflow/deployments/training-operator?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations/validator.training-operator.kubeflow.org?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log HTTP Request: PATCH https://10.96.0.1/api/v1/namespaces/kubeflow/services/training-operator-workload?force=true&fieldManager=lightkube "HTTP/1.1 200 OK"
+unit-training-operator-0: 03:50:50 INFO unit.training-operator/0.juju-log Reconcile completed successfully
+unit-training-operator-0: 03:50:51 INFO juju.worker.uniter.operation ran "config-changed" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 03:50:51 INFO juju.worker.uniter found queued "start" hook
+unit-training-operator-0: 03:50:51 INFO unit.training-operator/0.juju-log Running legacy hooks/start.
+unit-training-operator-0: 03:50:51 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:50:51 INFO juju.worker.uniter.operation ran "start" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 03:54:40 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:54:41 INFO juju.worker.uniter.operation ran "update-status" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 03:58:47 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 03:58:47 INFO juju.worker.uniter.operation ran "update-status" hook (via hook dispatching script: dispatch)
+unit-training-operator-0: 04:04:13 WARNING unit.training-operator/0.juju-log 0 containers are present in metadata.yaml and refresh_event was not specified. Defaulting to update_status. Metrics IP may not be set in a timely fashion.
+unit-training-operator-0: 04:04:13 INFO juju.worker.uniter.operation ran "update-status" hook (via hook dispatching script: dispatch)
