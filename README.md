@@ -5,6 +5,7 @@
 ![Kubernetes](https://img.shields.io/badge/kubernetes-kind-326CE5?logo=kubernetes&logoColor=white)
 ![Deploy modes](https://img.shields.io/badge/deploy-manifests%20%7C%20juju-blue)
 ![Tests](https://img.shields.io/badge/tests-bats%20%2B%20shellcheck-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 A shared Bash library that brings up local Kubernetes development clusters
 with kind, Kubeflow Pipelines, the Kubeflow Training Operator, MLflow, MinIO,
@@ -326,3 +327,8 @@ The consumer list can't live in the workflow file (see
 - **On the origin repo**: a sibling `consumer-contracts-guard` job fails the
   workflow if the variable is unset, so an accidentally cleared variable
   can't silently degrade the nightly run to a green no-op.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE)
+file for details.
