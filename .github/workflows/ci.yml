@@ -235,6 +235,13 @@ jobs:
             kubectl describe pods -n fed-e2e | tail -200 || true
             juju debug-log -m fed-fed-e2e:fed-e2e --replay --limit 400 2>/dev/null | tail -300 || true
             juju debug-log -m fed-fed-e2e:kubeflow --replay --limit 200 2>/dev/null | tail -150 || true
+            # Pebble-level service churn never surfaces as kubectl events
+            # (learned from the mysql "Initialising mysqld" stall): capture
+            # every container's own log for the non-active units too.
+            for p in $(kubectl get pods -n fed-e2e -o name); do
+              echo "== logs $p =="
+              kubectl logs -n fed-e2e "$p" --all-containers --tail=80 || true
+            done
           } > "$RUNNER_TEMP/diag/diag.txt" 2>&1
           tail -100 "$RUNNER_TEMP/diag/diag.txt"
       - name: Publish diagnostics ref
