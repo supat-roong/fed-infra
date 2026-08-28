@@ -136,6 +136,10 @@ jobs:
       || (github.event_name == 'push' && contains(github.event.head_commit.message, '[juju-e2e]'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      # contents: write solely for the failure-only diagnostics ref push
+      # (refs/ci-diag/*); every other job keeps the workflow-level read.
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Report available disk
@@ -189,7 +193,10 @@ jobs:
           FED_POD_READY_ATTEMPTS=60
           EOF
       - name: Bring up the juju deploy mode
-        run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env"
+        # shell: bash gives -o pipefail, so tee cannot mask a bring-up
+        # failure; the log feeds the diagnostics ref below.
+        shell: bash
+        run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env" 2>&1 | tee "$RUNNER_TEMP/e2e-up.log"
       - name: Verify the deployed stack
         run: |
           juju status -m fed-fed-e2e:fed-e2e
@@ -218,11 +225,32 @@ jobs:
       - name: Diagnostics
         if: failure()
         run: |
-          juju status -m fed-fed-e2e:fed-e2e --format=tabular || true
-          juju status -m fed-fed-e2e:kubeflow --format=tabular || true
-          kubectl get pods -A || true
-          kubectl describe pods -n fed-e2e | tail -150 || true
-          juju debug-log -m fed-fed-e2e:fed-e2e --replay --limit 300 2>/dev/null | tail -200 || true
+          mkdir -p "$RUNNER_TEMP/diag"
+          cp "$RUNNER_TEMP/e2e-up.log" "$RUNNER_TEMP/diag/" 2>/dev/null || true
+          {
+            juju status -m fed-fed-e2e:fed-e2e --format=yaml || true
+            juju status -m fed-fed-e2e:kubeflow --format=yaml || true
+            kubectl get pods -A -o wide || true
+            kubectl get events -A --sort-by=.lastTimestamp | tail -80 || true
+            kubectl describe pods -n fed-e2e | tail -200 || true
+            juju debug-log -m fed-fed-e2e:fed-e2e --replay --limit 400 2>/dev/null | tail -300 || true
+            juju debug-log -m fed-fed-e2e:kubeflow --replay --limit 200 2>/dev/null | tail -150 || true
+          } > "$RUNNER_TEMP/diag/diag.txt" 2>&1
+          tail -100 "$RUNNER_TEMP/diag/diag.txt"
+      - name: Publish diagnostics ref
+        # Job logs need API auth to read; a git ref on a public repo does
+        # not. On failure, push the bring-up log + diagnostics to
+        # refs/ci-diag/<run_id> (outside refs/heads, so it never shows up
+        # as a branch): `git fetch origin refs/ci-diag/<run_id>` retrieves
+        # it unauthenticated.
+        if: failure()
+        run: |
+          cd "$RUNNER_TEMP/diag"
+          git init -q .
+          git add -A
+          git -c user.email=ci@local -c user.name=ci commit -qm "juju-e2e diagnostics for run ${{ github.run_id }}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" \
+            HEAD:refs/ci-diag/${{ github.run_id }}
       - name: Report disk after
         if: always()
         run: df -h /
