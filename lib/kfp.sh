@@ -111,13 +111,13 @@ fed_kfp_install_juju() {
   fed_juju_deploy "$model" kfp-minio minio "$FED_MINIO_CHANNEL"
   fed_juju_config "$model" kfp-minio access-key=minio secret-key=minio123
   fed_juju_deploy "$model" kfp-api kfp-api "$FED_KFP_CHANNEL" --trust
-  fed_juju_deploy "$model" kfp-persistence kfp-persistence "$FED_KFP_CHANNEL"
-  fed_juju_deploy "$model" kfp-schedwf kfp-schedwf "$FED_KFP_CHANNEL"
-  fed_juju_deploy "$model" kfp-viewer kfp-viewer "$FED_KFP_CHANNEL"
+  fed_juju_deploy "$model" kfp-persistence kfp-persistence "$FED_KFP_CHANNEL" --trust
+  fed_juju_deploy "$model" kfp-schedwf kfp-schedwf "$FED_KFP_CHANNEL" --trust
+  fed_juju_deploy "$model" kfp-viewer kfp-viewer "$FED_KFP_CHANNEL" --trust
   fed_juju_deploy "$model" kfp-viz kfp-viz "$FED_KFP_CHANNEL"
   fed_juju_deploy "$model" kfp-ui kfp-ui "$FED_KFP_CHANNEL"
   fed_juju_deploy "$model" kfp-metadata-writer kfp-metadata-writer "$FED_KFP_CHANNEL"
-  fed_juju_deploy "$model" mlmd mlmd "$FED_MLMD_CHANNEL"
+  fed_juju_deploy "$model" mlmd mlmd "$FED_MLMD_CHANNEL" --trust
   fed_juju_deploy "$model" envoy envoy "$FED_ENVOY_CHANNEL"
   fed_juju_deploy "$model" argo-controller argo-controller "$FED_ARGO_CHANNEL" --trust
   fed_juju_integrate "$model" kfp-api:relational-db kfp-db:database
