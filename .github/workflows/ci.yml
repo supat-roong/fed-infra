@@ -222,17 +222,37 @@ jobs:
         shell: bash
         run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env" 2>&1 | tee "$RUNNER_TEMP/e2e-up.log"
       - name: Verify the deployed stack
+        # Poll via fed_juju_wait_active instead of a single-shot
+        # `juju status | grep`. Every charmed-kubeflow charm runs a full
+        # reconcile on its ~5-minute update-status, and the unit leaves
+        # `active` for the couple of seconds that takes, so a one-shot check
+        # landing in that window fails a perfectly healthy stack: in run
+        # 33245806294 kfp-viewer's reconcile ran 09:50:14.19-09:50:16.80 and
+        # the check fired at 09:50:16.11. Bring-up never hit this because it
+        # already polls through this same helper -- the inline copy here was
+        # the same predicate minus the retry.
+        shell: bash
         run: |
+          . lib/common.sh
+          . lib/config.sh
+          . lib/juju.sh
+          fed_config_load "$RUNNER_TEMP/e2e.env"
+          # Override after the load, which picks up the env file's 240 --
+          # that budget is sized for a cold bring-up. Verification only has
+          # to outlast one reconcile, so a minute still fails fast on an app
+          # that is genuinely stuck.
+          export FED_POD_READY_ATTEMPTS=12 FED_RETRY_DELAY=5
           juju status -m fed-fed-e2e:fed-e2e
           juju status -m fed-fed-e2e:kubeflow
           for app in minio mlflow-mysql mlflow-server temporal-k8s temporal-admin-k8s temporal-ui-k8s temporal-postgresql; do
-            juju status -m fed-fed-e2e:fed-e2e "$app" --format=oneline | grep -q 'workload:active' \
+            fed_juju_wait_active fed-e2e "$app" \
               || { echo "FAIL: $app not active" >&2; exit 1; }
           done
-          juju status -m fed-fed-e2e:kubeflow training-operator --format=oneline | grep -q 'workload:active'
+          fed_juju_wait_active kubeflow training-operator \
+            || { echo "FAIL: training-operator not active" >&2; exit 1; }
           kubectl get crd pytorchjobs.kubeflow.org
           for app in kfp-db kfp-minio kfp-api kfp-persistence kfp-schedwf kfp-viewer kfp-viz kfp-ui kfp-metadata-writer mlmd envoy argo-controller; do
-            juju status -m fed-fed-e2e:kubeflow "$app" --format=oneline | grep -q 'workload:active' \
+            fed_juju_wait_active kubeflow "$app" \
               || { echo "FAIL: $app not active" >&2; exit 1; }
           done
           # Hostports come from the kind extraPortMappings the env above
