@@ -69,6 +69,10 @@ fed_kfp_patch_arm() {
 # Patches KFP's own bundled MinIO (namespace kubeflow), which is separate from
 # the standalone MinIO in minio.sh. Uses 'replace' on the whole ports array so
 # repeated runs cannot append duplicate container ports.
+#
+# The image comes from quay.io, not Docker Hub: minio/minio there stopped
+# serving anonymous pulls, which left this deployment in ImagePullBackOff
+# until it hit its progress deadline and failed the rollout wait below.
 fed_kfp_patch_minio() {
   local ns=$FED_KFP_NAMESPACE
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then
@@ -76,7 +80,7 @@ fed_kfp_patch_minio() {
     return 0
   fi
   fed_log "patching KFP MinIO image and console port"
-  kubectl set image deployment/minio minio=minio/minio:latest -n "$ns" || return 1
+  kubectl set image deployment/minio minio=quay.io/minio/minio:latest -n "$ns" || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
     -p='[{"op":"replace","path":"/spec/template/spec/containers/0/ports","value":[{"containerPort":9000},{"containerPort":9001}]}]' || return 1
   kubectl patch deployment minio -n "$ns" --type=json \

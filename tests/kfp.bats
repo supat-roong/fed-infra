@@ -105,6 +105,15 @@ setup() {
   assert_called '"--console-address"'
 }
 
+# minio/minio on Docker Hub stopped serving anonymous pulls, which stalled the
+# kubeflow minio rollout until its progress deadline. quay.io is the registry
+# MinIO still publishes to, and the one manifests/minio.yaml.tpl already uses.
+@test "fed_kfp_patch_minio pulls the MinIO image from quay, not Docker Hub" {
+  fed_kfp_patch_minio
+  assert_called "minio=quay.io/minio/minio:"
+  refute_called "minio=minio/minio:"
+}
+
 @test "fed_kfp_wait waits on all four core deployments" {
   fed_kfp_wait
   assert_called "rollout status deployment/workflow-controller -n kubeflow"

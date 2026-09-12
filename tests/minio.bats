@@ -53,6 +53,15 @@ setup() {
   [ "$last_delete_line" -gt "$run_line" ]
 }
 
+# See the kfp.bats counterpart: minio/* is no longer anonymously pullable from
+# Docker Hub. Unlike the kfp rollout this one only warns, so a regression here
+# fails silently -- bucket creation just stops happening.
+@test "fed_minio_ensure_bucket pulls mc from quay, not Docker Hub" {
+  fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
+  assert_called "--image=quay.io/minio/mc:"
+  refute_called "--image=minio/mc:"
+}
+
 @test "fed_minio_ensure_bucket is a no-op when dry-running" {
   export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
   fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
