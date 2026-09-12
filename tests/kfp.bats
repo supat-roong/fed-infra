@@ -114,6 +114,12 @@ setup() {
   refute_called "minio=minio/minio:"
 }
 
+@test "fed_kfp_patch_minio uses the pinned FED_MINIO_IMAGE" {
+  fed_kfp_patch_minio
+  assert_called "minio=${FED_MINIO_IMAGE}"
+  [[ "$FED_MINIO_IMAGE" == quay.io/minio/minio:RELEASE.* ]]
+}
+
 @test "fed_kfp_wait waits on all four core deployments" {
   fed_kfp_wait
   assert_called "rollout status deployment/workflow-controller -n kubeflow"

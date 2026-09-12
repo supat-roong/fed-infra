@@ -45,3 +45,20 @@ load helper
   run python3 "$FED_INFRA_ROOT/tests/lint_inert_assertions.py" "$FED_INFRA_ROOT"
   [ "$status" -eq 0 ] || { echo "$output" >&2; false; }
 }
+
+@test "no image is pulled from a floating :latest tag" {
+  # A moving upstream tag turns an unchanged scheduled CI run into a random
+  # failure with no commit to blame: minio/minio:latest stalled the kubeflow
+  # minio rollout to its progress deadline the day Docker Hub stopped serving
+  # that repo anonymously. Pin every image to a release tag so that what CI
+  # ran yesterday is what it runs today.
+  # ^[^#]* anchors the match to the code part of the line: [^#]* cannot cross
+  # a '#', so prose mentioning the tag in a comment is not a finding.
+  run grep -rnE '^[^#]*:latest' "$FED_INFRA_ROOT"/lib/*.sh \
+    "$FED_INFRA_ROOT"/manifests/*.tpl "$FED_INFRA_ROOT"/bin/*
+  [ "$status" -ne 0 ] || {
+    echo "floating image tags found; pin them to a release tag:" >&2
+    echo "$output" >&2
+    return 1
+  }
+}

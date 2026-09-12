@@ -27,6 +27,11 @@ fed_config_defaults() {
   : "${FED_KIND_WORKERS:=0}"
   : "${FED_MLFLOW_VERSION:=2.12.2}"
   : "${FED_MLFLOW_IMAGE:=fed-mlflow:${FED_MLFLOW_VERSION}}"
+  # Pinned rather than :latest so an unchanged scheduled CI run cannot break
+  # on a moved upstream tag, and overridable so a mirror or air-gapped
+  # registry can be substituted without patching the library.
+  : "${FED_MINIO_IMAGE:=quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z}"
+  : "${FED_MC_IMAGE:=quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z}"
   : "${FED_IMAGES:=}"
   : "${FED_S3_BUCKET:=mlflow-artifacts}"
   : "${FED_NODEPORT_KFP:=30080}"
@@ -115,7 +120,7 @@ fed_config_defaults() {
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
          FED_TRAINING_OPERATOR_VERSION FED_KIND_WORKERS \
-         FED_MLFLOW_VERSION FED_MLFLOW_IMAGE \
+         FED_MLFLOW_VERSION FED_MLFLOW_IMAGE FED_MINIO_IMAGE FED_MC_IMAGE \
          FED_IMAGES FED_S3_BUCKET FED_NODEPORT_KFP FED_NODEPORT_MLFLOW \
          FED_NODEPORT_MINIO_API FED_NODEPORT_MINIO_CONSOLE FED_HOSTPORT_KFP \
          FED_HOSTPORT_MLFLOW FED_HOSTPORT_MINIO_API FED_HOSTPORT_MINIO_CONSOLE \

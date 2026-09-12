@@ -62,6 +62,12 @@ setup() {
   refute_called "--image=minio/mc:"
 }
 
+@test "fed_minio_ensure_bucket uses the pinned FED_MC_IMAGE" {
+  fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
+  assert_called "--image=${FED_MC_IMAGE}"
+  [[ "$FED_MC_IMAGE" == quay.io/minio/mc:RELEASE.* ]]
+}
+
 @test "fed_minio_ensure_bucket is a no-op when dry-running" {
   export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
   fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
@@ -73,6 +79,14 @@ setup() {
   [[ "$output" == *"namespace: demo-ns"* ]] || return 1
   [[ "$output" == *'value: "ak"'* ]] || return 1
   [[ "$output" == *"kind: StatefulSet"* ]]
+}
+
+@test "minio template renders the pinned MinIO image" {
+  run fed_render "$FED_INFRA_ROOT/manifests/minio.yaml.tpl"
+  # Guard first: an unset FED_MINIO_IMAGE would reduce the match below to
+  # the literal "image: ", which every rendering of this template contains.
+  [[ "$FED_MINIO_IMAGE" == quay.io/minio/minio:RELEASE.* ]] || return 1
+  [[ "$output" == *"image: ${FED_MINIO_IMAGE}"* ]]
 }
 
 @test "fed_minio_install_juju deploys the minio charm into the consumer model" {
