@@ -80,7 +80,7 @@ fed_kfp_patch_minio() {
     return 0
   fi
   fed_log "patching KFP MinIO image and console port"
-  kubectl set image deployment/minio minio=quay.io/minio/minio:latest -n "$ns" || return 1
+  kubectl set image deployment/minio "minio=${FED_MINIO_IMAGE}" -n "$ns" || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
     -p='[{"op":"replace","path":"/spec/template/spec/containers/0/ports","value":[{"containerPort":9000},{"containerPort":9001}]}]' || return 1
   kubectl patch deployment minio -n "$ns" --type=json \
