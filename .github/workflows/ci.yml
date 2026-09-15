@@ -143,7 +143,17 @@ jobs:
       github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       || (github.event_name == 'push' && contains(github.event.head_commit.message, '[juju-e2e]'))
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 90, raised from 60 alongside the FED_POD_READY_ATTEMPTS bump below.
+    # The two have to move together: a job cancelled by this timeout skips
+    # the `if: failure()` Diagnostics and Publish diagnostics ref steps, so
+    # blowing the ceiling costs exactly the evidence needed to diagnose the
+    # run -- a clean fed-infra-up failure inside the budget is strictly more
+    # useful than a cancellation. Sizing: healthy runs measure 26m46s-35m21s,
+    # and the pathological shape of run 34945540818 (~13m of setup, bootstrap
+    # and deploy, then two kfp waits) reaches ~78m if both waits now run their
+    # full 30-minute ceiling before the failure path adds diagnostics and
+    # teardown. Nightly-only, so the idle cost of the headroom is one runner.
+    timeout-minutes: 90
     permissions:
       # contents: write solely for the failure-only diagnostics ref push
       # (refs/ci-diag/*); every other job keeps the workflow-level read.
@@ -204,6 +214,19 @@ jobs:
       - name: Write the e2e env
         # No FED_DEPLOY_MODE on purpose: the runner's Docker daemon is
         # amd64, so this proves the `auto` resolution path end to end.
+        #
+        # FED_POD_READY_ATTEMPTS is 360, not the lib default 30: at the
+        # default FED_RETRY_DELAY of 5 that is a 30-minute ceiling per app.
+        # It was 240 (20 minutes) and nightly run 34945540818 blew it --
+        # kfp-ui sat in `PodInitializing` for the whole budget because its
+        # ml-pipeline-ui image was still behind kfp-viz's in the kind node's
+        # serialized pull queue. No pull error, no disk pressure: the last
+        # completed pull on that node finished 19 minutes before the job
+        # gave up, so registry.jujucharms.com was simply serving slowly.
+        # The six pulls that did finish took 13s-4m55s each and reported up
+        # to 8m03s of queue wait apiece, which is the shape of the problem.
+        # Only the genuinely slow app pays this ceiling -- fed_retry returns
+        # on first success, so a healthy bring-up is unchanged.
         run: |
           cat > "$RUNNER_TEMP/e2e.env" <<'EOF'
           FED_CLUSTER_NAME=fed-e2e
@@ -214,7 +237,7 @@ jobs:
           FED_S3_ACCESS_KEY=minioadmin
           FED_S3_SECRET_KEY=minioadmin123
           FED_S3_BUCKET=mlflow-artifacts
-          FED_POD_READY_ATTEMPTS=240
+          FED_POD_READY_ATTEMPTS=360
           EOF
       - name: Bring up the juju deploy mode
         # shell: bash gives -o pipefail, so tee cannot mask a bring-up
