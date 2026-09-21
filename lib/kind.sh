@@ -22,6 +22,12 @@ fed_kind_ensure_cluster() {
       i=$((i + 1))
     done
     printf '%s\n' "$rendered" | kind create cluster --name "$name" --config -
+    # Only on creation: an existing cluster already holds whatever it pulled,
+    # and re-importing a multi-GB archive on every idempotent re-run would
+    # cost minutes for nothing.
+    if [ -n "${FED_IMAGE_ARCHIVE:-}" ]; then
+      fed_kind_import_archive "$FED_IMAGE_ARCHIVE" "$name"
+    fi
   fi
 
   # Applies whether the cluster was just created or already existed: a node
@@ -108,6 +114,45 @@ fed_kind_load_image() {
 
   fed_log "loading image $image into cluster $cluster"
   kind load docker-image "$image" --name "$cluster"
+}
+
+# Seeds every node of cluster $2 with the images in archive $1 (an OCI tar
+# from fed_kind_export_images), straight into containerd's k8s.io namespace
+# so kubelet finds them already present -- digest-pinned refs included, which
+# `kind load docker-image` cannot carry because docker drops them on save.
+# A warm cache, never a requirement: a missing archive or a failed import only
+# warns, and whatever is absent is pulled as usual.
+fed_kind_import_archive() {
+  local archive=$1 cluster=$2 node nodes
+  if [ ! -f "$archive" ]; then
+    fed_warn "image archive not found, pulling everything: $archive"
+    return 0
+  fi
+  nodes=$(kind get nodes --name "$cluster" 2>/dev/null) || nodes=""
+  for node in $nodes; do
+    fed_log "importing image archive into ${node}"
+    docker exec -i "$node" ctr --namespace=k8s.io images import - < "$archive" \
+      || fed_warn "image archive import into ${node} failed; its images will be pulled instead"
+  done
+}
+
+# Writes every named image in cluster $1's control-plane containerd to the
+# OCI tar $2, for a later fed_kind_import_archive. Bare `sha256:` entries are
+# the ids containerd records alongside each named ref, not images of their
+# own. Written via a temp file so a failed export never leaves a truncated
+# archive where a cache step would pick it up.
+fed_kind_export_images() {
+  local cluster=$1 archive=$2 node refs
+  node="${cluster}-control-plane"
+  refs=$(docker exec "$node" ctr --namespace=k8s.io images ls -q | grep -v '^sha256:') || refs=""
+  [ -n "$refs" ] || { fed_warn "no images to export from ${node}"; return 1; }
+  # shellcheck disable=SC2086 # one ref per word, by design
+  if docker exec "$node" ctr --namespace=k8s.io images export - $refs > "${archive}.tmp"; then
+    mv "${archive}.tmp" "$archive"
+  else
+    rm -f "${archive}.tmp"
+    return 1
+  fi
 }
 
 fed_kind_delete_cluster() {

@@ -272,3 +272,59 @@ setup() {
   fed_kind_raise_inotify_limits demo
   assert_called "sysctl -w fs.inotify.max_user_instances=512"
 }
+
+@test "fed_kind_ensure_cluster imports FED_IMAGE_ARCHIVE into every node of a new cluster" {
+  export STUB_KIND_OUT="other-cluster"
+  export FED_IMAGE_ARCHIVE="$BATS_TEST_TMPDIR/images.tar"
+  : > "$FED_IMAGE_ARCHIVE"
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  assert_called "kind get nodes --name demo"
+  assert_called "docker exec -i other-cluster ctr --namespace=k8s.io images import -"
+}
+
+@test "fed_kind_ensure_cluster does not re-import FED_IMAGE_ARCHIVE into an existing cluster" {
+  export STUB_KIND_OUT="demo"
+  export FED_IMAGE_ARCHIVE="$BATS_TEST_TMPDIR/images.tar"
+  : > "$FED_IMAGE_ARCHIVE"
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  refute_called "images import"
+}
+
+@test "fed_kind_ensure_cluster skips a missing FED_IMAGE_ARCHIVE with a warning" {
+  export STUB_KIND_OUT="other-cluster"
+  export FED_IMAGE_ARCHIVE="$BATS_TEST_TMPDIR/absent.tar"
+  run fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"absent.tar"* ]] || return 1
+  refute_called "images import"
+}
+
+@test "fed_kind_ensure_cluster does not fail bootstrap when the archive import fails" {
+  export STUB_KIND_OUT="other-cluster"
+  export STUB_DOCKER_FAIL_GLOB="exec -i *"
+  export FED_IMAGE_ARCHIVE="$BATS_TEST_TMPDIR/images.tar"
+  : > "$FED_IMAGE_ARCHIVE"
+  run fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  [ "$status" -eq 0 ]
+  assert_called "images import"
+}
+
+@test "fed_kind_export_images exports every named image from the control-plane node" {
+  export STUB_DOCKER_OUT="docker.io/library/a:1
+sha256:0123456789abcdef
+registry.example/b@sha256:feed"
+  fed_kind_export_images demo "$BATS_TEST_TMPDIR/out.tar"
+  assert_called "docker exec demo-control-plane ctr --namespace=k8s.io images ls -q"
+  assert_called "docker exec demo-control-plane ctr --namespace=k8s.io images export - docker.io/library/a:1 registry.example/b@sha256:feed"
+  refute_called "export - sha256:"
+  [ -f "$BATS_TEST_TMPDIR/out.tar" ]
+}
+
+@test "fed_kind_export_images leaves no partial archive when the export fails" {
+  export STUB_DOCKER_OUT="docker.io/library/a:1"
+  export STUB_DOCKER_FAIL_GLOB="*images export*"
+  run fed_kind_export_images demo "$BATS_TEST_TMPDIR/out.tar"
+  [ "$status" -ne 0 ]
+  [ ! -e "$BATS_TEST_TMPDIR/out.tar" ]
+  [ ! -e "$BATS_TEST_TMPDIR/out.tar.tmp" ]
+}
