@@ -288,8 +288,11 @@ jobs:
       - name: Export images for the cache
         # Also after a failed bring-up: every pull that did complete is
         # still in the node, and the slow ones are exactly what is worth
-        # keeping. Saves only when the node holds more images than the
-        # restored archive, so a warm, unchanged run costs no upload.
+        # keeping. Saves only when the new archive holds more images than
+        # the restored one, so a warm, unchanged run costs no upload. The
+        # comparison is on archives, not on the node's image list: the node
+        # also lists images that cannot be exported (see
+        # fed_kind_export_images), so its count would never settle.
         # continue-on-error: the cache is an optimization and must never
         # fail the job or mask the bring-up result.
         id: export-images
@@ -298,21 +301,20 @@ jobs:
         shell: bash
         run: |
           archive="$RUNNER_TEMP/juju-images/images.tar"
+          count() { tar -xOf "$1" index.json | jq '.manifests | length'; }
           have=0
-          if [ -f "$archive" ]; then
-            have=$(tar -xOf "$archive" index.json | jq '.manifests | length')
-          fi
-          now=$(docker exec fed-e2e-control-plane ctr --namespace=k8s.io images ls -q | grep -vc '^sha256:')
-          echo "images: ${have} in the restored archive, ${now} in the node"
-          if [ "$now" -le "$have" ]; then
-            echo "nothing new to cache"
-            exit 0
-          fi
+          if [ -f "$archive" ]; then have=$(count "$archive"); fi
           . lib/common.sh
           . lib/kind.sh
           mkdir -p "$(dirname "$archive")"
           fed_kind_export_images fed-e2e "$archive"
+          now=$(count "$archive")
           ls -lh "$archive"
+          echo "images: ${have} in the restored archive, ${now} exported now"
+          if [ "$now" -le "$have" ]; then
+            echo "nothing new to cache"
+            exit 0
+          fi
           echo "save=true" >> "$GITHUB_OUTPUT"
       - name: Save the image cache
         if: always() && steps.export-images.outputs.save == 'true'

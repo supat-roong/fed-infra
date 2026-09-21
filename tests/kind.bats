@@ -320,6 +320,17 @@ registry.example/b@sha256:feed"
   [ -f "$BATS_TEST_TMPDIR/out.tar" ]
 }
 
+@test "fed_kind_export_images skips an image whose content is incomplete in the node" {
+  export STUB_DOCKER_OUT="docker.io/library/a:1
+registry.k8s.io/partial:v1
+registry.example/b@sha256:feed"
+  export STUB_DOCKER_FAIL_GLOB="*export /dev/null registry.k8s.io/partial:v1"
+  run fed_kind_export_images demo "$BATS_TEST_TMPDIR/out.tar"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"registry.k8s.io/partial:v1"* ]] || return 1
+  assert_called "docker exec demo-control-plane ctr --namespace=k8s.io images export - docker.io/library/a:1 registry.example/b@sha256:feed"
+}
+
 @test "fed_kind_export_images leaves no partial archive when the export fails" {
   export STUB_DOCKER_OUT="docker.io/library/a:1"
   export STUB_DOCKER_FAIL_GLOB="*images export*"

@@ -139,15 +139,25 @@ fed_kind_import_archive() {
 # Writes every named image in cluster $1's control-plane containerd to the
 # OCI tar $2, for a later fed_kind_import_archive. Bare `sha256:` entries are
 # the ids containerd records alongside each named ref, not images of their
-# own. Written via a temp file so a failed export never leaves a truncated
-# archive where a cache step would pick it up.
+# own. Each ref is probed with a throwaway in-node export first: some images
+# reference content the node never fetched (seen on nightly run 35638783453:
+# "content digest sha256:00cbc2...: not found"), and a single such ref fails
+# the whole bulk export. Written via a temp file so a failed export never
+# leaves a truncated archive where a cache step would pick it up.
 fed_kind_export_images() {
-  local cluster=$1 archive=$2 node refs
+  local cluster=$1 archive=$2 node refs ref ok=""
   node="${cluster}-control-plane"
   refs=$(docker exec "$node" ctr --namespace=k8s.io images ls -q | grep -v '^sha256:') || refs=""
-  [ -n "$refs" ] || { fed_warn "no images to export from ${node}"; return 1; }
+  for ref in $refs; do
+    if docker exec "$node" ctr --namespace=k8s.io images export /dev/null "$ref" >/dev/null 2>&1; then
+      ok="${ok:+$ok }${ref}"
+    else
+      fed_warn "skipping ${ref}: its content is incomplete in ${node}"
+    fi
+  done
+  [ -n "$ok" ] || { fed_warn "no images to export from ${node}"; return 1; }
   # shellcheck disable=SC2086 # one ref per word, by design
-  if docker exec "$node" ctr --namespace=k8s.io images export - $refs > "${archive}.tmp"; then
+  if docker exec "$node" ctr --namespace=k8s.io images export - $ok > "${archive}.tmp"; then
     mv "${archive}.tmp" "$archive"
   else
     rm -f "${archive}.tmp"
