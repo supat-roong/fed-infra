@@ -339,3 +339,20 @@ registry.example/b@sha256:feed"
   [ ! -e "$BATS_TEST_TMPDIR/out.tar" ]
   [ ! -e "$BATS_TEST_TMPDIR/out.tar.tmp" ]
 }
+
+@test "fed_kind_ensure_cluster keeps unpacked layers when FED_IMAGE_ARCHIVE is set" {
+  export STUB_KIND_OUT="" FED_KIND_WORKERS=1
+  export FED_IMAGE_ARCHIVE="$BATS_TEST_TMPDIR/absent.tar"
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  grep -q '^containerdConfigPatches:$' "$STUB_STDIN_LOG"
+  grep -q 'discard_unpacked_layers = false' "$STUB_STDIN_LOG"
+  # Appended after the worker node, so the nodes list stays intact.
+  [ "$(grep -n '^  - role: worker$' "$STUB_STDIN_LOG" | cut -d: -f1)" -lt \
+    "$(grep -n '^containerdConfigPatches:$' "$STUB_STDIN_LOG" | cut -d: -f1)" ]
+}
+
+@test "fed_kind_ensure_cluster leaves containerd alone without FED_IMAGE_ARCHIVE" {
+  export STUB_KIND_OUT="" FED_IMAGE_ARCHIVE=""
+  fed_kind_ensure_cluster demo "$FED_INFRA_ROOT/kind/single-cluster.yaml.tpl"
+  ! grep -q 'containerdConfigPatches' "$STUB_STDIN_LOG"
+}

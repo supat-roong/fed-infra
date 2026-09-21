@@ -21,6 +21,18 @@ fed_kind_ensure_cluster() {
   - role: worker"
       i=$((i + 1))
     done
+    # kind's containerd discards an image's compressed layers once unpacked,
+    # which leaves every pulled image unexportable (nightly run 35645170099
+    # skipped all of them), so a cluster meant to feed or use an image
+    # archive keeps them -- at the cost of that extra disk in the node.
+    # Appended after the workers so the nodes list stays contiguous.
+    if [ -n "${FED_IMAGE_ARCHIVE:-}" ]; then
+      rendered="${rendered}
+containerdConfigPatches:
+  - |-
+    [plugins.\"io.containerd.grpc.v1.cri\".containerd]
+      discard_unpacked_layers = false"
+    fi
     printf '%s\n' "$rendered" | kind create cluster --name "$name" --config -
     # Only on creation: an existing cluster already holds whatever it pulled,
     # and re-importing a multi-GB archive on every idempotent re-run would
