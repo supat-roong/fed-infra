@@ -158,6 +158,11 @@ jobs:
     # full 30-minute ceiling before the failure path adds diagnostics and
     # teardown. Nightly-only, so the idle cost of the headroom is one runner.
     timeout-minutes: 90
+    env:
+      # One place for the juju client version: the install step downloads
+      # it and the image cache key includes it, since the controller's own
+      # images (jujud-operator, juju-db) follow the client version.
+      JUJU_VERSION: 3.6.27
     permissions:
       # contents: write solely for the failure-only diagnostics ref push
       # (refs/ci-diag/*); every other job keeps the workflow-level read.
@@ -212,7 +217,7 @@ jobs:
         # extraction outright.
         run: |
           curl -fsSL -o /tmp/juju.tar.xz \
-            https://github.com/juju/juju/releases/download/v3.6.27/juju-3.6.27-linux-amd64.tar.xz
+            "https://github.com/juju/juju/releases/download/v${JUJU_VERSION}/juju-${JUJU_VERSION}-linux-amd64.tar.xz"
           scratch=$(mktemp -d)
           tar -xJf /tmp/juju.tar.xz -C "$scratch"
           found=$(find "$scratch" -type f -name juju | head -1)
@@ -247,11 +252,75 @@ jobs:
           FED_S3_BUCKET=mlflow-artifacts
           FED_POD_READY_ATTEMPTS=360
           EOF
+          echo "FED_IMAGE_ARCHIVE=$RUNNER_TEMP/juju-images/images.tar" >> "$RUNNER_TEMP/e2e.env"
+      - name: Compute the image cache key
+        # Every image this job pulls is fixed by the charm revisions and
+        # channels in lib/config.sh plus the juju version, so exactly those
+        # lines key the cache -- an unrelated edit to config.sh must not
+        # throw away a multi-GB warm cache.
+        id: images-key
+        shell: bash
+        run: |
+          hash=$( { grep -hE 'fed_config_pin_revision |_CHANNEL:=' lib/config.sh; echo "juju ${JUJU_VERSION}"; } \
+            | sha256sum | cut -c1-16 )
+          echo "prefix=juju-e2e-images-v1-${hash}-" >> "$GITHUB_OUTPUT"
+      - name: Restore the image cache
+        # Nightly runs 34945540818 and 35577852099 both died waiting on a pod
+        # stuck in PodInitializing behind the kind node's serialized pull
+        # queue from registry.jujucharms.com (kfp-db's mysql-image never
+        # finished in 27 minutes). A restored archive is imported into the
+        # node right after cluster creation (FED_IMAGE_ARCHIVE), so those
+        # pulls never happen. The key carries the run id because cache
+        # entries are immutable: each run that grows the image set saves a
+        # new entry, and restore-keys picks the newest for this pin set.
+        id: images-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/juju-images
+          key: ${{ steps.images-key.outputs.prefix }}${{ github.run_id }}
+          restore-keys: ${{ steps.images-key.outputs.prefix }}
       - name: Bring up the juju deploy mode
         # shell: bash gives -o pipefail, so tee cannot mask a bring-up
         # failure; the log feeds the diagnostics ref below.
+        id: bringup
         shell: bash
         run: bin/fed-infra-up --env "$RUNNER_TEMP/e2e.env" 2>&1 | tee "$RUNNER_TEMP/e2e-up.log"
+      - name: Export images for the cache
+        # Also after a failed bring-up: every pull that did complete is
+        # still in the node, and the slow ones are exactly what is worth
+        # keeping. Saves only when the node holds more images than the
+        # restored archive, so a warm, unchanged run costs no upload.
+        # continue-on-error: the cache is an optimization and must never
+        # fail the job or mask the bring-up result.
+        id: export-images
+        if: always() && steps.bringup.outcome != 'skipped'
+        continue-on-error: true
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/juju-images/images.tar"
+          have=0
+          if [ -f "$archive" ]; then
+            have=$(tar -xOf "$archive" index.json | jq '.manifests | length')
+          fi
+          now=$(docker exec fed-e2e-control-plane ctr --namespace=k8s.io images ls -q | grep -vc '^sha256:')
+          echo "images: ${have} in the restored archive, ${now} in the node"
+          if [ "$now" -le "$have" ]; then
+            echo "nothing new to cache"
+            exit 0
+          fi
+          . lib/common.sh
+          . lib/kind.sh
+          mkdir -p "$(dirname "$archive")"
+          fed_kind_export_images fed-e2e "$archive"
+          ls -lh "$archive"
+          echo "save=true" >> "$GITHUB_OUTPUT"
+      - name: Save the image cache
+        if: always() && steps.export-images.outputs.save == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/juju-images
+          key: ${{ steps.images-key.outputs.prefix }}${{ github.run_id }}
       - name: Verify the deployed stack
         # Poll via fed_juju_wait_active instead of a single-shot
         # `juju status | grep`. Every charmed-kubeflow charm runs a full
