@@ -216,7 +216,9 @@ jobs:
         # be `./juju` rather than `juju`, and a member-name miss fails the
         # extraction outright.
         run: |
-          curl -fsSL -o /tmp/juju.tar.xz \
+          # --retry-all-errors: run 35644535831 lost the whole job to a
+          # one-off HTTP error from the release download.
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/juju.tar.xz \
             "https://github.com/juju/juju/releases/download/v${JUJU_VERSION}/juju-${JUJU_VERSION}-linux-amd64.tar.xz"
           scratch=$(mktemp -d)
           tar -xJf /tmp/juju.tar.xz -C "$scratch"
