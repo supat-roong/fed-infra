@@ -104,7 +104,7 @@ fed_temporal_install() {
 # (spike findings §4).
 fed_temporal_install_juju() {
   local model=$1
-  fed_juju_deploy "$model" temporal-k8s temporal-k8s "$FED_TEMPORAL_CHANNEL"
+  fed_juju_deploy "$model" temporal-k8s temporal-k8s "$FED_TEMPORAL_CHANNEL" "$FED_TEMPORAL_REVISION"
   # num-history-shards has NO charm default (`juju config temporal-k8s` reports
   # it as an int whose default is null), and the charm refuses to start without
   # it, sitting blocked on:
@@ -119,9 +119,9 @@ fed_temporal_install_juju() {
   # install time instead of patching this library.
   fed_juju_config "$model" temporal-k8s \
     "num-history-shards=${FED_TEMPORAL_NUM_HISTORY_SHARDS}"
-  fed_juju_deploy "$model" temporal-admin-k8s temporal-admin-k8s "$FED_TEMPORAL_ADMIN_CHANNEL"
-  fed_juju_deploy "$model" temporal-ui-k8s temporal-ui-k8s "$FED_TEMPORAL_UI_CHANNEL"
-  fed_juju_deploy "$model" temporal-postgresql postgresql-k8s "$FED_POSTGRESQL_CHANNEL" --trust
+  fed_juju_deploy "$model" temporal-admin-k8s temporal-admin-k8s "$FED_TEMPORAL_ADMIN_CHANNEL" "$FED_TEMPORAL_ADMIN_REVISION"
+  fed_juju_deploy "$model" temporal-ui-k8s temporal-ui-k8s "$FED_TEMPORAL_UI_CHANNEL" "$FED_TEMPORAL_UI_REVISION"
+  fed_juju_deploy "$model" temporal-postgresql postgresql-k8s "$FED_POSTGRESQL_CHANNEL" "$FED_POSTGRESQL_REVISION" --trust
   fed_juju_integrate "$model" temporal-k8s:db temporal-postgresql:database
   fed_juju_integrate "$model" temporal-k8s:visibility temporal-postgresql:database
   fed_juju_integrate "$model" temporal-k8s:admin temporal-admin-k8s:admin

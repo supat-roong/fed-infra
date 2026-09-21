@@ -17,7 +17,7 @@ fed_minio_install() {
 # consumer model. Service name is `minio` (ports 9000/9001), unlike the
 # manifests path's `minio-service` — components.sh branches accordingly.
 fed_minio_install_juju() {
-  fed_juju_deploy "$FED_NAMESPACE" minio minio "$FED_MINIO_CHANNEL"
+  fed_juju_deploy "$FED_NAMESPACE" minio minio "$FED_MINIO_CHANNEL" "$FED_MINIO_REVISION"
   if [ -n "${FED_S3_ACCESS_KEY:-}" ] && [ -n "${FED_S3_SECRET_KEY:-}" ]; then
     # Charm rule: secret-key must be >= 8 characters.
     fed_juju_config "$FED_NAMESPACE" minio \

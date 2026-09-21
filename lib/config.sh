@@ -85,10 +85,13 @@ fed_config_defaults() {
   : "${FED_DEPLOY_MODE:=auto}"
   # Charm channel for juju-mode minio (lib/minio.sh's fed_minio_install_juju).
   : "${FED_MINIO_CHANNEL:=ckf-1.9/stable}"
+  fed_config_pin_revision FED_MINIO_REVISION FED_MINIO_CHANNEL ckf-1.9/stable 383
   # Charm channels for juju-mode mlflow (lib/mlflow.sh's
   # fed_mlflow_install_juju): mlflow-server and its mysql-k8s backing store.
   : "${FED_MLFLOW_CHANNEL:=2.15/stable}"
   : "${FED_MYSQL_CHANNEL:=8.0/stable}"
+  fed_config_pin_revision FED_MLFLOW_REVISION FED_MLFLOW_CHANNEL 2.15/stable 762
+  fed_config_pin_revision FED_MYSQL_REVISION FED_MYSQL_CHANNEL 8.0/stable 423
   # testing profile: sized for local dev/kind, not real hardware -- see
   # fed_mlflow_install_juju for the live evidence behind this default.
   : "${FED_MYSQL_PROFILE:=testing}"
@@ -99,6 +102,10 @@ fed_config_defaults() {
   : "${FED_TEMPORAL_ADMIN_CHANNEL:=1.23/stable}"
   : "${FED_TEMPORAL_UI_CHANNEL:=1.23/stable}"
   : "${FED_POSTGRESQL_CHANNEL:=14/stable}"
+  fed_config_pin_revision FED_TEMPORAL_REVISION FED_TEMPORAL_CHANNEL 1.23/stable 68
+  fed_config_pin_revision FED_TEMPORAL_ADMIN_REVISION FED_TEMPORAL_ADMIN_CHANNEL 1.23/stable 28
+  fed_config_pin_revision FED_TEMPORAL_UI_REVISION FED_TEMPORAL_UI_CHANNEL 1.23/stable 31
+  fed_config_pin_revision FED_POSTGRESQL_REVISION FED_POSTGRESQL_CHANNEL 14/stable 925
   # Mandatory temporal-k8s charm config with no charm-side default: the charm
   # stays blocked until it is a positive power of 2 (verified on rev 68 during
   # the x86_64 e2e). 4 suits a single-node local cluster; Temporal fixes the
@@ -108,6 +115,7 @@ fed_config_defaults() {
   # Charm channel for juju-mode training (lib/training.sh's
   # fed_training_install_juju): the training-operator charm.
   : "${FED_TRAINING_CHANNEL:=1.8/stable}"
+  fed_config_pin_revision FED_TRAINING_REVISION FED_TRAINING_CHANNEL 1.8/stable 545
   # Charm channels for juju-mode kfp (lib/kfp.sh's fed_kfp_install_juju).
   # 2.15 is the current stable track across the kfp-* family; mlmd, envoy and
   # argo-controller version on their own tracks but the defaults below are
@@ -116,6 +124,16 @@ fed_config_defaults() {
   : "${FED_MLMD_CHANNEL:=ckf-1.10/stable}"
   : "${FED_ENVOY_CHANNEL:=2.4/stable}"
   : "${FED_ARGO_CHANNEL:=3.7/stable}"
+  fed_config_pin_revision FED_KFP_API_REVISION FED_KFP_CHANNEL 2.15/stable 2557
+  fed_config_pin_revision FED_KFP_PERSISTENCE_REVISION FED_KFP_CHANNEL 2.15/stable 2568
+  fed_config_pin_revision FED_KFP_SCHEDWF_REVISION FED_KFP_CHANNEL 2.15/stable 2575
+  fed_config_pin_revision FED_KFP_VIEWER_REVISION FED_KFP_CHANNEL 2.15/stable 2598
+  fed_config_pin_revision FED_KFP_VIZ_REVISION FED_KFP_CHANNEL 2.15/stable 2513
+  fed_config_pin_revision FED_KFP_UI_REVISION FED_KFP_CHANNEL 2.15/stable 2575
+  fed_config_pin_revision FED_KFP_METADATA_WRITER_REVISION FED_KFP_CHANNEL 2.15/stable 1623
+  fed_config_pin_revision FED_MLMD_REVISION FED_MLMD_CHANNEL ckf-1.10/stable 441
+  fed_config_pin_revision FED_ENVOY_REVISION FED_ENVOY_CHANNEL 2.4/stable 576
+  fed_config_pin_revision FED_ARGO_REVISION FED_ARGO_CHANNEL 3.7/stable 939
   export FED_KFP_VERSION FED_TEMPORAL_VERSION FED_TEMPORAL_NAMESPACE \
          FED_TEMPORAL_DB_NAME FED_TEMPORAL_DB_USER FED_TEMPORAL_DB_PASSWORD \
          FED_NODEPORT_TEMPORAL_UI FED_HOSTPORT_TEMPORAL_UI \
@@ -135,7 +153,30 @@ fed_config_defaults() {
          FED_TEMPORAL_CHANNEL FED_TEMPORAL_ADMIN_CHANNEL FED_TEMPORAL_UI_CHANNEL \
          FED_POSTGRESQL_CHANNEL FED_TRAINING_CHANNEL \
          FED_KFP_CHANNEL FED_MLMD_CHANNEL FED_ENVOY_CHANNEL FED_ARGO_CHANNEL \
+         FED_MINIO_REVISION FED_MLFLOW_REVISION FED_MYSQL_REVISION \
+         FED_TEMPORAL_REVISION FED_TEMPORAL_ADMIN_REVISION FED_TEMPORAL_UI_REVISION \
+         FED_POSTGRESQL_REVISION FED_TRAINING_REVISION \
+         FED_KFP_API_REVISION FED_KFP_PERSISTENCE_REVISION FED_KFP_SCHEDWF_REVISION \
+         FED_KFP_VIEWER_REVISION FED_KFP_VIZ_REVISION FED_KFP_UI_REVISION \
+         FED_KFP_METADATA_WRITER_REVISION FED_MLMD_REVISION FED_ENVOY_REVISION \
+         FED_ARGO_REVISION \
          FED_TEMPORAL_NUM_HISTORY_SHARDS
+}
+
+# fed_config_pin_revision <revision-var> <channel-var> <default-channel> <revision>
+# Charm revision pins (amd64: juju mode never runs anywhere else, see
+# fed_deploy_mode). A channel only names a moving pointer; the revision is
+# what fixes the charm code and the OCI images it bundles by digest, so the
+# nightly juju-e2e deploys the same bits every night and its image cache
+# stays valid. The pin applies only while the channel is still the default:
+# a consumer who moves a channel must not be held on the old channel's
+# revision without noticing. Set a revision variable to an empty value to
+# float on the channel instead.
+fed_config_pin_revision() {
+  local rev_var=$1 channel_var=$2 default_channel=$3 revision=$4
+  eval "[ -z \"\${$rev_var+set}\" ]" || return 0
+  [ "${!channel_var}" = "$default_channel" ] || revision=""
+  printf -v "$rev_var" '%s' "$revision"
 }
 
 fed_config_validate() {

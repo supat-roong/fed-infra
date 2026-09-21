@@ -115,20 +115,24 @@ fed_juju_ensure() {
   done
 }
 
-# fed_juju_deploy <model> <app> <charm> <channel> [extra deploy flags...]
-# Skips silently when the app already exists in the model.
+# fed_juju_deploy <model> <app> <charm> <channel> <revision> [extra deploy flags...]
+# Skips silently when the app already exists in the model. An empty
+# <revision> deploys whatever the channel currently points at; a set one pins
+# the charm -- and with it the OCI images each revision bundles by digest --
+# so an unchanged run cannot pick up a newly released charm.
 fed_juju_deploy() {
-  local model=$1 app=$2 charm=$3 channel=$4 controller
-  shift 4
+  local model=$1 app=$2 charm=$3 channel=$4 revision=$5 controller
+  shift 5
   controller=$(fed_juju_controller_name)
+  set -- --channel "$channel" ${revision:+--revision "$revision"} "$@"
   if [ "${FED_DRY_RUN:-0}" != "1" ]; then
     if juju show-application -m "${controller}:${model}" "$app" >/dev/null 2>&1; then
       fed_log "juju app '${app}' already deployed in model '${model}'"
       return 0
     fi
-    fed_log "deploying '${charm}' as '${app}' into model '${model}' (channel ${channel})"
+    fed_log "deploying '${charm}' as '${app}' into model '${model}' (channel ${channel}${revision:+, revision ${revision}})"
   fi
-  fed_juju deploy -m "${controller}:${model}" "$charm" "$app" --channel "$channel" "$@"
+  fed_juju deploy -m "${controller}:${model}" "$charm" "$app" "$@"
 }
 
 # fed_juju_config <model> <app> key=value...  (re-applying is a safe no-op)

@@ -128,26 +128,33 @@ EOF
 
 @test "fed_juju_deploy deploys with app name and channel when the app is absent" {
   export STUB_JUJU_FAIL_GLOB="show-application*"
-  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable ""
   assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable"
+  refute_called "--revision"
+}
+
+@test "fed_juju_deploy pins the revision when one is given" {
+  export STUB_JUJU_FAIL_GLOB="show-application*"
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable 383
+  assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable --revision 383"
 }
 
 @test "fed_juju_deploy passes extra flags through" {
   export STUB_JUJU_FAIL_GLOB="show-application*"
-  fed_juju_deploy kubeflow training-operator training-operator 1.8/stable --trust
-  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel 1.8/stable --trust"
+  fed_juju_deploy kubeflow training-operator training-operator 1.8/stable 545 --trust
+  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel 1.8/stable --revision 545 --trust"
 }
 
 @test "fed_juju_deploy skips an already-deployed app" {
-  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable 383
   refute_called "juju deploy"
 }
 
 @test "fed_juju_deploy records the deploy without probing under FED_DRY_RUN=1" {
   export FED_DRY_RUN=1 FED_RENDER_DIR="$BATS_TEST_TMPDIR/out"
-  fed_juju_deploy demo-ns minio minio ckf-1.9/stable
+  fed_juju_deploy demo-ns minio minio ckf-1.9/stable 383
   [ -z "$(calls)" ]
-  grep -q "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable" \
+  grep -q "juju deploy -m fed-demo:demo-ns minio minio --channel ckf-1.9/stable --revision 383" \
     "$FED_RENDER_DIR/juju-commands.txt"
 }
 

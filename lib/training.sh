@@ -38,7 +38,7 @@ fed_training_install() {
 # Deployment; the pytorchjobs CRD it registers is the consumer contract.
 fed_training_install_juju() {
   fed_juju_deploy "${FED_KFP_NAMESPACE:-kubeflow}" training-operator training-operator \
-    "$FED_TRAINING_CHANNEL" --trust
+    "$FED_TRAINING_CHANNEL" "$FED_TRAINING_REVISION" --trust
   fed_juju_wait_active "${FED_KFP_NAMESPACE:-kubeflow}" training-operator
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then return 0; fi
   kubectl wait --for condition=established --timeout=120s crd/pytorchjobs.kubeflow.org || return 1

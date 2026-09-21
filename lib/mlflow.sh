@@ -46,9 +46,9 @@ fed_mlflow_install_juju() {
   # node with the pod healthy — a pebble-level stall invisible to kubectl
   # events. fed-infra targets local development clusters, so the small
   # testing profile is the right default; override via FED_MYSQL_PROFILE.
-  fed_juju_deploy "$FED_NAMESPACE" mlflow-mysql mysql-k8s "$FED_MYSQL_CHANNEL" --trust \
+  fed_juju_deploy "$FED_NAMESPACE" mlflow-mysql mysql-k8s "$FED_MYSQL_CHANNEL" "$FED_MYSQL_REVISION" --trust \
     --config "profile=${FED_MYSQL_PROFILE}"
-  fed_juju_deploy "$FED_NAMESPACE" mlflow-server mlflow-server "$FED_MLFLOW_CHANNEL"
+  fed_juju_deploy "$FED_NAMESPACE" mlflow-server mlflow-server "$FED_MLFLOW_CHANNEL" "$FED_MLFLOW_REVISION"
   fed_juju_integrate "$FED_NAMESPACE" mlflow-server:relational-db mlflow-mysql:database
   fed_juju_integrate "$FED_NAMESPACE" mlflow-server:object-storage minio:object-storage
   fed_juju_wait_active "$FED_NAMESPACE" mlflow-mysql

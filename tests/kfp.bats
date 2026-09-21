@@ -150,18 +150,18 @@ setup_juju() {
   setup_juju
   export STUB_JUJU_FAIL_GLOB="show-application*"
   fed_kfp_install_juju
-  assert_called "juju deploy -m fed-demo:kubeflow mysql-k8s kfp-db --channel ${FED_MYSQL_CHANNEL} --trust --config profile=testing"
-  assert_called "juju deploy -m fed-demo:kubeflow minio kfp-minio --channel ${FED_MINIO_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-api kfp-api --channel ${FED_KFP_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-persistence kfp-persistence --channel ${FED_KFP_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-schedwf kfp-schedwf --channel ${FED_KFP_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-viewer kfp-viewer --channel ${FED_KFP_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-viz kfp-viz --channel ${FED_KFP_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-ui kfp-ui --channel ${FED_KFP_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:kubeflow kfp-metadata-writer kfp-metadata-writer --channel ${FED_KFP_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow mlmd mlmd --channel ${FED_MLMD_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:kubeflow envoy envoy --channel ${FED_ENVOY_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:kubeflow argo-controller argo-controller --channel ${FED_ARGO_CHANNEL} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow mysql-k8s kfp-db --channel ${FED_MYSQL_CHANNEL} --revision ${FED_MYSQL_REVISION} --trust --config profile=testing"
+  assert_called "juju deploy -m fed-demo:kubeflow minio kfp-minio --channel ${FED_MINIO_CHANNEL} --revision ${FED_MINIO_REVISION}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-api kfp-api --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_API_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-persistence kfp-persistence --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_PERSISTENCE_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-schedwf kfp-schedwf --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_SCHEDWF_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-viewer kfp-viewer --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_VIEWER_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-viz kfp-viz --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_VIZ_REVISION}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-ui kfp-ui --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_UI_REVISION}"
+  assert_called "juju deploy -m fed-demo:kubeflow kfp-metadata-writer kfp-metadata-writer --channel ${FED_KFP_CHANNEL} --revision ${FED_KFP_METADATA_WRITER_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow mlmd mlmd --channel ${FED_MLMD_CHANNEL} --revision ${FED_MLMD_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow envoy envoy --channel ${FED_ENVOY_CHANNEL} --revision ${FED_ENVOY_REVISION}"
+  assert_called "juju deploy -m fed-demo:kubeflow argo-controller argo-controller --channel ${FED_ARGO_CHANNEL} --revision ${FED_ARGO_REVISION} --trust"
 }
 
 @test "fed_kfp_install_juju fixes kfp-minio to the manifests-path bundled-minio credentials" {

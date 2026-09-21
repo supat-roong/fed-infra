@@ -165,3 +165,45 @@ EOF
   [ "$FED_ENVOY_CHANNEL" = "2.4/stable" ]
   [ "$FED_ARGO_CHANNEL" = "3.7/stable" ]
 }
+
+@test "fed_config_load pins every charm revision on the default channels" {
+  fed_config_load "$ENVFILE"
+  [ "$FED_MINIO_REVISION" = "383" ]
+  [ "$FED_MLFLOW_REVISION" = "762" ]
+  [ "$FED_MYSQL_REVISION" = "423" ]
+  [ "$FED_TEMPORAL_REVISION" = "68" ]
+  [ "$FED_TEMPORAL_ADMIN_REVISION" = "28" ]
+  [ "$FED_TEMPORAL_UI_REVISION" = "31" ]
+  [ "$FED_POSTGRESQL_REVISION" = "925" ]
+  [ "$FED_TRAINING_REVISION" = "545" ]
+  [ "$FED_KFP_API_REVISION" = "2557" ]
+  [ "$FED_KFP_PERSISTENCE_REVISION" = "2568" ]
+  [ "$FED_KFP_SCHEDWF_REVISION" = "2575" ]
+  [ "$FED_KFP_VIEWER_REVISION" = "2598" ]
+  [ "$FED_KFP_VIZ_REVISION" = "2513" ]
+  [ "$FED_KFP_UI_REVISION" = "2575" ]
+  [ "$FED_KFP_METADATA_WRITER_REVISION" = "1623" ]
+  [ "$FED_MLMD_REVISION" = "441" ]
+  [ "$FED_ENVOY_REVISION" = "576" ]
+  [ "$FED_ARGO_REVISION" = "939" ]
+}
+
+@test "fed_config_load drops the pinned revision when the channel is overridden" {
+  echo "FED_KFP_CHANNEL=2.16/stable" >> "$ENVFILE"
+  fed_config_load "$ENVFILE"
+  [ -z "$FED_KFP_API_REVISION" ]
+  [ -z "$FED_KFP_VIZ_REVISION" ]
+  [ "$FED_MLMD_REVISION" = "441" ]
+}
+
+@test "fed_config_load keeps an explicitly empty revision floating" {
+  echo "FED_MYSQL_REVISION=" >> "$ENVFILE"
+  fed_config_load "$ENVFILE"
+  [ -z "$FED_MYSQL_REVISION" ]
+}
+
+@test "fed_config_load keeps a consumer-supplied revision" {
+  echo "FED_MYSQL_REVISION=400" >> "$ENVFILE"
+  fed_config_load "$ENVFILE"
+  [ "$FED_MYSQL_REVISION" = "400" ]
+}

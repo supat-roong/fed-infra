@@ -152,10 +152,10 @@ setup() {
   export STUB_JUJU_FAIL_GLOB="show-application*"
   export STUB_JUJU_OUT='workload:active'
   fed_temporal_install_juju demo-ns
-  assert_called "juju deploy -m fed-demo:demo-ns temporal-k8s temporal-k8s --channel ${FED_TEMPORAL_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:demo-ns temporal-admin-k8s temporal-admin-k8s --channel ${FED_TEMPORAL_ADMIN_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:demo-ns temporal-ui-k8s temporal-ui-k8s --channel ${FED_TEMPORAL_UI_CHANNEL}"
-  assert_called "juju deploy -m fed-demo:demo-ns postgresql-k8s temporal-postgresql --channel ${FED_POSTGRESQL_CHANNEL} --trust"
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-k8s temporal-k8s --channel ${FED_TEMPORAL_CHANNEL} --revision ${FED_TEMPORAL_REVISION}"
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-admin-k8s temporal-admin-k8s --channel ${FED_TEMPORAL_ADMIN_CHANNEL} --revision ${FED_TEMPORAL_ADMIN_REVISION}"
+  assert_called "juju deploy -m fed-demo:demo-ns temporal-ui-k8s temporal-ui-k8s --channel ${FED_TEMPORAL_UI_CHANNEL} --revision ${FED_TEMPORAL_UI_REVISION}"
+  assert_called "juju deploy -m fed-demo:demo-ns postgresql-k8s temporal-postgresql --channel ${FED_POSTGRESQL_CHANNEL} --revision ${FED_POSTGRESQL_REVISION} --trust"
 }
 
 @test "fed_temporal_install_juju sets the mandatory num-history-shards charm config" {

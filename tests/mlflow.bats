@@ -72,8 +72,8 @@ setup() {
   export STUB_JUJU_FAIL_GLOB="show-application*"
   export STUB_JUJU_OUT='workload:active'
   fed_mlflow_install_juju
-  assert_called "juju deploy -m fed-demo:demo-ns mysql-k8s mlflow-mysql --channel ${FED_MYSQL_CHANNEL} --trust"
-  assert_called "juju deploy -m fed-demo:demo-ns mlflow-server mlflow-server --channel ${FED_MLFLOW_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:demo-ns mysql-k8s mlflow-mysql --channel ${FED_MYSQL_CHANNEL} --revision ${FED_MYSQL_REVISION} --trust"
+  assert_called "juju deploy -m fed-demo:demo-ns mlflow-server mlflow-server --channel ${FED_MLFLOW_CHANNEL} --revision ${FED_MLFLOW_REVISION}"
 }
 
 @test "fed_mlflow_install_juju deploys mysql with the dev-sized testing profile" {

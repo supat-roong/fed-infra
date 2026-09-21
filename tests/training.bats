@@ -96,7 +96,7 @@ setup() {
   export STUB_JUJU_FAIL_GLOB="show-application*"
   export STUB_JUJU_OUT='workload:active'
   fed_training_install_juju
-  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel ${FED_TRAINING_CHANNEL} --trust"
+  assert_called "juju deploy -m fed-demo:kubeflow training-operator training-operator --channel ${FED_TRAINING_CHANNEL} --revision ${FED_TRAINING_REVISION} --trust"
 }
 
 @test "fed_training_install_juju waits for the pytorchjobs CRD to be established" {

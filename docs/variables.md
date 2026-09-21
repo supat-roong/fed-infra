@@ -63,7 +63,38 @@ is `juju`:
 | `FED_MLMD_CHANNEL` | `ckf-1.10/stable` | `mlmd` metadata store backing kfp. |
 | `FED_ENVOY_CHANNEL` | `2.4/stable` | `envoy` charm (grpc-web front for mlmd). |
 | `FED_ARGO_CHANNEL` | `3.7/stable` | `argo-controller` workflow engine backing kfp. |
+| `FED_*_REVISION` | see below | Charmhub revision pinned for each charm (amd64). |
 | `FED_TEMPORAL_NUM_HISTORY_SHARDS` | `4` | `temporal-k8s` `num-history-shards` config (must be a positive power of 2; the charm stays `blocked` without it). **Schema-locked**: Temporal pins the shard count permanently at first schema init, so choose it on the *first* bring-up; changing it later requires destroying and recreating the deployment. `4` suits a single-node local cluster. |
+
+### Charm revisions
+
+A channel is a moving pointer, so each charm is also pinned to a revision.
+The revision fixes both the charm code and the OCI images it bundles by
+digest. A pin applies only while its channel is left at the default: if you
+override a channel, its revisions go empty and float on the new channel
+unless you set them too. Set a revision to an empty value (e.g.
+`FED_MYSQL_REVISION=`) to float on the default channel instead.
+
+| Variable | Default | Charm (channel) |
+|---|---|---|
+| `FED_MINIO_REVISION` | `383` | `minio` (`FED_MINIO_CHANNEL`), both the standalone app and `kfp-minio` |
+| `FED_MYSQL_REVISION` | `423` | `mysql-k8s` (`FED_MYSQL_CHANNEL`), both `mlflow-mysql` and `kfp-db` |
+| `FED_MLFLOW_REVISION` | `762` | `mlflow-server` |
+| `FED_POSTGRESQL_REVISION` | `925` | `postgresql-k8s` |
+| `FED_TEMPORAL_REVISION` | `68` | `temporal-k8s` |
+| `FED_TEMPORAL_ADMIN_REVISION` | `28` | `temporal-admin-k8s` |
+| `FED_TEMPORAL_UI_REVISION` | `31` | `temporal-ui-k8s` |
+| `FED_TRAINING_REVISION` | `545` | `training-operator` |
+| `FED_KFP_API_REVISION` | `2557` | `kfp-api` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_PERSISTENCE_REVISION` | `2568` | `kfp-persistence` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_SCHEDWF_REVISION` | `2575` | `kfp-schedwf` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_VIEWER_REVISION` | `2598` | `kfp-viewer` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_VIZ_REVISION` | `2513` | `kfp-viz` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_UI_REVISION` | `2575` | `kfp-ui` (`FED_KFP_CHANNEL`) |
+| `FED_KFP_METADATA_WRITER_REVISION` | `1623` | `kfp-metadata-writer` (`FED_KFP_CHANNEL`) |
+| `FED_MLMD_REVISION` | `441` | `mlmd` |
+| `FED_ENVOY_REVISION` | `576` | `envoy` |
+| `FED_ARGO_REVISION` | `939` | `argo-controller` |
 
 ## Consumer-supplied, no default
 

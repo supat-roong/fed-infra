@@ -93,7 +93,7 @@ setup() {
   export STUB_JUJU_FAIL_GLOB="show-application*"
   export STUB_JUJU_OUT='- minio/0: agent:idle, workload:active'
   fed_minio_install_juju
-  assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ${FED_MINIO_CHANNEL}"
+  assert_called "juju deploy -m fed-demo:demo-ns minio minio --channel ${FED_MINIO_CHANNEL} --revision ${FED_MINIO_REVISION}"
 }
 
 @test "fed_minio_install_juju applies the S3 credentials as charm config and waits" {
