@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:15-alpine
+          image: postgres:15.19-alpine3.24
           env:
             - name: POSTGRES_USER
               value: "${FED_TEMPORAL_DB_USER}"
