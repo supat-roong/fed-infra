@@ -360,11 +360,15 @@ jobs:
               || { echo "FAIL: $app not active" >&2; exit 1; }
           done
           # Hostports come from the kind extraPortMappings the env above
-          # left at their defaults (8080/5050/8233/9001).
-          curl -fsS -o /dev/null http://localhost:8080
-          curl -fsS -o /dev/null http://localhost:5050
-          curl -fsS -o /dev/null http://localhost:8233
-          curl -fsS -o /dev/null http://localhost:9001
+          # left at their defaults (8080/5050/8233/9001). Retried for the
+          # same reconcile-window reason as the polling above: runs
+          # 35498774808 and 35664500658 each lost a fully active stack to one
+          # "Connection reset by peer" (curl exit 56). A service that is
+          # really down still fails after ~30s.
+          for port in 8080 5050 8233 9001; do
+            curl -fsS --retry 10 --retry-all-errors --retry-delay 3 \
+              -o /dev/null "http://localhost:${port}"
+          done
           # Evidence for the spike findings' open items: real Service ports,
           # and whether the default Temporal namespace registered. Informative
           # only -- failures above are what gate the job.
