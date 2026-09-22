@@ -202,13 +202,6 @@ source_multi_libs() {
   refute_called "--type"
 }
 
-@test "fed_expose_nodeport passes a requested patch type through to kubectl" {
-  source "$FED_INFRA_ROOT/lib/common.sh"
-  source "$FED_INFRA_ROOT/lib/nodeport.sh"
-  fed_expose_nodeport mysvc myns '[{"port":80,"targetPort":3000,"nodePort":30080}]' merge
-  assert_called "kubectl patch service mysvc -n myns --type=merge"
-}
-
 # --- fed_up / fed_down: multi profile ---
 
 @test "fed_up multi creates the host cluster and the default number of member clusters" {
@@ -471,27 +464,49 @@ juju_mode_env() {
   [ -n "$ensure" ] && [ -n "$cfg" ] && [ "$ensure" -lt "$cfg" ]
 }
 
-@test "fed_up in juju mode exposes the minio charm service, not minio-service" {
+@test "fed_up in juju mode exposes every charm through its own NodePort Service" {
+  # Never by patching the charm's Service: charms that reconcile it (kfp-ui
+  # re-patches on every update-status) silently drop the NodePort again, so
+  # localhost:8080 answered "Connection reset by peer" (runs 35664500658,
+  # 35669915395). A separate Service the charm never touches survives.
   juju_mode_env
-  export FED_COMPONENTS="minio"
+  export FED_COMPONENTS="kfp,minio,mlflow,temporal"
   fed_up
-  assert_called "kubectl patch service minio -n demo-ns"
-  refute_called "kubectl patch service minio-service"
+  refute_called "kubectl patch service kfp-ui"
+  refute_called "kubectl patch service temporal-ui-k8s -n demo-ns --type=merge -p {\"spec\":{\"type\":\"NodePort\""
+  grep -q '"name":"kfp-ui-nodeport","namespace":"kubeflow"' "$STUB_STDIN_LOG"
+  grep -q '"selector":{"app.kubernetes.io/name":"kfp-ui"}' "$STUB_STDIN_LOG"
+  grep -q '"name":"temporal-ui-k8s-nodeport","namespace":"demo-ns"' "$STUB_STDIN_LOG"
+  grep -q '"name":"mlflow-server-nodeport","namespace":"demo-ns"' "$STUB_STDIN_LOG"
+  grep -q '"name":"minio-nodeport","namespace":"demo-ns"' "$STUB_STDIN_LOG"
+  refute_called "minio-service"
 }
 
-@test "fed_up in juju mode uses a merge patch for every charm NodePort" {
-  # Charm Services carry a named placeholder:65535 port. A strategic patch
-  # merges our port in beside it, producing a multi-port Service with an
-  # unnamed port, which Kubernetes rejects outright:
-  #   spec.ports[0].name: Required value
-  # Observed live on temporal-ui-k8s during the x86_64 e2e; a merge patch
-  # replaces the ports list instead. mlflow-server has the same placeholder.
-  juju_mode_env
-  export FED_COMPONENTS="minio,mlflow,temporal"
-  fed_up
-  assert_called "kubectl patch service temporal-ui-k8s -n demo-ns --type=merge"
-  assert_called "kubectl patch service mlflow-server -n demo-ns --type=merge"
-  assert_called "kubectl patch service minio -n demo-ns --type=merge"
+@test "fed_expose_charm_nodeport applies a NodePort Service selecting the charm's pods" {
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/nodeport.sh"
+  fed_expose_charm_nodeport kfp-ui kubeflow '[{"port":3000,"targetPort":3000,"nodePort":30080}]'
+  assert_called "kubectl apply -f -"
+  grep -q '"type":"NodePort"' "$STUB_STDIN_LOG"
+  grep -q '"ports":\[{"port":3000,"targetPort":3000,"nodePort":30080}\]' "$STUB_STDIN_LOG"
+  refute_called "kubectl patch"
+}
+
+@test "fed_expose_charm_nodeport frees a NodePort an older release put on the charm Service" {
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/nodeport.sh"
+  export STUB_KUBECTL_OUT="NodePort"
+  fed_expose_charm_nodeport kfp-ui kubeflow '[{"port":3000,"targetPort":3000,"nodePort":30080}]'
+  assert_called 'kubectl patch service kfp-ui -n kubeflow --type=merge -p {"spec":{"type":"ClusterIP"}}'
+  assert_called "kubectl apply -f -"
+}
+
+@test "fed_expose_charm_nodeport is a no-op under FED_DRY_RUN=1" {
+  source "$FED_INFRA_ROOT/lib/common.sh"
+  source "$FED_INFRA_ROOT/lib/nodeport.sh"
+  export FED_DRY_RUN=1
+  fed_expose_charm_nodeport kfp-ui kubeflow '[{"port":3000,"targetPort":3000,"nodePort":30080}]'
+  [ -z "$(calls)" ]
 }
 
 @test "fed_up in manifests mode never uses a merge patch for NodePorts" {

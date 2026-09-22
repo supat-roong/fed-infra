@@ -175,13 +175,12 @@ fed_up_install_components() {
       # Charm service names/ports differ from the kustomize deployment's:
       # the UI app is kfp-ui (port 3000), and kfp's object store is the
       # kfp-minio charm with the same fixed credentials the manifests
-      # branch below uses for KFP's bundled MinIO. `merge` for the same
-      # placeholder-port reason as every charm Service.
+      # branch below uses for KFP's bundled MinIO.
       fed_minio_ensure_bucket "$FED_KFP_NAMESPACE" \
         "kfp-minio.${FED_KFP_NAMESPACE}.svc.cluster.local:9000" \
         minio minio123 mlpipeline
-      fed_expose_nodeport kfp-ui "$FED_KFP_NAMESPACE" \
-        "[{\"port\":3000,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]" merge
+      fed_expose_charm_nodeport kfp-ui "$FED_KFP_NAMESPACE" \
+        "[{\"port\":3000,\"targetPort\":3000,\"nodePort\":${FED_NODEPORT_KFP}}]"
     else
       fed_kfp_wait
       fed_minio_ensure_bucket "$FED_KFP_NAMESPACE" \
@@ -194,8 +193,8 @@ fed_up_install_components() {
 
   if fed_has_component temporal; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
-      fed_expose_nodeport temporal-ui-k8s "$FED_NAMESPACE" \
-        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]" merge
+      fed_expose_charm_nodeport temporal-ui-k8s "$FED_NAMESPACE" \
+        "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
     else
       fed_expose_nodeport temporal-web "$FED_TEMPORAL_NAMESPACE" \
         "[{\"port\":8080,\"targetPort\":8080,\"nodePort\":${FED_NODEPORT_TEMPORAL_UI}}]"
@@ -204,8 +203,8 @@ fed_up_install_components() {
 
   if fed_has_component mlflow; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
-      fed_expose_nodeport mlflow-server "$FED_NAMESPACE" \
-        "[{\"port\":5000,\"targetPort\":5000,\"nodePort\":${FED_NODEPORT_MLFLOW}}]" merge
+      fed_expose_charm_nodeport mlflow-server "$FED_NAMESPACE" \
+        "[{\"port\":5000,\"targetPort\":5000,\"nodePort\":${FED_NODEPORT_MLFLOW}}]"
       fed_minio_ensure_bucket "$FED_NAMESPACE" "minio.${FED_NAMESPACE}.svc.cluster.local:9000" \
         "$FED_S3_ACCESS_KEY" "$FED_S3_SECRET_KEY" "$FED_S3_BUCKET"
     else
@@ -216,8 +215,8 @@ fed_up_install_components() {
 
   if fed_has_component minio; then
     if [ "${FED_DEPLOY_MODE_RESOLVED:-manifests}" = "juju" ]; then
-      fed_expose_nodeport minio "$FED_NAMESPACE" \
-        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]" merge
+      fed_expose_charm_nodeport minio "$FED_NAMESPACE" \
+        "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
     else
       fed_expose_nodeport minio-service "$FED_NAMESPACE" \
         "[{\"name\":\"api\",\"port\":9000,\"targetPort\":9000,\"nodePort\":${FED_NODEPORT_MINIO_API}},{\"name\":\"console\",\"port\":9001,\"targetPort\":9001,\"nodePort\":${FED_NODEPORT_MINIO_CONSOLE}}]"
