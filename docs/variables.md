@@ -27,8 +27,8 @@ Setup fails immediately if any of these is missing:
 | `FED_RETRY_DELAY` | `5` | Seconds between retries. |
 | `FED_MLFLOW_VERSION` | `2.12.2` | Upstream MLflow image tag the local image builds `FROM`. |
 | `FED_MLFLOW_IMAGE` | `fed-mlflow:${FED_MLFLOW_VERSION}` | Local MLflow image (upstream + `boto3`), built by `fed_mlflow_build_image` and loaded into kind. |
-| `FED_MINIO_IMAGE` | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` | MinIO server image, used for both the standalone StatefulSet and KFP's bundled MinIO. Pinned, and on quay because Docker Hub's `minio/minio` no longer serves anonymous pulls. Override to point at a mirror. |
-| `FED_MC_IMAGE` | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z` | MinIO client image used by the short-lived bucket-creation pod. Same pinning and registry rationale as `FED_MINIO_IMAGE`. |
+| `FED_MINIO_IMAGE` | `docker.io/pgsty/minio:RELEASE.2026-08-04T00-00-00Z` | MinIO server image, used for both the standalone StatefulSet and KFP's bundled MinIO. Pinned, and a community rebuild because the official `minio/minio` images on Docker Hub and quay.io no longer serve anonymous pulls. Override to point at a mirror. |
+| `FED_MC_IMAGE` | `docker.io/pgsty/mc:RELEASE.2026-09-16T00-00-00Z` | MinIO client image used by the short-lived bucket-creation pod. Same pinning and registry rationale as `FED_MINIO_IMAGE`. |
 | `FED_IMAGES` | (empty) | Space-separated consumer-built images to `kind load` into the cluster. The consumer builds them before calling `fed-infra-up`. |
 | `FED_IMAGE_ARCHIVE` | (empty) | Path to an OCI image tar (as written by `fed_kind_export_images`) imported into every node of a newly created kind cluster, so those images are never pulled. A cache, not a requirement: a missing file or failed import only warns. Not re-imported into an existing cluster. Setting it also makes a newly created cluster keep unpacked image layers (kind discards them by default), which costs node disk but is what lets `fed_kind_export_images` export pulled images. |
 | `FED_S3_BUCKET` | `mlflow-artifacts` | Bucket created for MLflow's artifact store. |

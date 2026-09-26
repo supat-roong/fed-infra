@@ -70,9 +70,10 @@ fed_kfp_patch_arm() {
 # the standalone MinIO in minio.sh. Uses 'replace' on the whole ports array so
 # repeated runs cannot append duplicate container ports.
 #
-# The image comes from quay.io, not Docker Hub: minio/minio there stopped
-# serving anonymous pulls, which left this deployment in ImagePullBackOff
-# until it hit its progress deadline and failed the rollout wait below.
+# The image is FED_MINIO_IMAGE, not upstream's minio/minio: the official
+# MinIO images on Docker Hub and then quay.io stopped serving anonymous pulls,
+# which left this deployment in ImagePullBackOff until it hit its progress
+# deadline and failed the rollout wait below.
 fed_kfp_patch_minio() {
   local ns=$FED_KFP_NAMESPACE
   if [ "${FED_DRY_RUN:-0}" = "1" ]; then

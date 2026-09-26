@@ -53,19 +53,22 @@ setup() {
   [ "$last_delete_line" -gt "$run_line" ]
 }
 
-# See the kfp.bats counterpart: minio/* is no longer anonymously pullable from
-# Docker Hub. Unlike the kfp rollout this one only warns, so a regression here
-# fails silently -- bucket creation just stops happening.
-@test "fed_minio_ensure_bucket pulls mc from quay, not Docker Hub" {
+# See the kfp.bats counterpart: the official minio/* images are no longer
+# anonymously pullable from Docker Hub or quay.io. Unlike the kfp rollout this
+# one only warns, so a regression here fails silently -- bucket creation just
+# stops happening.
+@test "fed_minio_ensure_bucket does not pull the official minio/mc image" {
   fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
-  assert_called "--image=quay.io/minio/mc:"
+  assert_called "--image=docker.io/pgsty/mc:"
   refute_called "--image=minio/mc:"
+  refute_called "--image=docker.io/minio/mc:"
+  refute_called "--image=quay.io/minio/mc:"
 }
 
 @test "fed_minio_ensure_bucket uses the pinned FED_MC_IMAGE" {
   fed_minio_ensure_bucket demo-ns minio-service:9000 ak sk mybucket
   assert_called "--image=${FED_MC_IMAGE}"
-  [[ "$FED_MC_IMAGE" == quay.io/minio/mc:RELEASE.* ]]
+  [[ "$FED_MC_IMAGE" == docker.io/pgsty/mc:RELEASE.* ]]
 }
 
 @test "fed_minio_ensure_bucket is a no-op when dry-running" {
@@ -85,7 +88,7 @@ setup() {
   run fed_render "$FED_INFRA_ROOT/manifests/minio.yaml.tpl"
   # Guard first: an unset FED_MINIO_IMAGE would reduce the match below to
   # the literal "image: ", which every rendering of this template contains.
-  [[ "$FED_MINIO_IMAGE" == quay.io/minio/minio:RELEASE.* ]] || return 1
+  [[ "$FED_MINIO_IMAGE" == docker.io/pgsty/minio:RELEASE.* ]] || return 1
   [[ "$output" == *"image: ${FED_MINIO_IMAGE}"* ]]
 }
 

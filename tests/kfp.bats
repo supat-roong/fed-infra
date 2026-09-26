@@ -105,19 +105,22 @@ setup() {
   assert_called '"--console-address"'
 }
 
-# minio/minio on Docker Hub stopped serving anonymous pulls, which stalled the
-# kubeflow minio rollout until its progress deadline. quay.io is the registry
-# MinIO still publishes to, and the one manifests/minio.yaml.tpl already uses.
-@test "fed_kfp_patch_minio pulls the MinIO image from quay, not Docker Hub" {
+# The official minio/minio image stopped serving anonymous pulls, first on
+# Docker Hub and then on quay.io, and each time stalled the kubeflow minio
+# rollout until its progress deadline. pgsty/minio is a community rebuild
+# that is still anonymously pullable.
+@test "fed_kfp_patch_minio does not pull the official minio/minio image" {
   fed_kfp_patch_minio
-  assert_called "minio=quay.io/minio/minio:"
+  assert_called "minio=docker.io/pgsty/minio:"
   refute_called "minio=minio/minio:"
+  refute_called "minio=docker.io/minio/minio:"
+  refute_called "minio=quay.io/minio/minio:"
 }
 
 @test "fed_kfp_patch_minio uses the pinned FED_MINIO_IMAGE" {
   fed_kfp_patch_minio
   assert_called "minio=${FED_MINIO_IMAGE}"
-  [[ "$FED_MINIO_IMAGE" == quay.io/minio/minio:RELEASE.* ]]
+  [[ "$FED_MINIO_IMAGE" == docker.io/pgsty/minio:RELEASE.* ]]
 }
 
 @test "fed_kfp_wait waits on all four core deployments" {

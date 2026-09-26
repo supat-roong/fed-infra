@@ -38,7 +38,8 @@ fed_minio_ensure_bucket() {
   pod="fed-mc-$(printf '%s' "$bucket" | tr -cd 'a-z0-9')"
   fed_log "ensuring bucket '${bucket}' at ${endpoint}"
   kubectl delete pod "$pod" -n "$ns" --ignore-not-found >/dev/null 2>&1 || true
-  # quay.io rather than Docker Hub, for the reason given in fed_kfp_patch_minio.
+  # FED_MC_IMAGE rather than upstream minio/mc, for the reason given in
+  # fed_kfp_patch_minio.
   kubectl run "$pod" --image="$FED_MC_IMAGE" -n "$ns" --restart=Never --command -- \
     sh -c "mc alias set t http://${endpoint} ${access} ${secret} && mc mb t/${bucket} --ignore-existing"
   kubectl wait --for=jsonpath='{.status.phase}'=Succeeded "pod/$pod" -n "$ns" --timeout=120s \

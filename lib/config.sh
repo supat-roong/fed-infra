@@ -30,8 +30,10 @@ fed_config_defaults() {
   # Pinned rather than :latest so an unchanged scheduled CI run cannot break
   # on a moved upstream tag, and overridable so a mirror or air-gapped
   # registry can be substituted without patching the library.
-  : "${FED_MINIO_IMAGE:=quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z}"
-  : "${FED_MC_IMAGE:=quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z}"
+  # pgsty/* is a community rebuild of MinIO: the official images on both
+  # Docker Hub and quay.io stopped serving anonymous pulls.
+  : "${FED_MINIO_IMAGE:=docker.io/pgsty/minio:RELEASE.2026-08-04T00-00-00Z}"
+  : "${FED_MC_IMAGE:=docker.io/pgsty/mc:RELEASE.2026-09-16T00-00-00Z}"
   : "${FED_IMAGES:=}"
   : "${FED_IMAGE_ARCHIVE:=}"
   : "${FED_S3_BUCKET:=mlflow-artifacts}"
