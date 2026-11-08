@@ -90,13 +90,29 @@ jobs:
         # nothing) so a future runner-image change that shrinks this shows up
         # here rather than as a mystery kind/helm failure further down.
         run: df -h /
-      # Pinned (v1 floats) and with the kind version spelled out: kind
-      # embeds its default node image by digest, so this fixes the node's
-      # Kubernetes version too.
-      - uses: helm/kind-action@v1.14.0
-        with:
-          install_only: true
-          version: v0.31.0
+      - name: Install kind and kubectl
+        # Pinned, with the kind version spelled out: kind embeds its default
+        # node image by digest, so this fixes the node's Kubernetes version
+        # too. Installed by hand rather than via helm/kind-action (which did
+        # the same install_only download of these two pinned versions) because
+        # the action's curl has no retry: nightly run 42468470684 lost the
+        # smoke job when the kind checksum download came back empty
+        # ("no properly formatted checksum lines found").
+        env:
+          KIND_VERSION: v0.31.0
+          KUBECTL_VERSION: v1.35.0
+        run: |
+          fetch() { curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$1" "$2"; }
+          cd "$(mktemp -d)"
+          fetch kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          fetch kind.sha256 "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d' ' -f1 kind.sha256)  kind" | sha256sum -c -
+          fetch kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          fetch kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum -c -
+          sudo install -m 0755 kind kubectl /usr/local/bin/
+          kind version
+          kubectl version --client
       - name: Install envsubst
         # gettext-base is not preinstalled on ubuntu-latest (not present in
         # actions/runner-images' toolset-2404.json apt package lists), so it
@@ -174,13 +190,29 @@ jobs:
         # runner-image change that shrinks free disk shows up here rather
         # than as a mystery pull failure further down.
         run: df -h /
-      # Pinned (v1 floats) and with the kind version spelled out: kind
-      # embeds its default node image by digest, so this fixes the node's
-      # Kubernetes version too.
-      - uses: helm/kind-action@v1.14.0
-        with:
-          install_only: true
-          version: v0.31.0
+      - name: Install kind and kubectl
+        # Pinned, with the kind version spelled out: kind embeds its default
+        # node image by digest, so this fixes the node's Kubernetes version
+        # too. Installed by hand rather than via helm/kind-action (which did
+        # the same install_only download of these two pinned versions) because
+        # the action's curl has no retry: nightly run 42468470684 lost the
+        # smoke job when the kind checksum download came back empty
+        # ("no properly formatted checksum lines found").
+        env:
+          KIND_VERSION: v0.31.0
+          KUBECTL_VERSION: v1.35.0
+        run: |
+          fetch() { curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$1" "$2"; }
+          cd "$(mktemp -d)"
+          fetch kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          fetch kind.sha256 "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d' ' -f1 kind.sha256)  kind" | sha256sum -c -
+          fetch kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          fetch kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum -c -
+          sudo install -m 0755 kind kubectl /usr/local/bin/
+          kind version
+          kubectl version --client
       - name: Install envsubst
         # Same apt hang-vs-retry reasoning as the other jobs in this file.
         run: |
