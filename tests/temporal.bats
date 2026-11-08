@@ -197,6 +197,20 @@ setup() {
   assert_called "juju integrate -m fed-demo:demo-ns temporal-ui-k8s:ui temporal-k8s:ui"
 }
 
+@test "fed_temporal_install_juju waits for postgresql before relating it" {
+  # postgresql-k8s creates the relation's database once and never retries; a
+  # relation that lands while the server is still restarting leaves
+  # temporal-k8s blocked forever (run 42476799337).
+  export STUB_JUJU_OUT='workload:active'
+  fed_temporal_install_juju demo-ns
+  local wait_line rel_line
+  wait_line=$(grep -n "status -m fed-demo:demo-ns temporal-postgresql" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  rel_line=$(grep -n "integrate .*temporal-postgresql:database" "$STUB_LOG" | head -n1 | cut -d: -f1)
+  [ -n "$wait_line" ]
+  [ -n "$rel_line" ]
+  [ "$wait_line" -lt "$rel_line" ]
+}
+
 @test "fed_temporal_install_juju wires temporal-host-info for both the ui and admin charms" {
   # A required endpoint on both charms. Without it temporal-ui-k8s stays
   # blocked on "temporal-host-info relation not established" forever, even

@@ -122,6 +122,16 @@ fed_temporal_install_juju() {
   fed_juju_deploy "$model" temporal-admin-k8s temporal-admin-k8s "$FED_TEMPORAL_ADMIN_CHANNEL" "$FED_TEMPORAL_ADMIN_REVISION"
   fed_juju_deploy "$model" temporal-ui-k8s temporal-ui-k8s "$FED_TEMPORAL_UI_CHANNEL" "$FED_TEMPORAL_UI_REVISION"
   fed_juju_deploy "$model" temporal-postgresql postgresql-k8s "$FED_POSTGRESQL_CHANNEL" "$FED_POSTGRESQL_REVISION" --trust
+  # Wait for postgresql BEFORE relating it. postgresql-k8s attempts the
+  # database creation once, on the relation-changed hook, and does not retry:
+  # in run 42476799337 the db relation's hook landed while Patroni was still
+  # restarting after a failed first pebble-ready, create_database got
+  # "Connection refused", the hook still exited 0, and temporal-k8s sat
+  # blocked on "db:pgsql relation: no database connection available" for the
+  # whole 30-minute wait. The visibility relation, handled ten seconds later,
+  # was fine. Once the charm reports active its server accepts connections,
+  # so both relation hooks get a working database.
+  fed_juju_wait_active "$model" temporal-postgresql
   fed_juju_integrate "$model" temporal-k8s:db temporal-postgresql:database
   fed_juju_integrate "$model" temporal-k8s:visibility temporal-postgresql:database
   fed_juju_integrate "$model" temporal-k8s:admin temporal-admin-k8s:admin
