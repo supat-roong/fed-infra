@@ -1,0 +1,1024 @@
+model:
+  name: fed-e2e
+  type: caas
+  controller: fed-fed-e2e
+  cloud: fed-fed-e2e-k8s
+  version: 3.6.27
+  model-status:
+    current: available
+    since: 10 Nov 2026 10:43:35Z
+  sla: unsupported
+machines: {}
+applications: {}
+storage: {}
+controller:
+  timestamp: 11:15:58Z
+
+Model "fed-e2e" is empty.
+model:
+  name: kubeflow
+  type: caas
+  controller: fed-fed-e2e
+  cloud: fed-fed-e2e-k8s
+  version: 3.6.27
+  model-status:
+    current: available
+    since: 10 Nov 2026 10:43:35Z
+  sla: unsupported
+machines: {}
+applications:
+  argo-controller:
+    charm: argo-controller
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: argo-controller
+    charm-rev: 939
+    charm-channel: 3.7/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:55Z
+    relations:
+      object-storage:
+      - related-application: kfp-minio
+        interface: object-storage
+        scope: global
+    units:
+      argo-controller/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:55Z
+    endpoint-bindings:
+      "": alpha
+      grafana-dashboard: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      object-storage: alpha
+  envoy:
+    charm: envoy
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: envoy
+    charm-rev: 576
+    charm-channel: 2.4/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:53Z
+    relations:
+      grpc:
+      - related-application: mlmd
+        interface: k8s-service
+        scope: global
+    units:
+      envoy/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:53Z
+    endpoint-bindings:
+      "": alpha
+      grafana-dashboard: alpha
+      grpc: alpha
+      ingress: alpha
+      istio-ingress-route: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      provide-cmr-mesh: alpha
+      require-cmr-mesh: alpha
+      service-mesh: alpha
+  kfp-api:
+    charm: kfp-api
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-api
+    charm-rev: 2557
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:40Z
+    relations:
+      kfp-api:
+      - related-application: kfp-persistence
+        interface: k8s-service
+        scope: global
+      - related-application: kfp-ui
+        interface: k8s-service
+        scope: global
+      kfp-viz:
+      - related-application: kfp-viz
+        interface: k8s-service
+        scope: global
+      object-storage:
+      - related-application: kfp-minio
+        interface: object-storage
+        scope: global
+      relational-db:
+      - related-application: kfp-db
+        interface: mysql_client
+        scope: global
+    units:
+      kfp-api/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:40Z
+    endpoint-bindings:
+      "": alpha
+      grafana-dashboard: alpha
+      kfp-api: alpha
+      kfp-viz: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      mysql: alpha
+      object-storage: alpha
+      relational-db: alpha
+  kfp-db:
+    charm: mysql-k8s
+    base:
+      name: ubuntu
+      channel: "22.04"
+    charm-origin: charmhub
+    charm-name: mysql-k8s
+    charm-rev: 423
+    charm-channel: 8.0/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:37Z
+    relations:
+      database:
+      - related-application: kfp-api
+        interface: mysql_client
+        scope: global
+      database-peers:
+      - related-application: kfp-db
+        interface: mysql_peers
+        scope: global
+      restart:
+      - related-application: kfp-db
+        interface: rolling_op
+        scope: global
+      upgrade:
+      - related-application: kfp-db
+        interface: upgrade
+        scope: global
+    units:
+      kfp-db/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:37Z
+    endpoint-bindings:
+      "": alpha
+      certificates: alpha
+      database: alpha
+      database-peers: alpha
+      grafana-dashboard: alpha
+      logging: alpha
+      metrics-endpoint: alpha
+      mysql: alpha
+      mysql-root: alpha
+      replication: alpha
+      replication-offer: alpha
+      restart: alpha
+      s3-parameters: alpha
+      tracing: alpha
+      upgrade: alpha
+  kfp-metadata-writer:
+    charm: kfp-metadata-writer
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-metadata-writer
+    charm-rev: 1623
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:49Z
+    relations:
+      grpc:
+      - related-application: mlmd
+        interface: k8s-service
+        scope: global
+    units:
+      kfp-metadata-writer/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:49Z
+    endpoint-bindings:
+      "": alpha
+      grpc: alpha
+      logging: alpha
+  kfp-minio:
+    charm: minio
+    base:
+      name: ubuntu
+      channel: "20.04"
+    charm-origin: charmhub
+    charm-name: minio
+    charm-rev: 383
+    charm-channel: ckf-1.9/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: maintenance
+      message: downloading charm (ch:amd64/minio-383)
+      since: 10 Nov 2026 10:44:03Z
+    relations:
+      object-storage:
+      - related-application: argo-controller
+        interface: object-storage
+        scope: global
+      - related-application: kfp-api
+        interface: object-storage
+        scope: global
+      - related-application: kfp-ui
+        interface: object-storage
+        scope: global
+    units:
+      kfp-minio/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:38Z
+    endpoint-bindings:
+      "": alpha
+      grafana-dashboard: alpha
+      metrics-endpoint: alpha
+      object-storage: alpha
+  kfp-persistence:
+    charm: kfp-persistence
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-persistence
+    charm-rev: 2568
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:42Z
+    relations:
+      kfp-api:
+      - related-application: kfp-api
+        interface: k8s-service
+        scope: global
+    units:
+      kfp-persistence/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:42Z
+    endpoint-bindings:
+      "": alpha
+      kfp-api: alpha
+      logging: alpha
+  kfp-schedwf:
+    charm: kfp-schedwf
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-schedwf
+    charm-rev: 2575
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:43Z
+    units:
+      kfp-schedwf/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:43Z
+    endpoint-bindings:
+      "": alpha
+      logging: alpha
+  kfp-ui:
+    charm: kfp-ui
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-ui
+    charm-rev: 2575
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:48Z
+    relations:
+      kfp-api:
+      - related-application: kfp-api
+        interface: k8s-service
+        scope: global
+      object-storage:
+      - related-application: kfp-minio
+        interface: object-storage
+        scope: global
+    units:
+      kfp-ui/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:48Z
+    endpoint-bindings:
+      "": alpha
+      dashboard-links: alpha
+      ingress: alpha
+      kfp-api: alpha
+      kfp-ui: alpha
+      logging: alpha
+      object-storage: alpha
+  kfp-viewer:
+    charm: kfp-viewer
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-viewer
+    charm-rev: 2598
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:45Z
+    units:
+      kfp-viewer/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:45Z
+    endpoint-bindings:
+      "": alpha
+      logging: alpha
+  kfp-viz:
+    charm: kfp-viz
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: kfp-viz
+    charm-rev: 2513
+    charm-channel: 2.15/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:47Z
+    relations:
+      kfp-viz:
+      - related-application: kfp-api
+        interface: k8s-service
+        scope: global
+    units:
+      kfp-viz/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:47Z
+    endpoint-bindings:
+      "": alpha
+      kfp-viz: alpha
+      logging: alpha
+  mlmd:
+    charm: mlmd
+    base:
+      name: ubuntu
+      channel: "24.04"
+    charm-origin: charmhub
+    charm-name: mlmd
+    charm-rev: 441
+    charm-channel: ckf-1.10/stable
+    scale: 1
+    exposed: false
+    application-status:
+      current: waiting
+      message: installing agent
+      since: 10 Nov 2026 10:43:51Z
+    relations:
+      grpc:
+      - related-application: envoy
+        interface: k8s-service
+        scope: global
+      - related-application: kfp-metadata-writer
+        interface: k8s-service
+        scope: global
+    units:
+      mlmd/0:
+        workload-status:
+          current: waiting
+          message: installing agent
+        juju-status:
+          current: allocating
+          since: 10 Nov 2026 10:43:51Z
+    endpoint-bindings:
+      "": alpha
+      grpc: alpha
+      logging: alpha
+      velero-backup-config: alpha
+storage:
+  storage:
+    database/0:
+      kind: filesystem
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:37Z
+      persistent: false
+      attachments:
+        units:
+          kfp-db/0:
+            life: alive
+    minio-data/1:
+      kind: filesystem
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:38Z
+      persistent: false
+      attachments:
+        units:
+          kfp-minio/0:
+            life: alive
+    mlmd-data/2:
+      kind: filesystem
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:51Z
+      persistent: false
+      attachments:
+        units:
+          mlmd/0:
+            life: alive
+  filesystems:
+    "0":
+      volume: "0"
+      storage: database/0
+      attachments:
+        containers:
+          kfp-db/0:
+            mount-point: ""
+            read-only: false
+            life: alive
+        units:
+          kfp-db/0:
+            life: alive
+      size: 0
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:37Z
+    "1":
+      volume: "1"
+      storage: minio-data/1
+      attachments:
+        containers:
+          kfp-minio/0:
+            mount-point: ""
+            read-only: false
+            life: alive
+        units:
+          kfp-minio/0:
+            life: alive
+      size: 0
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:38Z
+    "2":
+      volume: "2"
+      storage: mlmd-data/2
+      attachments:
+        containers:
+          mlmd/0:
+            mount-point: ""
+            read-only: false
+            life: alive
+        units:
+          mlmd/0:
+            life: alive
+      size: 0
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:51Z
+  volumes:
+    "0":
+      storage: database/0
+      attachments:
+        containers:
+          kfp-db/0:
+            read-only: false
+            life: alive
+        units:
+          kfp-db/0:
+            life: alive
+      size: 0
+      persistent: false
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:37Z
+    "1":
+      storage: minio-data/1
+      attachments:
+        containers:
+          kfp-minio/0:
+            read-only: false
+            life: alive
+        units:
+          kfp-minio/0:
+            life: alive
+      size: 0
+      persistent: false
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:38Z
+    "2":
+      storage: mlmd-data/2
+      attachments:
+        containers:
+          mlmd/0:
+            read-only: false
+            life: alive
+        units:
+          mlmd/0:
+            life: alive
+      size: 0
+      persistent: false
+      life: alive
+      status:
+        current: pending
+        since: 10 Nov 2026 10:43:51Z
+controller:
+  timestamp: 11:15:58Z
+NAMESPACE                NAME                                            READY   STATUS    RESTARTS   AGE   IP            NODE                    NOMINATED NODE   READINESS GATES
+controller-fed-fed-e2e   controller-0                                    3/3     Running   0          32m   10.244.0.6    fed-e2e-control-plane   <none>           <none>
+controller-fed-fed-e2e   modeloperator-85c68f8676-sn2wf                  1/1     Running   0          32m   10.244.0.9    fed-e2e-control-plane   <none>           <none>
+fed-e2e                  modeloperator-dfdc48d87-nwbmg                   1/1     Running   0          32m   10.244.0.7    fed-e2e-control-plane   <none>           <none>
+kube-system              coredns-7d764666f9-22jb9                        1/1     Running   0          35m   10.244.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              coredns-7d764666f9-nzk9j                        1/1     Running   0          35m   10.244.0.4    fed-e2e-control-plane   <none>           <none>
+kube-system              etcd-fed-e2e-control-plane                      1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kindnet-tkpmj                                   1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-apiserver-fed-e2e-control-plane            1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-controller-manager-fed-e2e-control-plane   1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-proxy-b9wmb                                1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kube-system              kube-scheduler-fed-e2e-control-plane            1/1     Running   0          35m   172.18.0.2    fed-e2e-control-plane   <none>           <none>
+kubeflow                 kfp-minio-operator-0                            1/1     Running   0          32m   10.244.0.10   fed-e2e-control-plane   <none>           <none>
+kubeflow                 modeloperator-9cd484c4b-p68lz                   1/1     Running   0          32m   10.244.0.8    fed-e2e-control-plane   <none>           <none>
+local-path-storage       local-path-provisioner-67b8995b4b-kwt4z         1/1     Running   0          35m   10.244.0.3    fed-e2e-control-plane   <none>           <none>
+local-path-storage       35m         Warning   FailedScheduling          pod/local-path-provisioner-67b8995b4b-kwt4z                      0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system              35m         Normal    SuccessfulCreate          daemonset/kube-proxy                                             Created pod: kube-proxy-b9wmb
+kube-system              35m         Normal    SuccessfulCreate          daemonset/kindnet                                                Created pod: kindnet-tkpmj
+kube-system              35m         Normal    Scheduled                 pod/kindnet-tkpmj                                                Successfully assigned kube-system/kindnet-tkpmj to fed-e2e-control-plane
+local-path-storage       35m         Normal    SuccessfulCreate          replicaset/local-path-provisioner-67b8995b4b                     Created pod: local-path-provisioner-67b8995b4b-kwt4z
+kube-system              35m         Normal    Scheduled                 pod/kube-proxy-b9wmb                                             Successfully assigned kube-system/kube-proxy-b9wmb to fed-e2e-control-plane
+kube-system              35m         Normal    SuccessfulCreate          replicaset/coredns-7d764666f9                                    Created pod: coredns-7d764666f9-nzk9j
+kube-system              35m         Warning   FailedScheduling          pod/coredns-7d764666f9-22jb9                                     0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system              35m         Warning   FailedScheduling          pod/coredns-7d764666f9-nzk9j                                     0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system              35m         Normal    Created                   pod/kube-proxy-b9wmb                                             Container created
+kube-system              35m         Normal    Pulled                    pod/kube-proxy-b9wmb                                             Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+kube-system              35m         Normal    Pulled                    pod/kindnet-tkpmj                                                Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system              35m         Normal    Started                   pod/kube-proxy-b9wmb                                             Container started
+kube-system              35m         Normal    Created                   pod/kindnet-tkpmj                                                Container created
+kube-system              35m         Normal    Started                   pod/kindnet-tkpmj                                                Container started
+kube-system              34m         Normal    Scheduled                 pod/coredns-7d764666f9-nzk9j                                     Successfully assigned kube-system/coredns-7d764666f9-nzk9j to fed-e2e-control-plane
+kube-system              34m         Normal    Scheduled                 pod/coredns-7d764666f9-22jb9                                     Successfully assigned kube-system/coredns-7d764666f9-22jb9 to fed-e2e-control-plane
+local-path-storage       34m         Normal    Scheduled                 pod/local-path-provisioner-67b8995b4b-kwt4z                      Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-kwt4z to fed-e2e-control-plane
+default                  34m         Normal    NodeReady                 node/fed-e2e-control-plane                                       Node fed-e2e-control-plane status is now: NodeReady
+kube-system              34m         Normal    Created                   pod/coredns-7d764666f9-22jb9                                     Container created
+kube-system              34m         Normal    Pulled                    pod/coredns-7d764666f9-nzk9j                                     Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+kube-system              34m         Normal    Started                   pod/coredns-7d764666f9-nzk9j                                     Container started
+kube-system              34m         Normal    Created                   pod/coredns-7d764666f9-nzk9j                                     Container created
+kube-system              34m         Normal    TaintManagerEviction      pod/coredns-7d764666f9-nzk9j                                     Cancelling deletion of Pod kube-system/coredns-7d764666f9-nzk9j
+local-path-storage       34m         Normal    Pulled                    pod/local-path-provisioner-67b8995b4b-kwt4z                      Container image "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system              34m         Normal    Started                   pod/coredns-7d764666f9-22jb9                                     Container started
+kube-system              34m         Normal    Pulled                    pod/coredns-7d764666f9-22jb9                                     Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+kube-system              34m         Normal    TaintManagerEviction      pod/coredns-7d764666f9-22jb9                                     Cancelling deletion of Pod kube-system/coredns-7d764666f9-22jb9
+local-path-storage       34m         Normal    TaintManagerEviction      pod/local-path-provisioner-67b8995b4b-kwt4z                      Cancelling deletion of Pod local-path-storage/local-path-provisioner-67b8995b4b-kwt4z
+local-path-storage       34m         Normal    Created                   pod/local-path-provisioner-67b8995b4b-kwt4z                      Container created
+local-path-storage       34m         Normal    Started                   pod/local-path-provisioner-67b8995b4b-kwt4z                      Container started
+controller-fed-fed-e2e   32m         Normal    Provisioning              persistentvolumeclaim/storage-controller-0                       External provisioner is provisioning volume for claim "controller-fed-fed-e2e/storage-controller-0"
+controller-fed-fed-e2e   32m         Normal    SuccessfulCreate          statefulset/controller                                           Create Claim storage-controller-0 Pod controller-0 in StatefulSet controller success
+local-path-storage       32m         Normal    Pulled                    pod/helper-pod-create-pvc-89bb8ae5-b5db-4d05-a225-a0021a99537a   Container image "docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d" already present on machine and can be accessed by the pod
+local-path-storage       32m         Normal    Started                   pod/helper-pod-create-pvc-89bb8ae5-b5db-4d05-a225-a0021a99537a   Container started
+local-path-storage       32m         Normal    Created                   pod/helper-pod-create-pvc-89bb8ae5-b5db-4d05-a225-a0021a99537a   Container created
+controller-fed-fed-e2e   32m         Normal    WaitForFirstConsumer      persistentvolumeclaim/storage-controller-0                       waiting for first consumer to be created before binding
+controller-fed-fed-e2e   32m         Normal    SuccessfulCreate          statefulset/controller                                           Create Pod controller-0 in StatefulSet controller successful
+controller-fed-fed-e2e   32m         Normal    ExternalProvisioning      persistentvolumeclaim/storage-controller-0                       Waiting for a volume to be created either by the external provisioner 'rancher.io/local-path' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+controller-fed-fed-e2e   32m         Normal    ProvisioningSucceeded     persistentvolumeclaim/storage-controller-0                       Successfully provisioned volume pvc-89bb8ae5-b5db-4d05-a225-a0021a99537a
+controller-fed-fed-e2e   32m         Normal    Started                   pod/controller-0                                                 Container started
+controller-fed-fed-e2e   32m         Normal    Pulled                    pod/controller-0                                                 Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+controller-fed-fed-e2e   32m         Normal    Created                   pod/controller-0                                                 Container created
+controller-fed-fed-e2e   32m         Normal    Scheduled                 pod/controller-0                                                 Successfully assigned controller-fed-fed-e2e/controller-0 to fed-e2e-control-plane
+controller-fed-fed-e2e   32m         Normal    Pulled                    pod/controller-0                                                 Container image "ghcr.io/juju/juju-db:4.4.30" already present on machine and can be accessed by the pod
+controller-fed-fed-e2e   32m         Normal    Started                   pod/controller-0                                                 Container started
+controller-fed-fed-e2e   32m         Normal    Created                   pod/controller-0                                                 Container created
+controller-fed-fed-e2e   32m         Normal    Pulled                    pod/controller-0                                                 Container image "ghcr.io/juju/charm-base:ubuntu-24.04" already present on machine and can be accessed by the pod
+controller-fed-fed-e2e   32m         Normal    Started                   pod/controller-0                                                 Container started
+controller-fed-fed-e2e   32m         Normal    Pulled                    pod/controller-0                                                 Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+controller-fed-fed-e2e   32m         Normal    Created                   pod/controller-0                                                 Container created
+controller-fed-fed-e2e   32m         Normal    Created                   pod/controller-0                                                 Container created
+controller-fed-fed-e2e   32m         Normal    Started                   pod/controller-0                                                 Container started
+controller-fed-fed-e2e   32m         Warning   Unhealthy                 pod/controller-0                                                 Startup probe failed: Get "http://10.244.0.6:38811/v1/health?level=alive": dial tcp 10.244.0.6:38811: connect: connection refused
+fed-e2e                  32m         Normal    Scheduled                 pod/modeloperator-dfdc48d87-nwbmg                                Successfully assigned fed-e2e/modeloperator-dfdc48d87-nwbmg to fed-e2e-control-plane
+fed-e2e                  32m         Normal    ScalingReplicaSet         deployment/modeloperator                                         Scaled up replica set modeloperator-dfdc48d87 from 0 to 1
+fed-e2e                  32m         Normal    Pulled                    pod/modeloperator-dfdc48d87-nwbmg                                Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+fed-e2e                  32m         Normal    Created                   pod/modeloperator-dfdc48d87-nwbmg                                Container created
+fed-e2e                  32m         Normal    Started                   pod/modeloperator-dfdc48d87-nwbmg                                Container started
+fed-e2e                  32m         Normal    SuccessfulCreate          replicaset/modeloperator-dfdc48d87                               Created pod: modeloperator-dfdc48d87-nwbmg
+controller-fed-fed-e2e   32m         Normal    ScalingReplicaSet         deployment/modeloperator                                         Scaled up replica set modeloperator-85c68f8676 from 0 to 1
+controller-fed-fed-e2e   32m         Normal    Scheduled                 pod/modeloperator-85c68f8676-sn2wf                               Successfully assigned controller-fed-fed-e2e/modeloperator-85c68f8676-sn2wf to fed-e2e-control-plane
+controller-fed-fed-e2e   32m         Normal    Pulled                    pod/modeloperator-85c68f8676-sn2wf                               Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+kubeflow                 32m         Normal    Scheduled                 pod/modeloperator-9cd484c4b-p68lz                                Successfully assigned kubeflow/modeloperator-9cd484c4b-p68lz to fed-e2e-control-plane
+kubeflow                 32m         Normal    Pulled                    pod/modeloperator-9cd484c4b-p68lz                                Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+kubeflow                 32m         Normal    Created                   pod/modeloperator-9cd484c4b-p68lz                                Container created
+kubeflow                 32m         Normal    Started                   pod/modeloperator-9cd484c4b-p68lz                                Container started
+kubeflow                 32m         Normal    SuccessfulCreate          replicaset/modeloperator-9cd484c4b                               Created pod: modeloperator-9cd484c4b-p68lz
+kubeflow                 32m         Normal    ScalingReplicaSet         deployment/modeloperator                                         Scaled up replica set modeloperator-9cd484c4b from 0 to 1
+controller-fed-fed-e2e   32m         Normal    Created                   pod/modeloperator-85c68f8676-sn2wf                               Container created
+controller-fed-fed-e2e   32m         Normal    SuccessfulCreate          replicaset/modeloperator-85c68f8676                              Created pod: modeloperator-85c68f8676-sn2wf
+controller-fed-fed-e2e   32m         Normal    Started                   pod/modeloperator-85c68f8676-sn2wf                               Container started
+kubeflow                 32m         Normal    SuccessfulCreate          statefulset/kfp-minio-operator                                   Create Pod kfp-minio-operator-0 in StatefulSet kfp-minio-operator successful
+kubeflow                 32m         Normal    Scheduled                 pod/kfp-minio-operator-0                                         Successfully assigned kubeflow/kfp-minio-operator-0 to fed-e2e-control-plane
+kubeflow                 32m         Normal    Started                   pod/kfp-minio-operator-0                                         Container started
+kubeflow                 32m         Normal    Created                   pod/kfp-minio-operator-0                                         Container created
+kubeflow                 32m         Normal    Pulled                    pod/kfp-minio-operator-0                                         Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+kubeflow                 32m         Normal    Created                   pod/kfp-minio-operator-0                                         Container created
+kubeflow                 32m         Normal    Pulled                    pod/kfp-minio-operator-0                                         Container image "ghcr.io/juju/charm-base:ubuntu-20.04" already present on machine and can be accessed by the pod
+kubeflow                 32m         Normal    Started                   pod/kfp-minio-operator-0                                         Container started
+Name:             modeloperator-dfdc48d87-nwbmg
+Namespace:        fed-e2e
+Priority:         0
+Service Account:  modeloperator
+Node:             fed-e2e-control-plane/172.18.0.2
+Start Time:       Tue, 10 Nov 2026 10:43:38 +0000
+Labels:           model.juju.is/disable-webhook=true
+                  operator.juju.is/name=modeloperator
+                  operator.juju.is/target=model
+                  pod-template-hash=dfdc48d87
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.7
+IPs:
+  IP:           10.244.0.7
+Controlled By:  ReplicaSet/modeloperator-dfdc48d87
+Containers:
+  juju-operator:
+    Container ID:  containerd://c350324f097e549ac531bf849c6b163dbb9e0ad6bb3869d49d1b9233e1312fc4
+    Image:         ghcr.io/juju/jujud-operator:3.6.27
+    Image ID:      ghcr.io/juju/jujud-operator@sha256:f93170650811aa86356eaeba5a04eabd37eadb8e0f0e4b4e3e3a7df71e06e595
+    Port:          17071/TCP (api)
+    Host Port:     0/TCP (api)
+    Command:
+      /bin/sh
+    Args:
+      -c
+      export JUJU_DATA_DIR=/var/lib/juju
+      export JUJU_TOOLS_DIR=$JUJU_DATA_DIR/tools
+      
+      mkdir -p $JUJU_TOOLS_DIR
+      cp /opt/jujud $JUJU_TOOLS_DIR/jujud
+      
+      exec $JUJU_TOOLS_DIR/jujud model --model-uuid=c867cefb-1980-4fe0-8a86-985083593c5e
+      
+    State:          Running
+      Started:      Tue, 10 Nov 2026 10:43:38 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      HTTP_PORT:          17071
+      SERVICE_NAME:       modeloperator
+      SERVICE_NAMESPACE:  fed-e2e
+    Mounts:
+      /var/lib/juju/agents/model-c867cefb-1980-4fe0-8a86-985083593c5e/template-agent.conf from modeloperator (rw,path="template-agent.conf")
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-4p6nx (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  modeloperator:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      modeloperator
+    Optional:  false
+  kube-api-access-4p6nx:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  32m   default-scheduler  Successfully assigned fed-e2e/modeloperator-dfdc48d87-nwbmg to fed-e2e-control-plane
+  Normal  Pulled     32m   kubelet            spec.containers{juju-operator}: Container image "ghcr.io/juju/jujud-operator:3.6.27" already present on machine and can be accessed by the pod
+  Normal  Created    32m   kubelet            spec.containers{juju-operator}: Container created
+  Normal  Started    32m   kubelet            spec.containers{juju-operator}: Container started
+controller-0: 10:43:36 INFO juju.worker.apicaller [c867ce] "controller-0" successfully connected to "wss://localhost:17070"
+controller-0: 10:43:36 INFO juju.worker.logforwarder config change - log forwarding not enabled
+controller-0: 10:43:36 INFO juju.worker.logger logger worker started
+controller-0: 10:43:36 INFO juju.worker.pruner.action pruner config: max age: 336h0m0s, max collection size 5120M for fed-e2e (c867cefb-1980-4fe0-8a86-985083593c5e)
+controller-0: 10:43:36 INFO juju.worker.pruner.statushistory pruner config: max age: 336h0m0s, max collection size 5120M for fed-e2e (c867cefb-1980-4fe0-8a86-985083593c5e)
+model-c867cefb-1980-4fe0-8a86-985083593c5e: 10:43:38 INFO juju.worker.caasupgrader abort check blocked until version event received
+model-c867cefb-1980-4fe0-8a86-985083593c5e: 10:43:38 INFO juju.worker.caasupgrader unblocking abort check
+model-c867cefb-1980-4fe0-8a86-985083593c5e: 10:43:38 INFO juju.worker.muxhttpserver starting http server on [::]:17071
+model-c867cefb-1980-4fe0-8a86-985083593c5e: 10:43:38 INFO juju.worker.caasadmission ensuring model k8s webhook configurations
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "log-sender" manifold worker started at 2026-11-10 10:43:55.593119295 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "upgrade-steps-runner" manifold worker started at 2026-11-10 10:43:55.593129841 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "upgrader" manifold worker started at 2026-11-10 10:43:55.593186329 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "upgrade-steps-runner" manifold worker completed successfully
+application-kfp-minio: 10:43:55 INFO juju.worker.migrationminion migration migration phase is now: NONE
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "charm-dir" manifold worker started at 2026-11-10 10:43:55.60399294 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "proxy-config-updater" manifold worker started at 2026-11-10 10:43:55.604019399 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "api-address-updater" manifold worker started at 2026-11-10 10:43:55.604112777 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.logger initial log config: "<root>=DEBUG"
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "logging-config-updater" manifold worker started at 2026-11-10 10:43:55.604337228 +0000 UTC
+application-kfp-minio: 10:43:55 INFO juju.worker.logger logger worker started
+application-kfp-minio: 10:43:55 DEBUG juju.worker.dependency "hook-retry-strategy" manifold worker started at 2026-11-10 10:43:55.605062668 +0000 UTC
+application-kfp-minio: 10:43:55 DEBUG juju.worker.proxyupdater applying in-process legacy proxy settings proxy.Settings{Http:"", Https:"", Ftp:"", NoProxy:"10.96.72.159,127.0.0.1,::1,controller-service.controller-fed-fed-e2e.svc.cluster.local,localhost", AutoNoProxy:""}
+application-kfp-minio: 10:43:55 WARNING juju.worker.proxyupdater unable to set snap core settings [proxy.http= proxy.https= proxy.store=]: exec: "snap": executable file not found in $PATH, output: ""
+application-kfp-minio: 10:43:55 DEBUG juju.worker.proxyupdater new apt proxy settings proxy.Settings{Http:"", Https:"", Ftp:"", NoProxy:"127.0.0.1,::1,localhost", AutoNoProxy:""}
+application-kfp-minio: 10:43:55 INFO juju.worker.caasupgrader abort check blocked until version event received
+application-kfp-minio: 10:43:55 DEBUG juju.worker.caasupgrader current agent binary version: 3.6.27
+application-kfp-minio: 10:43:55 INFO juju.worker.caasupgrader unblocking abort check
+application-kfp-minio: 10:43:55 DEBUG juju.worker.logger reconfiguring logging from "<root>=DEBUG" to "<root>=INFO"
+application-kfp-minio: 10:43:55 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:43:55 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:43:55 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:43:55 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:43:55 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+controller-0: 10:43:55 INFO juju.worker.caasapplicationprovisioner.runner start "argo-controller"
+application-kfp-minio: 10:43:59 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:43:59 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:43:59 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:43:59 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:43:59 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:03 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:03 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:03 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:03 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:03 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:08 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:08 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:08 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:08 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:08 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:14 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:14 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:14 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:14 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:14 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:21 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:21 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:21 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:21 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:21 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:31 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:31 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:31 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:31 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:31 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:41 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:41 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:41 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:41 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:41 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:54 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:44:54 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:44:54 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:44:54 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:44:54 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:10 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:45:10 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:45:10 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:10 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:45:10 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:30 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:45:30 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:45:30 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:30 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:45:30 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:53 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:45:53 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:45:53 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:45:53 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:45:53 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:46:22 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:46:22 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:46:22 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:46:22 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:46:22 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:46:56 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:46:56 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:46:57 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:46:57 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:46:57 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:47:35 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:47:35 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:47:35 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:47:35 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:47:35 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:48:19 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:48:19 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:48:19 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:48:19 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:48:19 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:49:19 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:49:19 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:49:19 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:49:19 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:49:19 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:50:28 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:50:28 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:50:28 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:50:28 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:50:28 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:51:52 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:51:52 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:51:52 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:51:52 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:51:52 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:53:36 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:53:36 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:53:36 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:53:36 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:53:36 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:55:25 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:55:25 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:55:25 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:55:25 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:55:25 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:57:30 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:57:30 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:57:30 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:57:30 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:57:30 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:59:27 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 10:59:27 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 10:59:27 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 10:59:27 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 10:59:27 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:01:18 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 11:01:18 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 11:01:18 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:01:18 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 11:01:18 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:03:17 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 11:03:17 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 11:03:17 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:03:17 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 11:03:17 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:05:08 INFO juju.worker.caasoperator.charm downloading ch:amd64/minio-383 from API server
+application-kfp-minio: 11:05:08 INFO juju.downloader downloading from ch:amd64/minio-383
+application-kfp-minio: 11:05:08 WARNING juju.worker.caasoperator operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+application-kfp-minio: 11:05:08 INFO juju.worker.caasoperator.runner runner is dying
+application-kfp-minio: 11:05:08 ERROR juju.worker.dependency "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+== logs fed-e2e/pod/modeloperator-dfdc48d87-nwbmg ==
+== logs kubeflow/pod/kfp-minio-operator-0 ==
+2026-11-10 10:48:19 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:48:19 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:48:19 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:48:19 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:48:19 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:49:19 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:49:19 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:49:19 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:49:19 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:49:19 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:50:28 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:50:28 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:50:28 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:50:28 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:50:28 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:51:52 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:51:52 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:51:52 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:51:52 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:51:52 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:53:36 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:53:36 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:53:36 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:53:36 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:53:36 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:55:25 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:55:25 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:55:25 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:55:25 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:55:25 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:57:30 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:57:30 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:57:30 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:57:30 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:57:30 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:59:27 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 10:59:27 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 10:59:27 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 10:59:27 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 10:59:27 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:01:18 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:01:18 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:01:18 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:01:18 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:01:18 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:03:17 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:03:17 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:03:17 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:03:17 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:03:17 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:05:08 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:05:08 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:05:08 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:05:08 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:05:08 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:07:01 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:07:01 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:07:01 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:07:01 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:07:01 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:09:07 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:09:07 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:09:07 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:09:07 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:09:07 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:11:00 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:11:00 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:11:00 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:11:00 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:11:00 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:13:06 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:13:06 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:13:06 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:13:06 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:13:06 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:15:05 INFO juju.worker.caasoperator.charm bundles.go:82 downloading ch:amd64/minio-383 from API server
+2026-11-10 11:15:05 INFO juju.downloader download.go:112 downloading from ch:amd64/minio-383
+2026-11-10 11:15:05 WARNING juju.worker.caasoperator caasoperator.go:419 operator "kfp-minio" is shutting down, err: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+2026-11-10 11:15:05 INFO juju.worker.caasoperator.runner runner.go:410 runner is dying
+2026-11-10 11:15:05 ERROR juju.worker.dependency engine.go:695 "operator" manifold worker returned unexpected error: failed to initialize caasoperator for "kfp-minio": failed to download charm "ch:amd64/minio-383" from API server: Get https://10.96.72.159:17070/model/a5038ece-019f-4af0-8476-501dc206b1af/charms?file=%2A&url=ch%3Aamd64%2Fminio-383: cannot retrieve charm: ch:amd64/minio-383
+== logs kubeflow/pod/modeloperator-9cd484c4b-p68lz ==
